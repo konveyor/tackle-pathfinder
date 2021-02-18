@@ -1,14 +1,14 @@
 # Tackle Pathfinder application
 
-It's the next version of the https://github.com/redhat-cop/pathfinder project.  
+It's the next version of the <https://github.com/redhat-cop/pathfinder> project.  
 
 Pathfinder is an extensible, questionnaire based assessment tool for assessing the suitability of applications for deployment onto an enterprise Kubernetes platform.
 
-# API 
+# API
 
 * use Apicurio to design de API first
+* if the default docker-compose installation doesn't work ( for mysql issues) try full postgre approach ( <https://github.com/carlesarnal/apicurio-studio/tree/expand-docker-compose-db-choice-keycloak> )
 * use Microcks to mock the API to test it and decouple Frontend from Backend
-
 
 # LOGIC
 
@@ -54,9 +54,14 @@ User --> selectassessment
 # MODEL
 
 * flattened model (denormalised shcmema)
-* no dependency between questions
-* no mandatory/optional questions
-* no multichoice questions
+
+* initial premisses :
+  * no dependency between questions
+  * no mandatory/optional questions
+  * no multichoice questions
+  * i18n capabilities
+  * 1 application -> 1 assessment
+  * only 1 questionaire
 
 ```plantuml
 @startuml
@@ -77,8 +82,12 @@ package Assessment {
     entity assessment {
         date : timestamp
         user : long
+        status : [EMPTY, STARTED, COMPLETE]
     }
-    entity assess_page {
+    entity assess_questionaire {
+        name : string
+    }
+    entity assess_category {
         order : integer
         name : string
     }
@@ -105,7 +114,8 @@ package Assessment {
         id : long
         name : string
     }
-
+}
+package Review {
     entity assess_review {
         action : string
         effort : string
@@ -118,7 +128,7 @@ package QuestionaireDesign {
     entity questionaire {
         name : string
     }
-    entity page {
+    entity category {
         order : integer
         name : string
     }
@@ -137,9 +147,10 @@ package QuestionaireDesign {
 
 assessment ||--o{ assess_application
 assessment ||--o{ assess_stake
-assessment ||--o{ assess_page
+assessment ||--o| assess_questionaire
+assess_questionaire ||--o{ assess_category
 assessment ||--o| assess_review
-assess_page ||--o{ assess_question
+assess_category ||--o{ assess_question
 assess_question ||--o{ assess_answer
 
 application ||..o| assess_application
@@ -147,8 +158,8 @@ stakeholder ||..o{ assess_stake
 
 questionaire ||..o{ assessment
 
-questionaire ||--o{ page
-page ||--o{ question
+questionaire ||--o{ category
+category ||--o{ question
 question ||--o{ answer
 
 @enduml
