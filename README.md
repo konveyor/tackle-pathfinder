@@ -12,6 +12,8 @@ Pathfinder is an extensible, questionnaire based assessment tool for assessing t
 
 # LOGIC
 
+## Assess
+
 ```plantuml
 @startuml
 left to right direction
@@ -20,7 +22,7 @@ package Select {
     usecase "List Apps with Assessment status" as list
     usecase "Select Apps to Assess" as selectapp
 }
-package Asses {
+package Assess {
     usecase "Select Stakeholders" as selectstake
     usecase "Answer Questions" as answer
 }
@@ -37,9 +39,13 @@ package Review {
     criticallity, priority, comments"
     usecase "see assessment summary" as summary
 }
+
+
+
 User --> selectapp
 User --> selectstake
 User --> answer
+User --> list
 answer ..> navigate : include
 answer ..> save : include
 answer ..> select : include
@@ -48,6 +54,35 @@ answer ..> explana : include
 User --> review
 User --> summary
 User --> selectassessment
+
+
+@enduml
+```
+
+## Design
+
+```plantuml
+@startuml
+left to right direction
+actor User
+package Design {
+    usecase "Add/Edit/Delete Questionaire" as addquestionaire
+    usecase "Add/Edit/Delete question" as addquestion
+    usecase "Add/Edit/Delete answer" as addanswer
+    usecase "Import Questionaire" as import
+    usecase "Export Questionaire" as export
+}
+package Translation {
+    usecase "Add/Edit/Delete text in Base language" as addtext
+    usecase "Add/Edit/Delete translated text" as translate
+}
+User --> addquestionaire
+addquestionaire ..> addquestion : include
+addquestion ..> addanswer : include
+User --> import
+User --> export
+User --> addtext
+User --> translate
 @enduml
 ```
 
@@ -86,12 +121,14 @@ package Assessment {
     }
     entity assess_questionaire {
         name : string
+        language : [ES,FR,EN,IT]
     }
     entity assess_category {
         order : integer
         name : string
     }
     entity assess_question {
+        order : integer
         name : string
         tooltip : string
         question : string
@@ -114,6 +151,12 @@ package Assessment {
         id : long
         name : string
     }
+    assess_questionaire ||--o{ assess_category
+    assess_category ||--o{ assess_question
+    assess_question ||--o{ assess_answer
+    assessment ||--o{ assess_application
+    assessment ||--o| assess_questionaire
+
 }
 package Review {
     entity assess_review {
@@ -124,8 +167,9 @@ package Review {
     }
 }
 
-package QuestionaireDesign {
+package Questionaire {
     entity questionaire {
+        language : [ES,FR,EN,IT]
         name : string
     }
     entity category {
@@ -143,24 +187,26 @@ package QuestionaireDesign {
         risk : [RED,AMBER,GREEN]
         answer : string
     }
+    questionaire ||--o{ category
+    category ||--o{ question
+    question ||--o{ answer
 }
 
-assessment ||--o{ assess_application
+package Translation {
+    entity text {
+        translation_group : integer
+        language : [ES,FR, EN, IT]
+        text : string
+    }
+}
+
 assessment ||--o{ assess_stake
-assessment ||--o| assess_questionaire
-assess_questionaire ||--o{ assess_category
 assessment ||--o| assess_review
-assess_category ||--o{ assess_question
-assess_question ||--o{ assess_answer
 
 application ||..o| assess_application
 stakeholder ||..o{ assess_stake
 
 questionaire ||..o{ assessment
-
-questionaire ||--o{ category
-category ||--o{ question
-question ||--o{ answer
 
 @enduml
 ```
