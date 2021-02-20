@@ -1,0 +1,110 @@
+@startuml "Model"
+
+package ExternalEntities {
+    entity stakeholder {
+        id : long
+        name : string
+    }
+    entity application {
+        id : long
+        name : string
+    }
+}
+
+package Assessment {
+
+    entity assessment {
+        date : timestamp
+        user : long
+        status : [EMPTY, STARTED, COMPLETE]
+    }
+    entity assess_questionaire {
+        name : string
+        language : [ES,FR,EN,IT]
+    }
+    entity assess_category {
+        order : integer
+        name : string
+    }
+    entity assess_question {
+        order : integer
+        name : string
+        tooltip : string
+        question : string
+        comment : string
+    }
+
+    entity assess_answer {
+        order : integer
+        risk : [RED,AMBER,GREEN]
+        answer : string
+        selected : boolean
+    }
+
+    entity assess_application {
+        id : long
+        name : string
+    }
+
+    entity assess_stake {
+        id : long
+        name : string
+    }
+    assess_questionaire ||--o{ assess_category
+    assess_category ||--o{ assess_question
+    assess_question ||--o{ assess_answer
+    assessment ||--o{ assess_application
+    assessment ||--o| assess_questionaire
+
+}
+package Review {
+    entity assess_review {
+        action : string
+        effort : string
+        criticality : string
+        priority : string
+    }
+}
+
+package Questionaire {
+    entity questionaire {
+        language : [ES,FR,EN,IT]
+        name : string
+    }
+    entity category {
+        order : integer
+        name : string
+    }
+    entity question {
+        order : integer
+        name : string
+        question : string
+        tooltip : string
+    }
+    entity answer {
+        order : integer
+        risk : [RED,AMBER,GREEN]
+        answer : string
+    }
+    questionaire ||--o{ category
+    category ||--o{ question
+    question ||--o{ answer
+}
+
+package Translation {
+    entity text {
+        translation_group : integer
+        language : [ES,FR, EN, IT]
+        text : string
+    }
+}
+
+assessment ||--o{ assess_stake
+assessment ||--o| assess_review
+
+application ||..o| assess_application
+stakeholder ||..o{ assess_stake
+
+questionaire ||..o{ assessment
+
+@enduml

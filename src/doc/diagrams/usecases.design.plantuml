@@ -1,0 +1,22 @@
+@startuml "Use Cases Design"
+left to right direction
+actor User
+package Design {
+    usecase "Add/Edit/Delete Questionaire" as addquestionaire
+    usecase "Add/Edit/Delete question" as addquestion
+    usecase "Add/Edit/Delete answer" as addanswer
+    usecase "Import Questionaire" as import
+    usecase "Export Questionaire" as export
+}
+package Translation {
+    usecase "Add/Edit/Delete text in Base language" as addtext
+    usecase "Add/Edit/Delete translated text" as translate
+}
+User --> addquestionaire
+addquestionaire ..> addquestion : include
+addquestion ..> addanswer : include
+User --> import
+User --> export
+User --> addtext
+User --> translate
+@enduml
