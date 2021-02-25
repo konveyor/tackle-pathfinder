@@ -17,6 +17,8 @@ package Assessment {
         date : timestamp
         user : long
         status : [EMPTY, STARTED, COMPLETE]
+        application_id : long
+        application_name : string
     }
     entity assess_questionaire {
         name : string
@@ -41,11 +43,6 @@ package Assessment {
         selected : boolean
     }
 
-    entity assess_application {
-        id : long
-        name : string
-    }
-
     entity assess_stake {
         id : long
         name : string
@@ -53,12 +50,11 @@ package Assessment {
     assess_questionaire ||--o{ assess_category
     assess_category ||--o{ assess_question
     assess_question ||--o{ assess_answer
-    assessment ||--o{ assess_application
     assessment ||--o| assess_questionaire
 
 }
 package Review {
-    entity assess_review {
+    entity review {
         action : string
         effort : string
         criticality : string
@@ -100,9 +96,9 @@ package Translation {
 }
 
 assessment ||--o{ assess_stake
-assessment ||--o| assess_review
+assessment ||--o| review
 
-application ||..o| assess_application
+application ||..o| assessment
 stakeholder ||..o{ assess_stake
 
 questionaire ||..o{ assessment

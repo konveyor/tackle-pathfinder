@@ -1,0 +1,18 @@
+@startuml "Assess Sequence"
+(*) --> "Select One Application"
+--> "Click Assess"
+--> "Navigate Categories"
+--> "Click Answer" 
+--> "* Add one note"
+--> "Save Draft"
+--> (*)
+"* Add one note" --> "Navigate Categories"
+@enduml
+
+@startuml "Copy"
+(*) --> "Select one Application"
+--> "Click Copy"
+--> "Pop up with apps list appears"
+--> "Select One application"
+--> "Click confirm"
+@enduml 

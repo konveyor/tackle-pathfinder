@@ -12,13 +12,13 @@ Pathfinder is an extensible, questionnaire based assessment tool for assessing t
 
 # LOGIC
 
-## Assess
+## Assessment
 
-![Assess Diagram](out/doc/diagrams/usecases.assess/Use%20Cases.png)
+![Assess Diagram](doc/diagrams/out/Use%20Cases.png)
 
-## Design
+## Questionaire Design
 
-![Design Diagram](out/doc/diagrams/usecases.design/Use%20Cases%20Design.png)
+![Design Diagram](doc/diagrams/out/Use%20Cases%20Design.png)
 
 # MODEL
 
@@ -32,4 +32,11 @@ Pathfinder is an extensible, questionnaire based assessment tool for assessing t
   * 1 application -> 1 assessment
   * only 1 questionaire
 
-![Model Diagram](out/doc/diagrams/classes.model/Model.png)
+![Model Diagram](doc/diagrams/out/Model.png)
+
+
+# FLOW
+
+| Assess Application | Copy Assessment |
+| :------------------: | :---------------: |
+![Sequence Diagram](doc/diagrams/out/Assess%20Sequence.png) | ![Sequence Diagram](doc/diagrams/out/Copy.png) |

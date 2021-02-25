@@ -3,7 +3,12 @@ left to right direction
 actor User
 package Select {
     usecase "List Apps with Assessment status" as list
-    usecase "Select Apps to Assess" as selectapp
+    usecase "Select 1 App" as selectapp
+}
+package Copy {
+    usecase "Select FROM app" as selectfrom
+    usecase "Select TO app" as selectto
+    usecase "Copy Assessment" as copyfromto
 }
 package Assess {
     usecase "Select Stakeholders" as selectstake
@@ -22,21 +27,28 @@ package Review {
     criticallity, priority, comments"
     usecase "see assessment summary" as summary
 }
-
+package Report {
+    usecase "Select Report" as selectreport
+}
 
 
 User --> selectapp
 User --> selectstake
+
 User --> answer
 User --> list
+User --> copyfromto
+User ..> selectfrom
+User ..> selectto
+
 answer ..> navigate : include
 answer ..> save : include
 answer ..> select : include
 answer ..> comment : include
 answer ..> explana : include
+
 User --> review
 User --> summary
 User --> selectassessment
-
-
+User --> selectreport
 @enduml
