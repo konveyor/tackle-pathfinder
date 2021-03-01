@@ -28,27 +28,31 @@ package Review {
     usecase "see assessment summary" as summary
 }
 package Report {
-    usecase "Select Report" as selectreport
+    usecase "List Reports" as listreports
+    usecase "Create Report" as createreport
 }
 
 
-User --> selectapp
-User --> selectstake
 
-User --> answer
 User --> list
-User --> copyfromto
-User ..> selectfrom
-User ..> selectto
+list --> selectapp
 
+selectapp --> selectfrom
+selectto --> copyfromto
+selectfrom ..> selectto
+
+selectapp --> selectstake
+selectstake ..> answer
 answer ..> navigate : include
 answer ..> save : include
 answer ..> select : include
 answer ..> comment : include
 answer ..> explana : include
 
-User --> review
-User --> summary
-User --> selectassessment
-User --> selectreport
+selectapp --> selectassessment
+selectassessment --> review
+review --> summary
+
+selectapp --> listreports
+selectapp --> createreport
 @enduml
