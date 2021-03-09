@@ -1,0 +1,317 @@
+{
+  "services": [
+    {
+      "id": "60414511c38c10049a29136d",
+      "name": "tackle-pathfinder",
+      "version": "1.0.0",
+      "xmlNS": null,
+      "type": "REST",
+      "metadata": {
+        "createdOn": 1614890257353,
+        "lastUpdate": 1614934695705,
+        "annotations": null,
+        "labels": null
+      },
+      "operations": [
+        {
+          "name": "GET /info",
+          "method": "GET",
+          "action": null,
+          "inputName": null,
+          "outputName": null,
+          "bindings": null,
+          "dispatcher": null,
+          "dispatcherRules": null,
+          "defaultDelay": null,
+          "resourcePaths": ["/info"],
+          "parameterConstraints": null
+        },
+        {
+          "name": "GET /assessments/{assessmentId}",
+          "method": "GET",
+          "action": null,
+          "inputName": null,
+          "outputName": null,
+          "bindings": null,
+          "dispatcher": "URI_PARTS",
+          "dispatcherRules": "assessmentId",
+          "defaultDelay": null,
+          "resourcePaths": null,
+          "parameterConstraints": null
+        },
+        {
+          "name": "PUT /assessments/{assessmentId}",
+          "method": "PUT",
+          "action": null,
+          "inputName": null,
+          "outputName": null,
+          "bindings": null,
+          "dispatcher": "URI_PARTS",
+          "dispatcherRules": "assessmentId",
+          "defaultDelay": null,
+          "resourcePaths": null,
+          "parameterConstraints": null
+        },
+        {
+          "name": "DELETE /assessments/{assessmentId}",
+          "method": "DELETE",
+          "action": null,
+          "inputName": null,
+          "outputName": null,
+          "bindings": null,
+          "dispatcher": "URI_PARTS",
+          "dispatcherRules": "assessmentId",
+          "defaultDelay": null,
+          "resourcePaths": null,
+          "parameterConstraints": null
+        },
+        {
+          "name": "GET /questionaires/{questionaireId}",
+          "method": "GET",
+          "action": null,
+          "inputName": null,
+          "outputName": null,
+          "bindings": null,
+          "dispatcher": "URI_PARTS",
+          "dispatcherRules": "questionaireId",
+          "defaultDelay": null,
+          "resourcePaths": null,
+          "parameterConstraints": null
+        },
+        {
+          "name": "PUT /questionaires/{questionaireId}/import",
+          "method": "PUT",
+          "action": null,
+          "inputName": null,
+          "outputName": null,
+          "bindings": null,
+          "dispatcher": "URI_PARTS",
+          "dispatcherRules": "questionaireId",
+          "defaultDelay": null,
+          "resourcePaths": null,
+          "parameterConstraints": null
+        },
+        {
+          "name": "PUT /questionaires/{questionaireId}/export",
+          "method": "PUT",
+          "action": null,
+          "inputName": null,
+          "outputName": null,
+          "bindings": null,
+          "dispatcher": "URI_PARTS",
+          "dispatcherRules": "questionaireId",
+          "defaultDelay": null,
+          "resourcePaths": null,
+          "parameterConstraints": null
+        },
+        {
+          "name": "GET /questionaires",
+          "method": "GET",
+          "action": null,
+          "inputName": null,
+          "outputName": null,
+          "bindings": null,
+          "dispatcher": null,
+          "dispatcherRules": null,
+          "defaultDelay": null,
+          "resourcePaths": ["/questionaires"],
+          "parameterConstraints": null
+        },
+        {
+          "name": "GET /assessments",
+          "method": "GET",
+          "action": null,
+          "inputName": null,
+          "outputName": null,
+          "bindings": null,
+          "dispatcher": "SCRIPT",
+          "dispatcherRules": "Random rand = new Random()\nrandom_num = rand.nextInt(1)\nswitch (random_num) {\n  case 1: return \"assessments_get_ok\"; break;\n  case 0: return \"assessments_get_404\"; break;\n}",
+          "defaultDelay": 0,
+          "resourcePaths": ["/assessments", "/assessments"],
+          "parameterConstraints": []
+        },
+        {
+          "name": "POST /assessments",
+          "method": "POST",
+          "action": null,
+          "inputName": null,
+          "outputName": null,
+          "bindings": null,
+          "dispatcher": null,
+          "dispatcherRules": null,
+          "defaultDelay": null,
+          "resourcePaths": ["/assessments"],
+          "parameterConstraints": null
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "id": "6041f2a7c38c10049a29137d",
+      "name": "tackle-pathfinder-1.0.0.json",
+      "path": null,
+      "content": "{\n    \"openapi\": \"3.0.2\",\n    \"info\": {\n        \"title\": \"tackle-pathfinder\",\n        \"version\": \"1.0.0\"\n    },\n    \"paths\": {\n        \"/info\": {\n            \"summary\": \"Path used to manage the list of infos.\",\n            \"description\": \"The REST endpoint/path used to list zero or more `info` entities.  This path contains a `GET` operation to perform the list.\",\n            \"get\": {\n                \"responses\": {\n                    \"200\": {\n                        \"content\": {\n                            \"application/json\": {\n                                \"schema\": {\n                                    \"$ref\": \"#/components/schemas/info\"\n                                },\n                                \"examples\": {\n                                    \"info-example\": {\n                                        \"value\": {\n                                            \"date\": \"{{ now(yyyyMMdd-HHmmss) }}\",\n                                            \"uptime\": \"{{ randomInt(1000, 8000) }}\"\n                                        }\n                                    },\n                                    \"default\": {\n                                        \"value\": {\n                                            \"date\": \"2018-02-10T09:30Z\",\n                                            \"uptime\": 8\n                                        }\n                                    }\n                                }\n                            }\n                        },\n                        \"description\": \"Successful response - returns an `info` entity.\"\n                    }\n                },\n                \"operationId\": \"getinfo\",\n                \"summary\": \"Get Info\",\n                \"description\": \"Gets a list of all `info` entities.\"\n            }\n        },\n        \"/assessments/{assessmentId}\": {\n            \"summary\": \"Path used to manage a single assessment.\",\n            \"description\": \"The REST endpoint/path used to get, update, and delete single instances of an `assessment`.  This path contains `GET`, `PUT`, and `DELETE` operations used to perform the get, update, and delete tasks, respectively.\",\n            \"get\": {\n                \"responses\": {\n                    \"200\": {\n                        \"content\": {\n                            \"application/json\": {\n                                \"schema\": {\n                                    \"$ref\": \"#/components/schemas/assessment\"\n                                },\n                                \"examples\": {\n                                    \"assessment-1\": {\n                                        \"value\": {\n                                            \"date\": \"some text\",\n                                            \"user\": \"some text\",\n                                            \"status\": \"STARTED\",\n                                            \"categories\": [\n                                                {\n                                                    \"order\": 67,\n                                                    \"name\": \"some text\",\n                                                    \"questions\": [\n                                                        {\n                                                            \"name\": \"some text\",\n                                                            \"tooltip\": \"some text\",\n                                                            \"question\": \"some text\",\n                                                            \"comment\": \"some text\",\n                                                            \"answers\": [\n                                                                {\n                                                                    \"order\": 20,\n                                                                    \"risk\": \"some text\",\n                                                                    \"selected\": true,\n                                                                    \"answer\": \"some text\"\n                                                                },\n                                                                {\n                                                                    \"order\": 33,\n                                                                    \"risk\": \"some text\",\n                                                                    \"selected\": true,\n                                                                    \"answer\": \"some text\"\n                                                                }\n                                                            ]\n                                                        },\n                                                        {\n                                                            \"name\": \"some text\",\n                                                            \"tooltip\": \"some text\",\n                                                            \"question\": \"some text\",\n                                                            \"comment\": \"some text\",\n                                                            \"answers\": [\n                                                                {\n                                                                    \"order\": 16,\n                                                                    \"risk\": \"some text\",\n                                                                    \"selected\": true,\n                                                                    \"answer\": \"some text\"\n                                                                },\n                                                                {\n                                                                    \"order\": 22,\n                                                                    \"risk\": \"some text\",\n                                                                    \"selected\": true,\n                                                                    \"answer\": \"some text\"\n                                                                }\n                                                            ]\n                                                        }\n                                                    ]\n                                                },\n                                                {\n                                                    \"order\": 48,\n                                                    \"name\": \"some text\",\n                                                    \"questions\": [\n                                                        {\n                                                            \"name\": \"some text\",\n                                                            \"tooltip\": \"some text\",\n                                                            \"question\": \"some text\",\n                                                            \"comment\": \"some text\",\n                                                            \"answers\": [\n                                                                {\n                                                                    \"order\": 98,\n                                                                    \"risk\": \"some text\",\n                                                                    \"selected\": true,\n                                                                    \"answer\": \"some text\"\n                                                                },\n                                                                {\n                                                                    \"order\": 24,\n                                                                    \"risk\": \"some text\",\n                                                                    \"selected\": true,\n                                                                    \"answer\": \"some text\"\n                                                                }\n                                                            ]\n                                                        },\n                                                        {\n                                                            \"name\": \"some text\",\n                                                            \"tooltip\": \"some text\",\n                                                            \"question\": \"some text\",\n                                                            \"comment\": \"some text\",\n                                                            \"answers\": [\n                                                                {\n                                                                    \"order\": 54,\n                                                                    \"risk\": \"some text\",\n                                                                    \"selected\": true,\n                                                                    \"answer\": \"some text\"\n                                                                },\n                                                                {\n                                                                    \"order\": 92,\n                                                                    \"risk\": \"some text\",\n                                                                    \"selected\": true,\n                                                                    \"answer\": \"some text\"\n                                                                }\n                                                            ]\n                                                        }\n                                                    ]\n                                                }\n                                            ]\n                                        }\n                                    }\n                                }\n                            }\n                        },\n                        \"description\": \"Successful response - returns a single `assessment`.\"\n                    }\n                },\n                \"operationId\": \"getassessment\",\n                \"summary\": \"Get a assessment\",\n                \"description\": \"Gets the details of a single instance of a `assessment`.\"\n            },\n            \"put\": {\n                \"requestBody\": {\n                    \"description\": \"Updated `assessment` information.\",\n                    \"content\": {\n                        \"application/json\": {\n                            \"schema\": {\n                                \"$ref\": \"#/components/schemas/assessment\"\n                            }\n                        }\n                    },\n                    \"required\": true\n                },\n                \"responses\": {\n                    \"202\": {\n                        \"description\": \"Successful response.\"\n                    }\n                },\n                \"operationId\": \"updateassessment\",\n                \"summary\": \"Update a assessment\",\n                \"description\": \"Updates an existing `assessment`.\"\n            },\n            \"delete\": {\n                \"responses\": {\n                    \"204\": {\n                        \"description\": \"Successful response.\"\n                    }\n                },\n                \"operationId\": \"deleteassessment\",\n                \"summary\": \"Delete a assessment\",\n                \"description\": \"Deletes an existing `assessment`.\"\n            },\n            \"parameters\": [\n                {\n                    \"name\": \"assessmentId\",\n                    \"description\": \"A unique identifier for a `assessment`.\",\n                    \"schema\": {\n                        \"type\": \"string\"\n                    },\n                    \"in\": \"path\",\n                    \"required\": true\n                }\n            ]\n        },\n        \"/questionaires/{questionaireId}\": {\n            \"get\": {\n                \"responses\": {\n                    \"200\": {\n                        \"content\": {\n                            \"application/json\": {\n                                \"schema\": {\n                                    \"$ref\": \"#/components/schemas/questionaire\"\n                                },\n                                \"examples\": {\n                                    \"questionaire-1\": {\n                                        \"value\": {\n                                            \"name\": \"some text\",\n                                            \"id\": 25,\n                                            \"language\": \"ES\",\n                                            \"categories\": [\n                                                {\n                                                    \"name\": \"some text\",\n                                                    \"order\": 39,\n                                                    \"questions\": [\n                                                        {\n                                                            \"name\": \"some text\",\n                                                            \"order\": 44,\n                                                            \"question\": \"some text\",\n                                                            \"tooltip\": \"some text\",\n                                                            \"answers\": [\n                                                                {\n                                                                    \"order\": 9,\n                                                                    \"answer\": \"some text\",\n                                                                    \"risk\": \"AMBER\"\n                                                                },\n                                                                {\n                                                                    \"order\": 76,\n                                                                    \"answer\": \"some text\",\n                                                                    \"risk\": \"AMBER\"\n                                                                }\n                                                            ]\n                                                        },\n                                                        {\n                                                            \"name\": \"some text\",\n                                                            \"order\": 5,\n                                                            \"question\": \"some text\",\n                                                            \"tooltip\": \"some text\",\n                                                            \"answers\": [\n                                                                {\n                                                                    \"order\": 30,\n                                                                    \"answer\": \"some text\",\n                                                                    \"risk\": \"RED\"\n                                                                },\n                                                                {\n                                                                    \"order\": 11,\n                                                                    \"answer\": \"some text\",\n                                                                    \"risk\": \"RED\"\n                                                                }\n                                                            ]\n                                                        }\n                                                    ]\n                                                },\n                                                {\n                                                    \"name\": \"some text\",\n                                                    \"order\": 43,\n                                                    \"questions\": [\n                                                        {\n                                                            \"name\": \"some text\",\n                                                            \"order\": 28,\n                                                            \"question\": \"some text\",\n                                                            \"tooltip\": \"some text\",\n                                                            \"answers\": [\n                                                                {\n                                                                    \"order\": 31,\n                                                                    \"answer\": \"some text\",\n                                                                    \"risk\": \"AMBER\"\n                                                                },\n                                                                {\n                                                                    \"order\": 6,\n                                                                    \"answer\": \"some text\",\n                                                                    \"risk\": \"AMBER\"\n                                                                }\n                                                            ]\n                                                        },\n                                                        {\n                                                            \"name\": \"some text\",\n                                                            \"order\": 0,\n                                                            \"question\": \"some text\",\n                                                            \"tooltip\": \"some text\",\n                                                            \"answers\": [\n                                                                {\n                                                                    \"order\": 96,\n                                                                    \"answer\": \"some text\",\n                                                                    \"risk\": \"RED\"\n                                                                },\n                                                                {\n                                                                    \"order\": 81,\n                                                                    \"answer\": \"some text\",\n                                                                    \"risk\": \"GREEN\"\n                                                                }\n                                                            ]\n                                                        }\n                                                    ]\n                                                }\n                                            ]\n                                        }\n                                    }\n                                }\n                            }\n                        },\n                        \"description\": \"Success\"\n                    }\n                }\n            },\n            \"parameters\": [\n                {\n                    \"name\": \"questionaireId\",\n                    \"schema\": {\n                        \"type\": \"integer\"\n                    },\n                    \"in\": \"path\",\n                    \"required\": true\n                }\n            ]\n        },\n        \"/questionaires/{questionaireId}/import\": {\n            \"put\": {\n                \"requestBody\": {\n                    \"content\": {\n                        \"application/json\": {\n                            \"schema\": {\n                                \"$ref\": \"#/components/schemas/questionaire\"\n                            }\n                        }\n                    },\n                    \"required\": true\n                },\n                \"responses\": {\n                    \"200\": {\n                        \"description\": \"success\"\n                    }\n                }\n            },\n            \"parameters\": [\n                {\n                    \"name\": \"questionaireId\",\n                    \"schema\": {\n                        \"type\": \"integer\"\n                    },\n                    \"in\": \"path\",\n                    \"required\": true\n                },\n                {\n                    \"name\": \"oldformat\",\n                    \"description\": \"\",\n                    \"schema\": {\n                        \"type\": \"boolean\"\n                    },\n                    \"in\": \"query\"\n                }\n            ]\n        },\n        \"/questionaires/{questionaireId}/export\": {\n            \"put\": {\n                \"requestBody\": {\n                    \"content\": {\n                        \"application/json\": {\n                            \"schema\": {\n                                \"$ref\": \"#/components/schemas/questionaire\"\n                            }\n                        }\n                    },\n                    \"required\": true\n                },\n                \"responses\": {\n                    \"200\": {\n                        \"description\": \"success\"\n                    }\n                }\n            },\n            \"parameters\": [\n                {\n                    \"name\": \"questionaireId\",\n                    \"schema\": {\n                        \"type\": \"integer\"\n                    },\n                    \"in\": \"path\",\n                    \"required\": true\n                }\n            ]\n        },\n        \"/questionaires\": {\n            \"get\": {\n                \"responses\": {\n                    \"200\": {\n                        \"content\": {\n                            \"application/json\": {\n                                \"schema\": {\n                                    \"type\": \"array\",\n                                    \"items\": {\n                                        \"$ref\": \"#/components/schemas/questionaire-header\"\n                                    }\n                                },\n                                \"examples\": {\n                                    \"questionaire_header_success\": {\n                                        \"value\": [\n                                            {\n                                                \"name\": \"some text\",\n                                                \"description\": \"some text\",\n                                                \"id\": 27\n                                            },\n                                            {\n                                                \"name\": \"some text\",\n                                                \"description\": \"some text\",\n                                                \"id\": 47\n                                            }\n                                        ]\n                                    }\n                                }\n                            }\n                        },\n                        \"description\": \"Success\"\n                    }\n                }\n            }\n        },\n        \"/assessments\": {\n            \"summary\": \"Path used to get the assessment headers\",\n            \"description\": \"The REST endpoint/path used to get a list of instances of an `assessment`.  This path contains `GET`, `POST` operations used to perform the get and insert respectively.\",\n            \"get\": {\n                \"parameters\": [\n                    {\n                        \"name\": \"applications\",\n                        \"description\": \"\",\n                        \"schema\": {\n                            \"type\": \"array\",\n                            \"items\": {\n                                \"type\": \"integer\"\n                            }\n                        },\n                        \"in\": \"query\"\n                    }\n                ],\n                \"responses\": {\n                    \"200\": {\n                        \"content\": {\n                            \"application/json\": {\n                                \"schema\": {\n                                    \"$ref\": \"#/components/schemas/ResponseAssesmentHeader\"\n                                },\n                                \"examples\": {\n                                    \"assessments_get_ok\": {\n                                        \"value\": {\n                                            \"List\": {\n                                                \"TotalRows\": 38,\n                                                \"Pages\": 16,\n                                                \"PageCount\": 81\n                                            },\n                                            \"Data\": [\n                                                {\n                                                    \"id\": 94,\n                                                    \"name\": \"some text\",\n                                                    \"applications\": [\n                                                        19,\n                                                        10\n                                                    ],\n                                                    \"status\": \"COMPLETE\"\n                                                },\n                                                {\n                                                    \"id\": 94,\n                                                    \"name\": \"some text\",\n                                                    \"applications\": [\n                                                        15,\n                                                        3\n                                                    ],\n                                                    \"status\": \"STARTED\"\n                                                }\n                                            ]\n                                        }\n                                    }\n                                }\n                            }\n                        },\n                        \"description\": \"Success\"\n                    },\n                    \"404\": {\n                        \"content\": {\n                            \"application/json\": {\n                                \"schema\": {\n                                    \"type\": \"string\"\n                                },\n                                \"examples\": {\n                                    \"assessments_get_404\": {\n                                        \"value\": \"\\\"Not found\\\"\"\n                                    }\n                                }\n                            }\n                        },\n                        \"description\": \"Not found\"\n                    }\n                },\n                \"description\": \"\"\n            },\n            \"post\": {\n                \"requestBody\": {\n                    \"content\": {\n                        \"application/json\": {\n                            \"schema\": {\n                                \"$ref\": \"#/components/schemas/assessment\"\n                            }\n                        }\n                    },\n                    \"required\": true\n                },\n                \"responses\": {\n                    \"201\": {\n                        \"content\": {\n                            \"application/json\": {\n                                \"schema\": {\n                                    \"type\": \"string\"\n                                },\n                                \"examples\": {\n                                    \"success\": {\n                                        \"value\": \"\\\"some text\\\"\"\n                                    }\n                                }\n                            }\n                        },\n                        \"description\": \"Created\"\n                    },\n                    \"400\": {\n                        \"content\": {\n                            \"application/json\": {\n                                \"schema\": {\n                                    \"type\": \"string\"\n                                },\n                                \"examples\": {\n                                    \"bad request\": {\n                                        \"value\": \"\\\"some text\\\"\"\n                                    }\n                                }\n                            }\n                        },\n                        \"description\": \"Invalid format\"\n                    }\n                }\n            }\n        }\n    },\n    \"components\": {\n        \"schemas\": {\n            \"info\": {\n                \"title\": \"Root Type for info\",\n                \"description\": \"\",\n                \"type\": \"object\",\n                \"properties\": {\n                    \"date\": {\n                        \"format\": \"date-time\",\n                        \"type\": \"string\"\n                    },\n                    \"uptime\": {\n                        \"format\": \"int32\",\n                        \"type\": \"integer\"\n                    }\n                },\n                \"example\": {\n                    \"date\": \"20210217T183510.100\",\n                    \"uptime\": 15600\n                }\n            },\n            \"answer\": {\n                \"title\": \"Root Type for answer\",\n                \"description\": \"\",\n                \"required\": [\n                    \"order\",\n                    \"answer\",\n                    \"risk\"\n                ],\n                \"type\": \"object\",\n                \"properties\": {\n                    \"order\": {\n                        \"description\": \"\",\n                        \"type\": \"integer\"\n                    },\n                    \"answer\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"risk\": {\n                        \"description\": \"\",\n                        \"enum\": [\n                            \"GREEN\",\n                            \"AMBER\",\n                            \"RED\"\n                        ],\n                        \"type\": \"string\"\n                    }\n                }\n            },\n            \"question\": {\n                \"title\": \"Root Type for question\",\n                \"description\": \"\",\n                \"required\": [\n                    \"name\",\n                    \"order\",\n                    \"question\",\n                    \"tooltip\",\n                    \"answers\"\n                ],\n                \"type\": \"object\",\n                \"properties\": {\n                    \"name\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"order\": {\n                        \"description\": \"\",\n                        \"type\": \"integer\"\n                    },\n                    \"question\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"tooltip\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"answers\": {\n                        \"description\": \"\",\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"$ref\": \"#/components/schemas/answer\"\n                        }\n                    }\n                }\n            },\n            \"category\": {\n                \"title\": \"Root Type for category\",\n                \"description\": \"\",\n                \"required\": [\n                    \"name\",\n                    \"order\",\n                    \"questions\"\n                ],\n                \"type\": \"object\",\n                \"properties\": {\n                    \"name\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"order\": {\n                        \"description\": \"\",\n                        \"type\": \"integer\"\n                    },\n                    \"questions\": {\n                        \"description\": \"\",\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"$ref\": \"#/components/schemas/question\"\n                        }\n                    }\n                }\n            },\n            \"questionaire\": {\n                \"title\": \"Root Type for questionaire\",\n                \"description\": \"\",\n                \"required\": [\n                    \"name\",\n                    \"id\",\n                    \"language\",\n                    \"categories\",\n                    \"description\"\n                ],\n                \"type\": \"object\",\n                \"properties\": {\n                    \"name\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"id\": {\n                        \"description\": \"\",\n                        \"type\": \"integer\"\n                    },\n                    \"language\": {\n                        \"description\": \"\",\n                        \"enum\": [\n                            \"ES\",\n                            \"EN\",\n                            \"FR\",\n                            \"IT\"\n                        ],\n                        \"type\": \"string\"\n                    },\n                    \"categories\": {\n                        \"description\": \"\",\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"$ref\": \"#/components/schemas/category\"\n                        }\n                    },\n                    \"description\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    }\n                }\n            },\n            \"assessment\": {\n                \"description\": \"\",\n                \"required\": [\n                    \"date\",\n                    \"user\",\n                    \"status\",\n                    \"categories\"\n                ],\n                \"type\": \"object\",\n                \"properties\": {\n                    \"date\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"user\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"status\": {\n                        \"description\": \"\",\n                        \"enum\": [\n                            \"EMPTY\",\n                            \"STARTED\",\n                            \"COMPLETE\",\n                            \"DISCARDED\"\n                        ],\n                        \"type\": \"string\"\n                    },\n                    \"categories\": {\n                        \"description\": \"\",\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"$ref\": \"#/components/schemas/assess_category\"\n                        }\n                    }\n                }\n            },\n            \"questionaire-header\": {\n                \"description\": \"\",\n                \"required\": [\n                    \"name\",\n                    \"description\",\n                    \"id\"\n                ],\n                \"type\": \"object\",\n                \"properties\": {\n                    \"name\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"description\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"id\": {\n                        \"description\": \"\",\n                        \"type\": \"integer\"\n                    }\n                }\n            },\n            \"assess_question\": {\n                \"description\": \"\",\n                \"required\": [\n                    \"name\",\n                    \"tooltip\",\n                    \"question\",\n                    \"comment\",\n                    \"answers\"\n                ],\n                \"type\": \"object\",\n                \"properties\": {\n                    \"name\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"tooltip\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"question\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"comment\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"answers\": {\n                        \"description\": \"\",\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"$ref\": \"#/components/schemas/assess_answer\"\n                        }\n                    }\n                }\n            },\n            \"assess_category\": {\n                \"description\": \"\",\n                \"required\": [\n                    \"order\",\n                    \"name\",\n                    \"questions\"\n                ],\n                \"type\": \"object\",\n                \"properties\": {\n                    \"order\": {\n                        \"description\": \"\",\n                        \"type\": \"integer\"\n                    },\n                    \"name\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"questions\": {\n                        \"description\": \"\",\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"$ref\": \"#/components/schemas/assess_question\"\n                        }\n                    }\n                }\n            },\n            \"assess_answer\": {\n                \"description\": \"\",\n                \"required\": [\n                    \"order\",\n                    \"risk\",\n                    \"selected\",\n                    \"answer\"\n                ],\n                \"type\": \"object\",\n                \"properties\": {\n                    \"order\": {\n                        \"description\": \"\",\n                        \"type\": \"integer\"\n                    },\n                    \"risk\": {\n                        \"description\": \"\",\n                        \"enum\": [],\n                        \"type\": \"string\"\n                    },\n                    \"selected\": {\n                        \"description\": \"\",\n                        \"type\": \"boolean\"\n                    },\n                    \"answer\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    }\n                }\n            },\n            \"assessment_header\": {\n                \"description\": \"\",\n                \"required\": [\n                    \"id\",\n                    \"name\",\n                    \"applications\",\n                    \"status\"\n                ],\n                \"type\": \"object\",\n                \"properties\": {\n                    \"id\": {\n                        \"description\": \"\",\n                        \"type\": \"integer\"\n                    },\n                    \"name\": {\n                        \"description\": \"\",\n                        \"type\": \"string\"\n                    },\n                    \"applications\": {\n                        \"description\": \"\",\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"type\": \"integer\"\n                        }\n                    },\n                    \"status\": {\n                        \"description\": \"\",\n                        \"enum\": [\n                            \"EMPTY\",\n                            \"STARTED\",\n                            \"COMPLETE\"\n                        ],\n                        \"type\": \"string\"\n                    }\n                }\n            },\n            \"GenericListofElements\": {\n                \"description\": \"\",\n                \"required\": [\n                    \"TotalRows\",\n                    \"Pages\",\n                    \"PageCount\"\n                ],\n                \"type\": \"object\",\n                \"properties\": {\n                    \"TotalRows\": {\n                        \"description\": \"\",\n                        \"type\": \"integer\"\n                    },\n                    \"Pages\": {\n                        \"description\": \"\",\n                        \"type\": \"integer\"\n                    },\n                    \"PageCount\": {\n                        \"description\": \"\",\n                        \"type\": \"integer\"\n                    }\n                }\n            },\n            \"ResponseAssesmentHeader\": {\n                \"description\": \"\",\n                \"required\": [\n                    \"List\",\n                    \"Data\"\n                ],\n                \"type\": \"object\",\n                \"properties\": {\n                    \"List\": {\n                        \"$ref\": \"#/components/schemas/GenericListofElements\",\n                        \"description\": \"\"\n                    },\n                    \"Data\": {\n                        \"description\": \"\",\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"$ref\": \"#/components/schemas/assessment_header\"\n                        }\n                    }\n                },\n                \"example\": {\n                    \"List\": {\n                        \"TotalRows\": 68,\n                        \"Pages\": 15,\n                        \"PageCount\": 27\n                    },\n                    \"Data\": [\n                        {\n                            \"id\": 49,\n                            \"name\": \"some text\",\n                            \"applications\": [\n                                92,\n                                3\n                            ],\n                            \"status\": \"STARTED\"\n                        },\n                        {\n                            \"id\": 0,\n                            \"name\": \"some text\",\n                            \"applications\": [\n                                52,\n                                66\n                            ],\n                            \"status\": \"COMPLETE\"\n                        }\n                    ]\n                }\n            }\n        }\n    }\n}",
+      "type": "OPEN_API_SPEC",
+      "serviceId": "60414511c38c10049a29136d"
+    }
+  ],
+  "requests": [
+    {
+      "name": "default",
+      "content": null,
+      "operationId": "60414511c38c10049a29136d-GET /info",
+      "testCaseId": null,
+      "headers": [{ "name": "Accept", "values": ["application/json"] }],
+      "id": "6041f2a7c38c10049a29137f",
+      "responseId": "6041f2a7c38c10049a29137e",
+      "queryParameters": null
+    },
+    {
+      "name": "info-example",
+      "content": null,
+      "operationId": "60414511c38c10049a29136d-GET /info",
+      "testCaseId": null,
+      "headers": [{ "name": "Accept", "values": ["application/json"] }],
+      "id": "6041f2a7c38c10049a291381",
+      "responseId": "6041f2a7c38c10049a291380",
+      "queryParameters": null
+    },
+    {
+      "name": "questionaire_header_success",
+      "content": null,
+      "operationId": "60414511c38c10049a29136d-GET /questionaires",
+      "testCaseId": null,
+      "headers": [{ "name": "Accept", "values": ["application/json"] }],
+      "id": "6041f2a7c38c10049a291383",
+      "responseId": "6041f2a7c38c10049a291382",
+      "queryParameters": null
+    },
+    {
+      "name": "assessments_get_ok",
+      "content": null,
+      "operationId": "60414511c38c10049a29136d-GET /assessments",
+      "testCaseId": null,
+      "headers": [{ "name": "Accept", "values": ["application/json"] }],
+      "id": "6041f2a7c38c10049a291385",
+      "responseId": "6041f2a7c38c10049a291384",
+      "queryParameters": null
+    },
+    {
+      "name": "assessments_get_404",
+      "content": null,
+      "operationId": "60414511c38c10049a29136d-GET /assessments",
+      "testCaseId": null,
+      "headers": [{ "name": "Accept", "values": ["application/json"] }],
+      "id": "6041f2a7c38c10049a291387",
+      "responseId": "6041f2a7c38c10049a291386",
+      "queryParameters": null
+    },
+    {
+      "name": "success",
+      "content": null,
+      "operationId": "60414511c38c10049a29136d-POST /assessments",
+      "testCaseId": null,
+      "headers": [{ "name": "Accept", "values": ["application/json"] }],
+      "id": "6041f2a7c38c10049a291389",
+      "responseId": "6041f2a7c38c10049a291388",
+      "queryParameters": null
+    },
+    {
+      "name": "bad request",
+      "content": null,
+      "operationId": "60414511c38c10049a29136d-POST /assessments",
+      "testCaseId": null,
+      "headers": [{ "name": "Accept", "values": ["application/json"] }],
+      "id": "6041f2a7c38c10049a29138b",
+      "responseId": "6041f2a7c38c10049a29138a",
+      "queryParameters": null
+    }
+  ],
+  "responses": [
+    {
+      "name": "default",
+      "content": "{\"date\":\"2018-02-10T09:30Z\",\"uptime\":8}",
+      "operationId": "60414511c38c10049a29136d-GET /info",
+      "testCaseId": null,
+      "headers": null,
+      "id": "6041f2a7c38c10049a29137e",
+      "status": "200",
+      "mediaType": "application/json",
+      "dispatchCriteria": null,
+      "fault": false
+    },
+    {
+      "name": "info-example",
+      "content": "{\"date\":\"{{ now(yyyyMMdd-HHmmss) }}\",\"uptime\":\"{{ randomInt(1000, 8000) }}\"}",
+      "operationId": "60414511c38c10049a29136d-GET /info",
+      "testCaseId": null,
+      "headers": null,
+      "id": "6041f2a7c38c10049a291380",
+      "status": "200",
+      "mediaType": "application/json",
+      "dispatchCriteria": null,
+      "fault": false
+    },
+    {
+      "name": "questionaire_header_success",
+      "content": "[{\"name\":\"some text\",\"description\":\"some text\",\"id\":27},{\"name\":\"some text\",\"description\":\"some text\",\"id\":47}]",
+      "operationId": "60414511c38c10049a29136d-GET /questionaires",
+      "testCaseId": null,
+      "headers": null,
+      "id": "6041f2a7c38c10049a291382",
+      "status": "200",
+      "mediaType": "application/json",
+      "dispatchCriteria": null,
+      "fault": false
+    },
+    {
+      "name": "assessments_get_ok",
+      "content": "{\"List\":{\"TotalRows\":38,\"Pages\":16,\"PageCount\":81},\"Data\":[{\"id\":94,\"name\":\"some text\",\"applications\":[19,10],\"status\":\"COMPLETE\"},{\"id\":94,\"name\":\"some text\",\"applications\":[15,3],\"status\":\"STARTED\"}]}",
+      "operationId": "60414511c38c10049a29136d-GET /assessments",
+      "testCaseId": null,
+      "headers": null,
+      "id": "6041f2a7c38c10049a291384",
+      "status": "200",
+      "mediaType": "application/json",
+      "dispatchCriteria": "",
+      "fault": false
+    },
+    {
+      "name": "assessments_get_404",
+      "content": "\"Not found\"",
+      "operationId": "60414511c38c10049a29136d-GET /assessments",
+      "testCaseId": null,
+      "headers": null,
+      "id": "6041f2a7c38c10049a291386",
+      "status": "404",
+      "mediaType": "application/json",
+      "dispatchCriteria": "",
+      "fault": true
+    },
+    {
+      "name": "success",
+      "content": "\"some text\"",
+      "operationId": "60414511c38c10049a29136d-POST /assessments",
+      "testCaseId": null,
+      "headers": null,
+      "id": "6041f2a7c38c10049a291388",
+      "status": "201",
+      "mediaType": "application/json",
+      "dispatchCriteria": null,
+      "fault": false
+    },
+    {
+      "name": "bad request",
+      "content": "\"some text\"",
+      "operationId": "60414511c38c10049a29136d-POST /assessments",
+      "testCaseId": null,
+      "headers": null,
+      "id": "6041f2a7c38c10049a29138a",
+      "status": "400",
+      "mediaType": "application/json",
+      "dispatchCriteria": null,
+      "fault": true
+    }
+  ]
+}
