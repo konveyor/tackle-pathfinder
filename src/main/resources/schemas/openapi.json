@@ -400,7 +400,26 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/questionaire-header"
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/questionaire-header"
+                                    }
+                                },
+                                "examples": {
+                                    "questionaire_header_success": {
+                                        "value": [
+                                            {
+                                                "name": "some text",
+                                                "description": "some text",
+                                                "id": 27
+                                            },
+                                            {
+                                                "name": "some text",
+                                                "description": "some text",
+                                                "id": 47
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         },
@@ -410,8 +429,8 @@
             }
         },
         "/assessments": {
-            "summary": "Path used to manage a single assessment.",
-            "description": "The REST endpoint/path used to get, update, and delete single instances of an `assessment`.  This path contains `GET`, `PUT`, and `DELETE` operations used to perform the get, update, and delete tasks, respectively.",
+            "summary": "Path used to get the assessment headers",
+            "description": "The REST endpoint/path used to get a list of instances of an `assessment`.  This path contains `GET`, `POST` operations used to perform the get and insert respectively.",
             "get": {
                 "parameters": [
                     {
@@ -428,10 +447,48 @@
                 ],
                 "responses": {
                     "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResponseAssesmentHeader"
+                                },
+                                "examples": {
+                                    "assessments_get_ok": {
+                                        "value": {
+                                            "List": {
+                                                "TotalRows": 38,
+                                                "Pages": 16,
+                                                "PageCount": 81
+                                            },
+                                            "Data": [
+                                                {
+                                                    "id": 94,
+                                                    "name": "some text",
+                                                    "applications": [
+                                                        19,
+                                                        10
+                                                    ],
+                                                    "status": "COMPLETE"
+                                                },
+                                                {
+                                                    "id": 94,
+                                                    "name": "some text",
+                                                    "applications": [
+                                                        15,
+                                                        3
+                                                    ],
+                                                    "status": "STARTED"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        },
                         "description": "Success"
                     },
                     "404": {
-                        "description": "Not found"
+                        "$ref": "#/components/responses/404_response"
                     }
                 },
                 "description": ""
@@ -453,12 +510,29 @@
                             "application/json": {
                                 "schema": {
                                     "type": "string"
+                                },
+                                "examples": {
+                                    "success": {
+                                        "value": "\"some text\""
+                                    }
                                 }
                             }
                         },
                         "description": "Created"
                     },
                     "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "examples": {
+                                    "bad request": {
+                                        "value": "\"some text\""
+                                    }
+                                }
+                            }
+                        },
                         "description": "Invalid format"
                     }
                 }
@@ -482,8 +556,8 @@
                     }
                 },
                 "example": {
-                    "date": "20210217T183510.100",
-                    "uptime": 15600
+                    "date": "{{now(dd/MM/yyyy HH:mm:ss)}}",
+                    "uptime": "{{randomInt(5000, 200000)}}"
                 }
             },
             "answer": {
@@ -760,8 +834,7 @@
                     },
                     "risk": {
                         "description": "",
-                        "enum": [
-                        ],
+                        "enum": [],
                         "type": "string"
                     },
                     "selected": {
@@ -809,6 +882,94 @@
                         "type": "string"
                     }
                 }
+            },
+            "GenericListofElements": {
+                "description": "",
+                "required": [
+                    "TotalRows",
+                    "Pages",
+                    "PageCount"
+                ],
+                "type": "object",
+                "properties": {
+                    "TotalRows": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "Pages": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "PageCount": {
+                        "description": "",
+                        "type": "integer"
+                    }
+                }
+            },
+            "ResponseAssesmentHeader": {
+                "description": "",
+                "required": [
+                    "List",
+                    "Data"
+                ],
+                "type": "object",
+                "properties": {
+                    "List": {
+                        "$ref": "#/components/schemas/GenericListofElements",
+                        "description": ""
+                    },
+                    "Data": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/assessment_header"
+                        }
+                    }
+                },
+                "example": {
+                    "List": {
+                        "TotalRows": 68,
+                        "Pages": 15,
+                        "PageCount": 27
+                    },
+                    "Data": [
+                        {
+                            "id": 49,
+                            "name": "some text",
+                            "applications": [
+                                92,
+                                3
+                            ],
+                            "status": "STARTED"
+                        },
+                        {
+                            "id": 0,
+                            "name": "some text",
+                            "applications": [
+                                52,
+                                66
+                            ],
+                            "status": "COMPLETE"
+                        }
+                    ]
+                }
+            }
+        },
+        "responses": {
+            "404_response": {
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "string"
+                        },
+                        "examples": {
+                            "404_response": {
+                                "value": "\"Not found\""
+                            }
+                        }
+                    }
+                },
+                "description": ""
             }
         }
     }

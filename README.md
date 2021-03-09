@@ -8,19 +8,66 @@ Pathfinder is an extensible, questionnaire based assessment tool for assessing t
 
 * use Apicurio to design de API first
 * if the default docker-compose installation doesn't work ( for mysql issues) try full postgre approach ( <https://github.com/carlesarnal/apicurio-studio/tree/expand-docker-compose-db-choice-keycloak> )
-* use Microcks to mock the API to test it and decouple Frontend from Backend
+* use [Microcks](https://microcks.io/blog/why-microcks/) to mock the API to test it and decouple Frontend from Backend
 
-### Installation
+---
+
+### **Installation**
+
+#### **1. Minikube - Microcks**
+
+1. install [Helm](https://helm.sh/docs/intro/install/)
+2. install [Microcks](https://github.com/microcks/microcks/tree/master/install/kubernetes)
+
+```shell
+minikube start --kubernetes-version=v1.20.2 --cpus 4 --memory 8192
+
+minikube addons enable ingress
+
+helm repo add microcks https://microcks.io/helm
+
+kubectl create namespace microcks
+
+helm install microcks microcks/microcks --version 1.2.0 --namespace microcks --set microcks.url=microcks.$(minikube ip).nip.io --set keycloak.url=keycloak.$(minikube ip).nip.io
+
+```
+
+Check URL of microcks on the output : `Microcks is available at https://microcks.192.168.49.2.nip.io.` (that IP will change with yours)
+
+Use `admin` or `user` as user and `microcks123` as password
+
+#### **2. Local container - Microcks**
+
+1. run microcks [dockercompose](https://microcks.io/documentation/getting-started/)
+
+```shell
+git clone https://github.com/microcks/microcks.git
+
+cd microcks/install/docker-compose
+
+docker-compose up -d
+```
+
+#### **3. Local container - Apicurito**
+
+1. run apicurito
+
+```shell
+podman run -p 9080:8080 apicurio/apicurito-ui
+```
+
+#### **4. Openshift**
 
 1. in your cluster install microcks & apicurio operators
-2. go to secrets , my-microcksinstall-keycloak-admin, copy username and password
-3. go to keycloak route login using those credentials
-4. got to view all suers and set the password for admin
-5. go to microcks route and log with those credentials
+1. go to secrets , my-microcksinstall-keycloak-admin, copy username and password
+1. go to keycloak route login using those credentials
+1. got to view all suers and set the password for admin
+1. go to microcks route and log with those credentials
 
+---
 ### API Design
 
-1. go to apicurio route
+1. go to apicurio URL
 2. Open API , load the openapi.json file
 3. Create/Edit the data types used by the operations
 4. For each operation and verb generate the different Responses
@@ -31,13 +78,14 @@ Pathfinder is an extensible, questionnaire based assessment tool for assessing t
 
 ### API Mocking
 
-1. go to  microcks route
+1. go to  microcks URL
 2. go to "Importers" menu
 3. click "upload" the file openapi.json
 4. microcks will store all the dispatchers configured and apply them as long as we don't change the name and version of the API
 5. to export microcks configuration go to "Administration" menu, then "Snapshots" and then "Export"
 6. to import microcks configuration go to "Administration" menu, then "Snapshots" and then "Import Snapshot....Browse"
 7. these import/export actions should be done everytime your microcks installation is recreated
+8. every 
 
 ### API Testing
 
@@ -73,3 +121,20 @@ Pathfinder is an extensible, questionnaire based assessment tool for assessing t
 | Assess Application | Copy Assessment |
 | :------------------: | :---------------: |
 ![Sequence Diagram](doc/diagrams/out/Assess%20Sequence.png) | ![Sequence Diagram](doc/diagrams/out/Copy.png) |
+
+## PERSISTENCE
+
+### PostgreSQL
+
+Start PostreSQL container with [Podman](https://podman.io/) executing:
+
+```Shell
+$ podman run -it \
+            --name postgres-pathfinder -e POSTGRES_USER=pathfinder \
+            -e POSTGRES_PASSWORD=pathfinder -e POSTGRES_DB=pathfinder_db \
+            -p 5432:5432 postgres:10.6
+```
+
+It works the same with Docker just replacing `podman` with `docker` in the above command.
+
+

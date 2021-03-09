@@ -16,9 +16,10 @@ package Assessment {
     entity assessment {
         date : timestamp
         user : long
-        status : [EMPTY, STARTED, COMPLETE]
+        status : [EMPTY, STARTED, COMPLETE, DISCARDED]
         application_id : long
         application_name : string
+        notes: string
     }
     entity assess_questionaire {
         name : string
@@ -30,6 +31,7 @@ package Assessment {
     }
     entity assess_question {
         order : integer
+        type: [SINGLE]
         name : string
         tooltip : string
         question : string
@@ -73,6 +75,7 @@ package Questionaire {
     }
     entity question {
         order : integer
+        type: [SINGLE]
         name : string
         question : string
         tooltip : string
