@@ -16,19 +16,19 @@ import java.util.Objects;
 
 @MappedSuperclass
 public abstract class AbstractEntity extends PanacheEntity {
-    //    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSSSSSx")
     @JsonIgnore
     @CreationTimestamp
     @Column(updatable=false)
     public Instant createTime;
-    //    @JsonIgnore
+    
     public String createUser;
-    //    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSSSSSx")
+    
     @JsonIgnore
     @UpdateTimestamp
     public Instant updateTime;
-    //    @JsonIgnore
+    
     public String updateUser;
+    
     @JsonIgnore
     public Boolean deleted = false;
 

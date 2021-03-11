@@ -136,5 +136,3 @@ $ podman run -it \
 ```
 
 It works the same with Docker just replacing `podman` with `docker` in the above command.
-
-

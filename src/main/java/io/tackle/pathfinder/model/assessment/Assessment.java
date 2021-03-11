@@ -5,10 +5,9 @@ import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
+import javax.persistence.Basic;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-
-import java.util.List;
 
 @Entity
 @Table(name = "assessment")
@@ -16,9 +15,9 @@ import java.util.List;
 @Where(clause = "deleted = false")
 public class Assessment extends AbstractEntity {
     String status;
+
+    @Basic(optional = false)
     Long applicationId;
-    String applicationName;
+
     String notes;
-    AssessQuestionaire assessQuestionaire;
-    List<AssessStakeholder> assessStakeholders;
 }
