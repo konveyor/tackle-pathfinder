@@ -6,6 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +25,11 @@ import java.util.Map;
     "applicationId",
     "status"
 })
-public class AssessmentHeader {
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class AssessmentHeaderDto {
 
     /**
      * 
@@ -46,7 +54,7 @@ public class AssessmentHeader {
      */
     @JsonProperty("applicationId")
     @JsonPropertyDescription("")
-    private Integer application;
+    private Long applicationId;
     /**
      * 
      * (Required)
@@ -54,87 +62,9 @@ public class AssessmentHeader {
      */
     @JsonProperty("status")
     @JsonPropertyDescription("")
-    private AssessmentHeader.Status status;
+    private AssessmentHeaderDto.Status status;
 
-    /**
-     * 
-     * (Required)
-     * 
-     */
-    @JsonProperty("id")
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * 
-     * (Required)
-     * 
-     */
-    @JsonProperty("id")
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * 
-     * (Required)
-     * 
-     */
-    @JsonProperty("name")
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * 
-     * (Required)
-     * 
-     */
-    @JsonProperty("name")
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * 
-     * (Required)
-     * 
-     */
-    @JsonProperty("application")
-    public Integer getApplication() {
-        return application;
-    }
-
-    /**
-     * 
-     * (Required)
-     * 
-     */
-    @JsonProperty("application")
-    public void setApplication(Integer application) {
-        this.application = application;
-    }
-
-    /**
-     * 
-     * (Required)
-     * 
-     */
-    @JsonProperty("status")
-    public AssessmentHeader.Status getStatus() {
-        return status;
-    }
-
-    /**
-     * 
-     * (Required)
-     * 
-     */
-    @JsonProperty("status")
-    public void setStatus(AssessmentHeader.Status status) {
-        this.status = status;
-    }
+    
 
     public enum Status {
 
@@ -142,10 +72,10 @@ public class AssessmentHeader {
         STARTED("STARTED"),
         COMPLETE("COMPLETE");
         private final String value;
-        private final static Map<String, AssessmentHeader.Status> CONSTANTS = new HashMap<String, AssessmentHeader.Status>();
+        private final static Map<String, AssessmentHeaderDto.Status> CONSTANTS = new HashMap<String, AssessmentHeaderDto.Status>();
 
         static {
-            for (AssessmentHeader.Status c: values()) {
+            for (AssessmentHeaderDto.Status c: values()) {
                 CONSTANTS.put(c.value, c);
             }
         }
@@ -165,8 +95,8 @@ public class AssessmentHeader {
         }
 
         @JsonCreator
-        public static AssessmentHeader.Status fromValue(String value) {
-            AssessmentHeader.Status constant = CONSTANTS.get(value);
+        public static AssessmentHeaderDto.Status fromValue(String value) {
+            AssessmentHeaderDto.Status constant = CONSTANTS.get(value);
             if (constant == null) {
                 throw new IllegalArgumentException(value);
             } else {

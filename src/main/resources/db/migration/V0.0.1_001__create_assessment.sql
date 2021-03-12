@@ -36,9 +36,7 @@ CREATE TEMPORARY TABLE audited_table_template (
 CREATE TABLE assessment (
     LIKE audited_table_template INCLUDING ALL,
 
-    assess_status status_enum NULL,
+    status status_enum NULL,
     application_id id_type,
-    language language_type,
-    application_id id_type,
-    questionaire_id id_type
+    notes big_text_type NULL
 );

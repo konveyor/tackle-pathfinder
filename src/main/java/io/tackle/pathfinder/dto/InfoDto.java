@@ -23,8 +23,7 @@ import java.time.Instant;
 })
 @Builder
 @Data
-public class Info {
-
+public class InfoDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
     @JsonProperty("date")
     private Instant date;

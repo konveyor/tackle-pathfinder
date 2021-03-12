@@ -1,7 +1,7 @@
 package io.tackle.pathfinder.controllers;
 
 
-import io.tackle.pathfinder.dto.Info;
+import io.tackle.pathfinder.dto.InfoDto;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -17,5 +17,5 @@ public interface InfoResource {
    */
   @GET
   @Produces("application/json")
-  Info getinfo();
+  InfoDto getinfo();
 }
