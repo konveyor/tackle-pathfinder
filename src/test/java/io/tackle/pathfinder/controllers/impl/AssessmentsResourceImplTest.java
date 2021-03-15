@@ -4,10 +4,12 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
+import io.tackle.pathfinder.dto.AssessmentHeaderDto;
+import io.tackle.pathfinder.dto.AssessmentStatus;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.is;
+import static org.assertj.core.api.Assertions.assertThat; // main one
 
 @QuarkusTest
 @QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
@@ -21,20 +23,26 @@ public class AssessmentsResourceImplTest {
 
 	@Test
 	public void testGetApplicationAssessments() {
-		given()
-		.when().get("/applications/20/assessments")
+
+		AssessmentHeaderDto[] assessments = given().queryParam("applicationId", "20").when().get("/assessments")
 		.then()
 		   .statusCode(200)
-		   .body("id", is(1),
-		         "applicationId", is(20),
-				 "status", is("STARTED"));
-  	}	
-	  
+				.extract().as(AssessmentHeaderDto[].class);
+
+		assertThat(assessments)
+			.hasSize(1)
+			.usingRecursiveComparison()
+				.ignoringFields("id")
+				.isEqualTo(AssessmentHeaderDto.builder().applicationId(20L).notes("").status(AssessmentStatus.STARTED).build());
+  	}
+
 	@Test
 	public void testGetApplicationAssessmentsNotFound() {
-		given()
-		.when().get("/applications/30/assessments")
+		Object[] elements = given().queryParam("applicationId", "30").when().get("/assessments")
 		.then()
-		   .statusCode(404);
+			.statusCode(200)
+			.extract()
+			.as(Object[].class);
+		assertThat(elements).isEmpty();
   	}
 }

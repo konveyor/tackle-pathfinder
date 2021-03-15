@@ -1,18 +1,13 @@
 package io.tackle.pathfinder.dto;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
@@ -38,7 +33,7 @@ public class AssessmentHeaderDto {
      */
     @JsonProperty("id")
     @JsonPropertyDescription("")
-    private Integer id;
+    private Long id;
     /**
      * 
      * (Required)

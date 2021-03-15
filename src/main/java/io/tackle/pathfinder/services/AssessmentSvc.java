@@ -1,6 +1,7 @@
 package io.tackle.pathfinder.services;
 
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
+import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.assessment.Assessment;
 
@@ -18,6 +19,15 @@ public class AssessmentSvc {
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
         return assessmentQuery.stream().findFirst().map(e -> mapper.assessmentToAssessmentHeaderDto(e));
+    }
+
+    public AssessmentHeaderDto createAssessment(Long applicationId) {
+        Assessment assessment = new Assessment();
+        assessment.applicationId = applicationId;
+        assessment.status = AssessmentStatus.STARTED;
+        assessment.persist();
+
+        return mapper.assessmentToAssessmentHeaderDto(assessment);
     }
 
 }
