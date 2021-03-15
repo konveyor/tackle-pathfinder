@@ -62,48 +62,9 @@ public class AssessmentHeaderDto {
      */
     @JsonProperty("status")
     @JsonPropertyDescription("")
-    private AssessmentHeaderDto.Status status;
+    private AssessmentStatus status;
 
-    
-
-    public enum Status {
-
-        EMPTY("EMPTY"),
-        STARTED("STARTED"),
-        COMPLETE("COMPLETE");
-        private final String value;
-        private final static Map<String, AssessmentHeaderDto.Status> CONSTANTS = new HashMap<String, AssessmentHeaderDto.Status>();
-
-        static {
-            for (AssessmentHeaderDto.Status c: values()) {
-                CONSTANTS.put(c.value, c);
-            }
-        }
-
-        private Status(String value) {
-            this.value = value;
-        }
-
-        @Override
-        public String toString() {
-            return this.value;
-        }
-
-        @JsonValue
-        public String value() {
-            return this.value;
-        }
-
-        @JsonCreator
-        public static AssessmentHeaderDto.Status fromValue(String value) {
-            AssessmentHeaderDto.Status constant = CONSTANTS.get(value);
-            if (constant == null) {
-                throw new IllegalArgumentException(value);
-            } else {
-                return constant;
-            }
-        }
-
-    }
-
+    @JsonProperty("notes")
+    @JsonPropertyDescription("")
+    private String notes;
 }

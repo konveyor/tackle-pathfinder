@@ -27,7 +27,7 @@ CREATE TEMPORARY TABLE audited_table_template (
     createUser user_type NOT NULL,
     createTime timestamp NOT NULL,
     owner_id id_type NOT NULL,
-    deleted boolean,
+    deleted boolean DEFAULT false,
     updateTime TIMESTAMP,
     updateUser user_type
 );

@@ -8,16 +8,16 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import java.util.List;
+import java.util.Optional;
 
 @ApplicationScoped
 public class AssessmentSvc {
     @Inject
     AssessmentMapper mapper;
 
-    public AssessmentHeaderDto gAssessmentHeaderDtoByApplicationId(Long applicationId) {
+    public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
-        System.out.println("xxxxxxxxxxxx" + assessmentQuery);
-        return mapper.assessmentToAssessmentHeaderDto(assessmentQuery.get(0));
+        return assessmentQuery.stream().findFirst().map(e -> mapper.assessmentToAssessmentHeaderDto(e));
     }
 
 }

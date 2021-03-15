@@ -1,4 +1,4 @@
-package io.tackle.pathfinder.beans;
+package io.tackle.pathfinder;
 
 import javax.enterprise.inject.Produces;
 import javax.inject.Named;

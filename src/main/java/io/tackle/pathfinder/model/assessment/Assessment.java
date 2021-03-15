@@ -1,7 +1,8 @@
 package io.tackle.pathfinder.model.assessment;
 
-import io.tackle.pathfinder.dto.AssessmentDto;
+import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.model.AbstractEntity;
+import lombok.ToString;
 import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -17,13 +18,14 @@ import javax.persistence.Table;
 @Table(name = "assessment")
 @SQLDelete(sql = "UPDATE assessment SET deleted = true WHERE id = ?", check = ResultCheckStyle.COUNT)
 @Where(clause = "deleted = false")
+@ToString
 public class Assessment extends AbstractEntity {
     @Enumerated(value = EnumType.STRING)
-    AssessmentDto.Status status;
+    public AssessmentStatus status;
 
     @Basic(optional = false)
     @Column(name="application_id")
-    Long applicationId;
+    public Long applicationId;
 
-    String notes;
+    public String notes;
 }

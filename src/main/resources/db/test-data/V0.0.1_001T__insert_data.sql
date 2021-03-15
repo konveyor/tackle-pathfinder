@@ -1,1 +1,0 @@
-INSERT INTO assessment (id, name, status, application_id, notes) values (nextval('hibernate_sequence'), 'test name', 'CREATED', 20, 'This is a simple note\nAnd a new line.');

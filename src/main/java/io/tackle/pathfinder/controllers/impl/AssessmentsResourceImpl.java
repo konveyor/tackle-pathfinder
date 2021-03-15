@@ -5,6 +5,7 @@ import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
 
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PathParam;
 
 public class AssessmentsResourceImpl implements AssessmentsResource {
@@ -13,6 +14,6 @@ public class AssessmentsResourceImpl implements AssessmentsResource {
 
   @Override
   public AssessmentHeaderDto getApplicationAssessments(@PathParam("applicationId") Long applicationId) {
-    return service.gAssessmentHeaderDtoByApplicationId(applicationId);
+    return service.getAssessmentHeaderDtoByApplicationId(applicationId).orElseThrow(NotFoundException::new);
   }
 }

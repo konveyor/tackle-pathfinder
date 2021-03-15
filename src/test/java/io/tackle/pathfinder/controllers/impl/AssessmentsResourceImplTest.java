@@ -4,7 +4,6 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
@@ -26,6 +25,16 @@ public class AssessmentsResourceImplTest {
 		.when().get("/applications/20/assessments")
 		.then()
 		   .statusCode(200)
-		   .body(is(AssessmentHeaderDto.builder().applicationId(20L).id(1000).name("Test").build()));
+		   .body("id", is(1),
+		         "applicationId", is(20),
+				 "status", is("STARTED"));
+  	}	
+	  
+	@Test
+	public void testGetApplicationAssessmentsNotFound() {
+		given()
+		.when().get("/applications/30/assessments")
+		.then()
+		   .statusCode(404);
   	}
 }
