@@ -45,6 +45,8 @@ public abstract class AbstractEntity extends PanacheEntity {
     }
 
     private String getUsername() {
+        return "mock"; 
+        /*
         // based on the Quarkus issue
         // https://github.com/quarkusio/quarkus/issues/6948#issuecomment-619872942
         SecurityIdentity context = CDI.current().select(SecurityIdentity.class).get();
@@ -57,6 +59,7 @@ public abstract class AbstractEntity extends PanacheEntity {
         // since all service are authenticated, it should never get here
         // so maybe worth evaluating to throw an exception? food for thoughts
         return "";
+        */
     }
 
 }
