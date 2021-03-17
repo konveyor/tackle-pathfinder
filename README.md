@@ -122,17 +122,67 @@ podman run -p 9080:8080 apicurio/apicurito-ui
 | :------------------: | :---------------: |
 ![Sequence Diagram](doc/diagrams/out/Assess%20Sequence.png) | ![Sequence Diagram](doc/diagrams/out/Copy.png) |
 
-## PERSISTENCE
+## Local test
+
+Run a Postgres container, a Keycloak one ( if you are running this application alone and not with the rest of Tackle modules ) and execute the application in dev mode.
 
 ### PostgreSQL
 
-Start PostreSQL container with [Podman](https://podman.io/) executing:
+Start PostreSQL container with [Podman](https://podman.io/) executing this.
 
 ```Shell
-$ podman run -it \
+podman run -it \
             --name postgres-pathfinder -e POSTGRES_USER=pathfinder \
             -e POSTGRES_PASSWORD=pathfinder -e POSTGRES_DB=pathfinder_db \
-            -p 5432:5432 postgres:10.6
+            -p 5433:5432 postgres:10.6
+```
+
+*NOTE* setting the port to 5433 to not interfere with other services PostgresSQL
+
+### Keycloak
+
+```Shell
+podman run -it --name keycloak --rm \
+            -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin -e KEYCLOAK_IMPORT=/tmp/keycloak/quarkus-realm.json \
+            -e DB_VENDOR=h2 -p 8180:8080 -p 8543:8443 -v ./src/main/resources/keycloak:/tmp/keycloak:Z \
+            jboss/keycloak:12.0.2
 ```
 
 It works the same with Docker just replacing `podman` with `docker` in the above command.
+
+### Application
+
+```Shell
+./mvnw quarkus:dev
+```
+
+### Call endpoints in dev mode
+
+To do calls to application's endpoint while running it in dev mode, execute the following commands:
+
+Configure security
+
+```Shell
+export access_token=$(\
+    curl -X POST http://localhost:8180/auth/realms/quarkus/protocol/openid-connect/token \
+    --user backend-service:secret \
+    -H 'content-type: application/x-www-form-urlencoded' \
+    -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token' \
+ )
+```
+
+Get list of assessments
+
+```Shell
+curl -X GET 'http://localhost:8080/pathfinder/assessments?applicationId=20' \
+  -H 'Accept: application/json' -H "Authorization: Bearer "$access_token -v -s | jq
+```
+
+Create an assessment
+
+```Shell
+curl 'http://localhost:8080/pathfinder/assessments' \
+  -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer "$access_token \
+  -d "{ \"applicationId\": 20 }" \
+  -v -s | jq
+```
