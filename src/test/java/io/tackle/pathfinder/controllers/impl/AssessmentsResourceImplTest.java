@@ -4,15 +4,22 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
+import io.tackle.commons.testcontainers.KeycloakTestResource;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
+import io.tackle.commons.tests.SecuredResourceTest;
 import io.tackle.pathfinder.dto.ApplicationDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.model.assessment.Assessment;
+import io.tackle.pathfinder.services.AssessmentSvc;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import javax.inject.Inject;
+import javax.transaction.Transactional;
+
 import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat; // main one
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
@@ -24,10 +31,27 @@ import static org.hamcrest.Matchers.greaterThan;
                 @ResourceArg(name = PostgreSQLDatabaseTestResource.PASSWORD, value = "pathfinder")
         }
 )
-public class AssessmentsResourceImplTest {
+@QuarkusTestResource(value = KeycloakTestResource.class,
+        initArgs = {
+                @ResourceArg(name = KeycloakTestResource.IMPORT_REALM_JSON_PATH, value = "keycloak/quarkus-realm.json"),
+                @ResourceArg(name = KeycloakTestResource.REALM_NAME, value = "quarkus")
+        }
+)
+public class AssessmentsResourceImplTest extends SecuredResourceTest {
+	@Inject
+	AssessmentSvc assessmentSvc;
+
+	@BeforeEach
+	@Transactional
+	public void init() {
+		System.out.println("Count : " + Assessment.count());
+		System.out.println("DeleteAll : " + Assessment.deleteAll());
+		System.out.println("Count : " + Assessment.count());
+	}
 
     @Test
-	public void testGetApplicationAssessments() {
+	public void given_ApplicationWithAssessment_When_Get_Then_ReturnsHeaderDto() {
+		assessmentSvc.createAssessment(20L);
 
 		AssessmentHeaderDto[] assessments = given()
 			.queryParam("applicationId", "20")
@@ -45,7 +69,7 @@ public class AssessmentsResourceImplTest {
   	}
 
 	@Test
-	public void testGetApplicationAssessmentsNotFound() {
+	public void given_ApplicationWithoutAssessment_When_Get_Then_ReturnEmptyAnd200() {
 		Object[] elements = given()
 			.queryParam("applicationId", "30")
 		.when()
@@ -66,23 +90,24 @@ public class AssessmentsResourceImplTest {
 		.when()
 			.post("/assessments")
 		.then()
+			.log().all()
 			.statusCode(201)
 			.body("id", greaterThan(0),
-			      "applicationId", equalTo("20"),
+			      "applicationId", equalTo(20),
 				  "status", equalTo("STARTED"));
 	}
 
 	@Test
-	public void given_ApplicationWithAssessment_When_CreateAssessment_Then_Returns402() {
-		Assessment assessment = new Assessment();
-        assessment.applicationId = 20L;
-        assessment.status = AssessmentStatus.STARTED;
+	public void given_ApplicationWithAssessment_When_CreateAssessment_Then_Returns400() {
+		assessmentSvc.createAssessment(20L);
 
 		given()
+		    .contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
 			.body(new ApplicationDto(20L))
 		.when()
 			.post("/assessments")
 		.then()
-			.statusCode(402);
+			.statusCode(400);
 	}
 }

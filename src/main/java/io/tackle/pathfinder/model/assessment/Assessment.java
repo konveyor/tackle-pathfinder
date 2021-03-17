@@ -1,7 +1,7 @@
 package io.tackle.pathfinder.model.assessment;
 
+import io.tackle.commons.entities.AbstractEntity;
 import io.tackle.pathfinder.dto.AssessmentStatus;
-import io.tackle.pathfinder.model.AbstractEntity;
 import lombok.ToString;
 import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
