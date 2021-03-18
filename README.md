@@ -56,7 +56,11 @@ docker-compose up -d
 podman run -p 9080:8080 apicurio/apicurito-ui
 ```
 
-#### **4. Openshift**
+#### **4. SaSS version - Apicurio**
+
+1. go to `https://studio.apicur.io/`
+
+#### **5. Openshift**
 
 1. in your cluster install microcks & apicurio operators
 1. go to secrets , my-microcksinstall-keycloak-admin, copy username and password
@@ -65,6 +69,7 @@ podman run -p 9080:8080 apicurio/apicurito-ui
 1. go to microcks route and log with those credentials
 
 ---
+
 ### API Design
 
 1. go to apicurio URL
@@ -85,7 +90,6 @@ podman run -p 9080:8080 apicurio/apicurito-ui
 5. to export microcks configuration go to "Administration" menu, then "Snapshots" and then "Export"
 6. to import microcks configuration go to "Administration" menu, then "Snapshots" and then "Import Snapshot....Browse"
 7. these import/export actions should be done everytime your microcks installation is recreated
-8. every 
 
 ### API Testing
 
@@ -156,6 +160,8 @@ It works the same with Docker just replacing `podman` with `docker` in the above
 ./mvnw quarkus:dev
 ```
 
+This will make Pathfinder to run on port 8085
+
 ### Call endpoints in dev mode
 
 To do calls to application's endpoint while running it in dev mode, execute the following commands:
@@ -174,14 +180,14 @@ export access_token=$(\
 Get list of assessments
 
 ```Shell
-curl -X GET 'http://localhost:8080/pathfinder/assessments?applicationId=20' \
+curl -X GET 'http://localhost:8085/pathfinder/assessments?applicationId=20' \
   -H 'Accept: application/json' -H "Authorization: Bearer "$access_token -v -s | jq
 ```
 
 Create an assessment
 
 ```Shell
-curl 'http://localhost:8080/pathfinder/assessments' \
+curl 'http://localhost:8085/pathfinder/assessments' \
   -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer "$access_token \
   -d "{ \"applicationId\": 20 }" \
   -v -s | jq
