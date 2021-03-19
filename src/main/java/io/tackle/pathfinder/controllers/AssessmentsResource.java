@@ -3,6 +3,7 @@ package io.tackle.pathfinder.controllers;
 import io.tackle.pathfinder.dto.ApplicationDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -23,10 +24,10 @@ public interface AssessmentsResource {
    */
   @GET
   @Produces("application/json")
-  public List<AssessmentHeaderDto> getApplicationAssessments(@QueryParam("applicationId") Long applicationId);
+  public List<AssessmentHeaderDto> getApplicationAssessments(@NotNull @QueryParam("applicationId") Long applicationId);
 
   @POST
   @Produces("application/json")
   @Consumes("application/json")
-  Response createAssessment(ApplicationDto data);
+  Response createAssessment(@NotNull ApplicationDto data);
 }

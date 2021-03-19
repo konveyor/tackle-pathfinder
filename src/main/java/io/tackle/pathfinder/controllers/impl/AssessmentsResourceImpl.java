@@ -6,6 +6,7 @@ import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
 
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -19,12 +20,12 @@ public class AssessmentsResourceImpl implements AssessmentsResource {
   AssessmentSvc service;
 
   @Override
-  public List<AssessmentHeaderDto> getApplicationAssessments(@QueryParam("applicationId") Long applicationId) {
+  public List<AssessmentHeaderDto> getApplicationAssessments(@NotNull @QueryParam("applicationId") Long applicationId) {
     return service.getAssessmentHeaderDtoByApplicationId(applicationId).stream().collect(Collectors.toList());
   }
 
   @Override
-  public Response createAssessment(ApplicationDto data) {
+  public Response createAssessment(@NotNull ApplicationDto data) {
     return Response
       .status(Status.CREATED)
       .entity(service.createAssessment(data.getApplicationId()))
