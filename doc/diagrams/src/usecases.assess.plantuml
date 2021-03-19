@@ -1,0 +1,58 @@
+@startuml "Use Cases"
+left to right direction
+actor User
+package Select {
+    usecase "List Apps with Assessment status" as list
+    usecase "Select 1 App" as selectapp
+}
+package Copy {
+    usecase "Select FROM app" as selectfrom
+    usecase "Select TO app" as selectto
+    usecase "Copy Assessment" as copyfromto
+}
+package Assess {
+    usecase "Select Stakeholders" as selectstake
+    usecase "Answer Questions" as answer
+}
+package Answer {
+    usecase "Navigate Questions Categories" as navigate
+    usecase "Save as Draft" as save
+    usecase "Select option as answer" as select
+    usecase "Add comment" as comment
+    usecase "See question explanation" as explana
+}
+package Review {
+    usecase "Select completed Assessment" as selectassessment
+    usecase review as "Set action, effort,
+    criticallity, priority, comments"
+    usecase "see assessment summary" as summary
+}
+package Report {
+    usecase "List Reports" as listreports
+    usecase "Create Report" as createreport
+}
+
+
+
+User --> list
+list --> selectapp
+
+selectapp --> selectfrom
+selectto --> copyfromto
+selectfrom ..> selectto
+
+selectapp --> selectstake
+selectstake ..> answer
+answer ..> navigate : include
+answer ..> save : include
+answer ..> select : include
+answer ..> comment : include
+answer ..> explana : include
+
+selectapp --> selectassessment
+selectassessment --> review
+review --> summary
+
+selectapp --> listreports
+selectapp --> createreport
+@enduml

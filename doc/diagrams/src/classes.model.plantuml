@@ -1,0 +1,117 @@
+@startuml "Model"
+
+package ExternalEntities {
+    entity stakeholder {
+        id : long
+        name : string
+    }
+    entity application {
+        id : long
+        name : string
+    }
+}
+
+package Assessment {
+
+    entity assessment {
+        id : long
+        date : timestamp
+        user : long
+        status : [EMPTY, STARTED, COMPLETE, DISCARDED]
+        application_id : long
+        notes: string
+    }
+    entity assess_questionaire {
+        id : long
+        name : string
+        language : [ES,FR,EN,IT]
+    }
+    entity assess_category {
+        id : long
+        order : integer
+        name : string
+    }
+    entity assess_question {
+        id : long
+        order : integer
+        type: [SINGLE]
+        name : string
+        tooltip : string
+        question : string
+        comment : string
+    }
+
+    entity assess_single_option {
+        id : long
+        order : integer
+        risk : [RED,AMBER,GREEN]
+        option : string
+        selected : boolean
+    }
+
+    entity assess_stake {
+        stakeholder_id : long
+    }
+
+    assess_questionaire ||--o{ assess_category
+    assess_category ||--o{ assess_question
+    assess_question ||--o{ assess_single_option
+    assessment ||--o| assess_questionaire
+
+}
+package Review {
+    entity review {
+        action : string
+        effort : string
+        criticality : string
+        priority : string
+    }
+}
+
+package Questionaire {
+    entity questionaire {
+        id : long
+        language : [ES,FR,EN,IT]
+        name : string
+    }
+    entity category {
+        id : long
+        order : integer
+        name : string
+    }
+    entity question {
+        id : long
+        order : integer
+        type: [SINGLE]
+        name : string
+        question : string
+        tooltip : string
+    }
+    entity single_option {
+        id : long
+        order : integer
+        risk : [RED,AMBER,GREEN]
+        answer : string
+    }
+    questionaire ||--o{ category
+    category ||--o{ question
+    question ||--o{ single_option
+}
+
+package Translation {
+    entity text {
+        translation_group : integer
+        language : [ES,FR, EN, IT]
+        text : string
+    }
+}
+
+assessment ||--o{ assess_stake
+assessment ||--o| review
+
+application ||..o{ assessment
+stakeholder ||..o{ assess_stake
+
+questionaire ||..o{ assess_questionaire
+
+@enduml
