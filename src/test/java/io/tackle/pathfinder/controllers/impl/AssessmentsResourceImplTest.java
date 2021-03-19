@@ -110,4 +110,27 @@ public class AssessmentsResourceImplTest extends SecuredResourceTest {
 		.then()
 			.statusCode(400);
 	}
+
+	@Test
+	public void given_NullApplication_When_GetAssessments_Then_Returns400() {
+		given()
+		    .contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.post("/assessments")
+		.then()
+			.statusCode(400);
+	}
+
+	@Test
+	public void given_NullApplication_When_CreateAssessment_Then_Returns400() {
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(400);
+	}	
 }
