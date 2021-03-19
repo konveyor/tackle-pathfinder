@@ -11,6 +11,14 @@
             "get": {
                 "parameters": [
                     {
+                        "examples": {
+                            "applicationId_44": {
+                                "value": "44"
+                            },
+                            "applicationId_6": {
+                                "value": "6"
+                            }
+                        },
                         "name": "applicationId",
                         "description": "",
                         "schema": {
@@ -33,7 +41,6 @@
                                     "assessment_header_list_ok": {
                                         "value": [
                                             {
-                                                "name": "some text",
                                                 "status": "COMPLETE",
                                                 "applicationId": 74,
                                                 "id": 4
@@ -106,16 +113,11 @@
                 "description": "",
                 "required": [
                     "id",
-                    "name",
                     "applicationId",
                     "status"
                 ],
                 "type": "object",
                 "properties": {
-                    "name": {
-                        "description": "",
-                        "type": "string"
-                    },
                     "status": {
                         "description": "",
                         "enum": [
@@ -135,7 +137,6 @@
                     }
                 },
                 "example": {
-                    "name": "Questionaire Name",
                     "status": "STARTED",
                     "id": 24,
                     "applicationId": 14
