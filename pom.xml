@@ -21,6 +21,7 @@
     <lombok.version>1.18.18</lombok.version>
     <testcontainers.version>1.15.2</testcontainers.version>
     <keycloak.version>12.0.3</keycloak.version>
+    <jacoco.version>0.8.6</jacoco.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -226,6 +227,36 @@
         <quarkus.package.type>native</quarkus.package.type>
         <quarkus.container-image.tag>${quarkus.application.version:latest}-native</quarkus.container-image.tag>
       </properties>
+    </profile>
+    <profile>
+      <id>jacoco</id>
+      <build>
+        <plugins>
+        <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>${jacoco.version}</version>
+          <executions>
+              <execution>
+                  <id>default-prepare-agent</id>
+                  <goals>
+                      <goal>prepare-agent</goal>
+                  </goals>
+              </execution>
+              <execution>
+                  <id>default-report</id>
+                  <goals>
+                      <goal>report</goal>
+                  </goals>
+                  <configuration>
+                      <dataFile>${project.build.directory}/jacoco.exec</dataFile>
+                      <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
+                  </configuration>
+              </execution>
+          </executions>
+      </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 </project>
