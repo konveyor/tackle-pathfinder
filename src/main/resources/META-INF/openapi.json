@@ -1,8 +1,8 @@
 {
     "openapi": "3.0.2",
     "info": {
-        "title": "tackle-pathfinder-0.0.1",
-        "version": "1.0.0"
+        "title": "tackle-pathfinder",
+        "version": "0.0.1"
     },
     "paths": {
         "/assessments": {
@@ -12,11 +12,14 @@
                 "parameters": [
                     {
                         "examples": {
-                            "applicationId_44": {
-                                "value": "44"
+                            "application_null": {
+                                "value": ""
                             },
-                            "applicationId_6": {
-                                "value": "6"
+                            "application_noassessed": {
+                                "value": "1000"
+                            },
+                            "application_alreadyassessed": {
+                                "value": "1"
                             }
                         },
                         "name": "applicationId",
@@ -38,23 +41,35 @@
                                     }
                                 },
                                 "examples": {
-                                    "assessment_header_list_ok": {
+                                    "application_noassessed": {
                                         "value": [
-                                            {
-                                                "status": "COMPLETE",
-                                                "applicationId": 74,
-                                                "id": 4
-                                            }
                                         ]
                                     },
-                                    "assessment_header_list_empty": {
+                                    "application_alreadyassessed": {
                                         "value": [
+                                            {
+                                                "status": "EMPTY",
+                                                "applicationId": 68,
+                                                "id": 66
+                                            }
                                         ]
                                     }
                                 }
                             }
                         },
                         "description": "Success"
+                    },
+                    "400": {
+                        "content": {
+                            "text/xml": {
+                                "examples": {
+                                    "application_null": {
+                                        "value": ""
+                                    }
+                                }
+                            }
+                        },
+                        "description": "When the request is not well formed."
                     }
                 },
                 "operationId": "getApplicationAssessments",
