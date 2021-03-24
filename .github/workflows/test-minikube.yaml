@@ -45,8 +45,8 @@ jobs:
       - name: Deploy Pathfinder on minikube
         run: |
           kubectl create namespace tackle
-          kubectl deploy -f test-deployment.yaml -n tackle
-          kubectl deploy -f src/main/kubernetes/tackle-pathfinder.yaml -n tackle
+          kubectl apply -f src/test/resources/test-deployment.yaml -n tackle
+          kubectl apply -f src/main/kubernetes/tackle-pathfinder.yaml -n tackle
       - name: Get Keycloak token
         run: |
           export access_token=$(\
