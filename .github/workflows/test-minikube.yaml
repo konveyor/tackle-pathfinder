@@ -81,7 +81,7 @@ jobs:
               "globals": [
                 {
                   "name": "Authorization",
-                  "values": "Bearer ${{keycloak_token}}"
+                  "values": "Bearer ${{env.keycloak_token}}"
                 } 
               ]
             }
