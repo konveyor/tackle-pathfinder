@@ -49,22 +49,20 @@ jobs:
           kubectl apply -f src/main/kubernetes/tackle-pathfinder.yaml -n tackle
       - name: Get Keycloak token
         run: |
-          export access_token=$(\
-            curl -X POST http://$(minikube ip)/auth/realms/quarkus/protocol/openid-connect/token \
+          export access_token=$(curl -X POST "http://$(minikube ip)/auth/realms/quarkus/protocol/openid-connect/token" \
             --user backend-service:secret \
             -H 'content-type: application/x-www-form-urlencoded' \
-            -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token' \
-          )
+            -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token')
           echo "keycloak_token=$access_token" >> $GITHUB_ENV
       - name: API simple tests
         run: |
           test $(curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=10" -H 'Accept: application/json' \
-            -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[]200" && return 0 || return 1
+            -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[]200" && exit 0 || exit 1
           test $(curl "http://$(minikube ip)/pathfinder/assessments" \
             -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $access_token" \
-            -d '{ "applicationId": 20 }' -s -w "%{http_code}") = "{\"id\":1,\"applicationId\":20,\"status\":\"STARTED\"}201" && return 0 || return 1
+            -d '{ "applicationId": 20 }' -s -w "%{http_code}") = "{\"id\":1,\"applicationId\":20,\"status\":\"STARTED\"}201" && exit 0 || exit 1
           test $(curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=20" -H 'Accept: application/json' \
-            -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[{\"id\":1,\"applicationId\":20,\"status\":\"STARTED\"}]200" && return 0 || return 1
+            -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[{\"id\":1,\"applicationId\":20,\"status\":\"STARTED\"}]200" && exit 0 || exit 1
       - name: Microcks API load
         run: |
           curl -X POST "https://microcks.$(minikube ip).nip.io/api/artifact/upload" -H "accept: text/plain" -H "Content-Type: multipart/form-data" \
