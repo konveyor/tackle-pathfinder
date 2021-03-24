@@ -9,13 +9,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: API simple tests 1
-        run: |
-          curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=10" -H 'Accept: application/json' \
-            -H "Authorization: Bearer $access_token" -s -w "%{http_code}"
-          
-          test $(curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=10" -H 'Accept: application/json' \
-            -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[]200" 
       - name: Checkout
         uses: actions/checkout@v1
       - name: Setup Minikube
@@ -66,7 +59,7 @@ jobs:
           curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=10" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s -w "%{http_code}"
           test $(curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=10" -H 'Accept: application/json' \
-            -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[]200" && exit 0 || exit 1
+            -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[]200"
 #          test $(curl "http://$(minikube ip)/pathfinder/assessments" \
 #            -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $access_token" \
 #            -d '{ "applicationId": 20 }' -s -w "%{http_code}") = "{\"id\":1,\"applicationId\":20,\"status\":\"STARTED\"}201" && exit 0 || exit 1
