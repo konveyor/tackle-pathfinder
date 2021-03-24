@@ -1,0 +1,88 @@
+name: Tackle Pathfinder CI PR Minikube Test
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  microcks-api-validation:
+    runs-on: ubuntu-latest
+
+    environment: Development
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.3.1
+        with:
+          minikube version: 'v1.16.0'
+          kubernetes version: 'v1.19.2'
+          github token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Pathfinder image and push it to the minikube docker host
+        run: |
+          cd ${{github.workspace}}
+          ./mvnw -U -B package -DskipTests -Pnative \
+          -Dquarkus.container-image.push=false \
+          -Dquarkus.container-image.build=true \
+          -Dquarkus.container-image.group=${{ github.repository_owner }} \
+          -Dquarkus.container-image.additional-tags=latest-jar \
+          -Dquarkus.container-image.tag=0.0.1-SNAPSHOT-native \
+          -Dquarkus.container-image.registry=${{ secrets.QUAYIO_REPO }} \
+          -Dquarkus.native.container-build=true
+          minikube cache add ${{ secrets.QUAYIO_REPO }}:0.0.1-SNAPSHOT-native
+      - name: Install Microcks on minikube
+        run: |
+          wget https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz
+          tar -zxvf helm-v3.5.3-linux-amd64.tar.gz
+          minikube addons enable ingress
+          ./linux-amd64/helm repo add microcks https://microcks.io/helm
+          kubectl create namespace microcks
+          ./linux-amd64/helm install microcks microcks/microcks --version 1.2.0 \
+            --namespace microcks --set microcks.url=microcks.$(minikube ip).nip.io \
+            --set keycloak.url=keycloak.$(minikube ip).nip.io
+      - name: Deploy Pathfinder on minikube
+        run: |
+          kubectl create namespace tackle
+          kubectl deploy -f test-deployment.yaml -n tackle
+          kubectl deploy -f src/main/kubernetes/tackle-pathfinder.yaml -n tackle
+      - name: Get Keycloak token
+        run: |
+          export access_token=$(\
+            curl -X POST http://$(minikube ip)/auth/realms/quarkus/protocol/openid-connect/token \
+            --user backend-service:secret \
+            -H 'content-type: application/x-www-form-urlencoded' \
+            -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token' \
+          )
+      - name: API simple test
+        run: |
+          test $(curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=10" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[]200" && return 0 || return 1
+          test $(curl "http://$(minikube ip)/pathfinder/assessments" \
+            -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $access_token" \
+            -d '{ "applicationId": 20 }' -s -w "%{http_code}") = "{\"id\":1,\"applicationId\":20,\"status\":\"STARTED\"}201" && return 0 || return 1
+          test $(curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=20" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[{\"id\":1,\"applicationId\":20,\"status\":\"STARTED\"}]200" && return 0 || return 1
+      - name: Microcks API load
+        run: |
+          curl -X POST "https://microcks.$(minikube ip).nip.io/api/artifact/upload" -H "accept: text/plain" -H "Content-Type: multipart/form-data" \
+            -F "file=@src/main/resources/META-INF/openapi.json;type=application/json" -L -k
+      - name: Microcks execution
+        uses: microcks/test-github-action@v1
+        with:
+          apiNameAndVersion: 'tackle-pathfinder-0.0.2:0.0.2'
+          testEndpoint: 'http://$(minikube ip)/pathfinder'
+          runner: OPEN_API_SCHEMA
+          microcksURL: microcks.$(minikube ip).nip.io
+          keycloakClientId:  account
+          keycloakClientSecret:  0136c3ef-0dfd-4b13-a6d0-2c8b6358edec
+          waitFor: '10sec'
+          operationsHeaders: |
+            {
+              "globals": [
+                {
+                  "name": "Authorization",
+                  "values": "Bearer ${{access_token}}"
+                }
+              ]
+            }

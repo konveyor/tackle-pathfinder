@@ -1,8 +1,12 @@
 {
     "openapi": "3.0.2",
     "info": {
-        "title": "tackle-pathfinder",
-        "version": "0.0.1"
+        "title": "tackle-pathfinder-0.0.2",
+        "version": "0.0.1",
+        "contact": {
+            "name": "Konveyor",
+            "url": "http://github.com/konveyor/tackle-pathfinder"
+        }
     },
     "paths": {
         "/assessments": {
@@ -64,7 +68,9 @@
                             "text/xml": {
                                 "examples": {
                                     "application_null": {
-                                        "value": ""
+                                        "value": {
+
+                                        }
                                     }
                                 }
                             }
