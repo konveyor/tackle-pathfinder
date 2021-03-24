@@ -51,7 +51,8 @@ jobs:
             --user backend-service:secret \
             -H 'content-type: application/x-www-form-urlencoded' \
             -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token' \
-          )
+          ) 
+          echo "keycloak_token=$access_token" >> $GITHUB_ENV
       - name: API simple test
         run: |
           test $(curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=10" -H 'Accept: application/json' \
@@ -80,7 +81,7 @@ jobs:
               "globals": [
                 {
                   "name": "Authorization",
-                  "values": "Bearer ${{access_token}}"
-                }
+                  "values": "Bearer ${{keycloak_token}}"
+                } 
               ]
             }
