@@ -26,7 +26,7 @@ jobs:
           -Dquarkus.container-image.group=${{ github.repository_owner }} \
           -Dquarkus.container-image.additional-tags=latest-jar \
           -Dquarkus.container-image.tag=0.0.1-SNAPSHOT-native \
-          -Dquarkus.container-image.registry=quay.io/konveyor/tackle-pathfinder \
+          -Dquarkus.container-image.registry=quay.io \
           -Dquarkus.native.container-build=true
           minikube cache add quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native
       - name: Install Microcks on minikube
