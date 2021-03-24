@@ -58,11 +58,11 @@ jobs:
         run: |
           test $(curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=10" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[]200" && exit 0 || exit 1
-          test $(curl "http://$(minikube ip)/pathfinder/assessments" \
-            -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $access_token" \
-            -d '{ "applicationId": 20 }' -s -w "%{http_code}") = "{\"id\":1,\"applicationId\":20,\"status\":\"STARTED\"}201" && exit 0 || exit 1
-          test $(curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=20" -H 'Accept: application/json' \
-            -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[{\"id\":1,\"applicationId\":20,\"status\":\"STARTED\"}]200" && exit 0 || exit 1
+#          test $(curl "http://$(minikube ip)/pathfinder/assessments" \
+#            -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $access_token" \
+#            -d '{ "applicationId": 20 }' -s -w "%{http_code}") = "{\"id\":1,\"applicationId\":20,\"status\":\"STARTED\"}201" && exit 0 || exit 1
+#          test $(curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=20" -H 'Accept: application/json' \
+#            -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[{\"id\":1,\"applicationId\":20,\"status\":\"STARTED\"}]200" && exit 0 || exit 1
       - name: Microcks API load
         run: |
           curl -X POST "https://microcks.$(minikube ip).nip.io/api/artifact/upload" -H "accept: text/plain" -H "Content-Type: multipart/form-data" \
