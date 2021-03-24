@@ -8,8 +8,6 @@ jobs:
   microcks-api-validation:
     runs-on: ubuntu-latest
 
-    environment: Development
-
     steps:
       - name: Checkout
         uses: actions/checkout@v1
