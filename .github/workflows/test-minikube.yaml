@@ -26,9 +26,9 @@ jobs:
           -Dquarkus.container-image.group=${{ github.repository_owner }} \
           -Dquarkus.container-image.additional-tags=latest-jar \
           -Dquarkus.container-image.tag=0.0.1-SNAPSHOT-native \
-          -Dquarkus.container-image.registry=${{ secrets.QUAYIO_REPO }} \
+          -Dquarkus.container-image.registry=${{secrets.QUAYIO_REPO}} \
           -Dquarkus.native.container-build=true
-          minikube cache add ${{ secrets.QUAYIO_REPO }}:0.0.1-SNAPSHOT-native
+          minikube cache add ${{secrets.QUAYIO_REPO}}:0.0.1-SNAPSHOT-native
       - name: Install Microcks on minikube
         run: |
           wget https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz
