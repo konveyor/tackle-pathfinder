@@ -9,6 +9,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: API simple tests 1
+        run: |
+          curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=10" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -s -w "%{http_code}"
+          
+          test $(curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=10" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[]200" 
       - name: Checkout
         uses: actions/checkout@v1
       - name: Setup Minikube
@@ -19,12 +26,6 @@ jobs:
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
           start args: '--addons=registry --addons=ingress'
-      - name: API simple tests 1
-        run: |
-          curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=10" -H 'Accept: application/json' \
-            -H "Authorization: Bearer $access_token" -s -w "%{http_code}"
-          test $(curl -X GET "http://$(minikube ip)/pathfinder/assessments?applicationId=10" -H 'Accept: application/json' \
-            -H "Authorization: Bearer $access_token" -s -w "%{http_code}") = "[]200" && exit 0 || exit 1
       - name: Build Pathfinder image and push it to the minikube docker host
         run: |
           cd ${{github.workspace}}
