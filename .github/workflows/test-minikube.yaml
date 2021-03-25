@@ -55,12 +55,14 @@ jobs:
         uses: jakejarvis/wait-action@master
         with:
           time: '360s'
+      - name: Await minikube status
+
       - name: Check status on Minikube
         run : | 
           kubectl get pods -n tackle
           kubectl get pods -n microcks
-          kubectl logs -l app.kubernetes.io/name=tackle-pathfinder -n tackle
-          kubectl logs -l app.kubernetes.io/name=keycloak -n tackle
+          kubectl logs --tail=100 -l app.kubernetes.io/name=tackle-pathfinder -n tackle 
+          kubectl logs --tail=100 -l app.kubernetes.io/name=keycloak -n tackle 
       - name: API simple tests
         run: .github/scripts/check_api.sh
         shell: bash
