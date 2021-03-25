@@ -1,4 +1,6 @@
 #!/bin/sh -x
+set -e
+
 minikube_ip=$(minikube ip)
 access_token=$(curl -X POST "http://$(minikube ip)/auth/realms/quarkus/protocol/openid-connect/token" \
             --user backend-service:secret \

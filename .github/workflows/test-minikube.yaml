@@ -51,6 +51,11 @@ jobs:
         uses: jakejarvis/wait-action@master
         with:
           time: '60s'
+      - name: Check status on Minikube
+        run : | 
+          kubectl get pods -n tackle
+          kubectl get pods -n microcks
+          kubectl describe deployment tackle-pathfinder -n tackle
       - name: API simple tests
         run: .github/scripts/check_api.sh
         shell: bash
