@@ -56,7 +56,7 @@ jobs:
       - name: Check status on Minikube
         run : |
           kubectl get pods -n tackle
-          kubectl logs --tail=100 -l app.kubernetes.io/name=keycloak -n tackle
+          kubectl logs --tail=100 -l app.kubernetes.io/name=tackle-pathfinder -n tackle
       - name: Install Helm
         run: |
           wget https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz
