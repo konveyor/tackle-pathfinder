@@ -54,6 +54,7 @@ jobs:
       - name: Sleep for 500 seconds to allow objects to be created and ready
         run: |
           timeout 500 bash -c 'while [[ ! "$(kubectl rollout status deployment tackle-pathfinder -n tackle)" =~ "successfully" ]]; do kubectl rollout status deployment tackle-pathfinder -n tackle; sleep 15; done' || false
+        shell: bash
       - name: Check status on Minikube
         run : |
           kubectl get pods -n tackle
