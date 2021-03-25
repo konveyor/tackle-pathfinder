@@ -2,7 +2,11 @@
 set -e
 
 minikube_ip=$(minikube ip)
-access_token=$(curl -X POST "http://$(minikube ip)/auth/realms/quarkus/protocol/openid-connect/token" \
+curl -X POST "http://$minikube_ip/auth/realms/quarkus/protocol/openid-connect/token" \
+            --user backend-service:secret \
+            -H 'content-type: application/x-www-form-urlencoded' \
+            -d 'username=alice&password=alice&grant_type=password'
+access_token=$(curl -X POST "http://$minikube_ip/auth/realms/quarkus/protocol/openid-connect/token" \
             --user backend-service:secret \
             -H 'content-type: application/x-www-form-urlencoded' \
             -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token')
