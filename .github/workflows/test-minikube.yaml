@@ -51,10 +51,13 @@ jobs:
           kubectl create namespace tackle
           kubectl apply -f src/test/resources/test-deployment.yaml -n tackle
           kubectl apply -f src/main/kubernetes/tackle-pathfinder.yaml -n tackle
-      - name: Sleep for 500 seconds to allow objects to be created and ready
+      - name: Check during max 10 minutes to allow objects to be created and ready
+        timeout-minutes: 10
         run: |
-          timeout --foreground 500s .github/scripts/check_deployment.sh
-        shell: bash
+          while [[ ! "$(kubectl rollout status deployment tackle-pathfinder -n tackle)" =~ "successfully" ]]; do
+            kubectl rollout status deployment tackle-pathfinder -n tackle
+            sleep 15
+          done
       - name: Check status on Minikube
         run : |
           kubectl get pods -n tackle
