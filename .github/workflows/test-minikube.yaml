@@ -47,6 +47,10 @@ jobs:
           kubectl create namespace tackle
           kubectl apply -f src/test/resources/test-deployment.yaml -n tackle
           kubectl apply -f src/main/kubernetes/tackle-pathfinder.yaml -n tackle
+      - name: Sleep for 60 seconds to allow objects to be created and ready
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '60s'
       - name: API simple tests
         run: .github/scripts/check_api.sh
         shell: bash
