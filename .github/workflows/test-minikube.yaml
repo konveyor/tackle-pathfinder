@@ -31,21 +31,10 @@ jobs:
 #            -Dquarkus.container-image.registry=quay.io \
 #            -Dquarkus.native.container-build=true
 #          minikube cache add quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native
-      - name: Sleep for 60 seconds to allow Minikube to be ready
+      - name: Sleep for 120 seconds to allow Minikube to be ready
         uses: jakejarvis/wait-action@master
         with:
           time: '60s'
-      - name: Install Helm
-        run: |
-          wget https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz
-          tar -zxvf helm-v3.5.3-linux-amd64.tar.gz
-      - name: Install Microcks on minikube
-        run: |
-          ./linux-amd64/helm repo add microcks https://microcks.io/helm
-          kubectl create namespace microcks
-          ./linux-amd64/helm install microcks microcks/microcks --version 1.2.0 \
-            --namespace microcks --set microcks.url=microcks.$(minikube ip).nip.io \
-            --set keycloak.url=keycloak.$(minikube ip).nip.io
       - name: Deploy Pathfinder on minikube
         run: |
           kubectl create namespace tackle
@@ -64,17 +53,29 @@ jobs:
         uses: jakejarvis/wait-action@master
         with:
           time: '5m'
-
+      - name: Check status on Minikube
+        run : |
+          kubectl get pods -n tackle
+          kubectl logs --tail=100 -l app.kubernetes.io/name=keycloak -n tackle
+      - name: Install Helm
+        run: |
+          wget https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz
+          tar -zxvf helm-v3.5.3-linux-amd64.tar.gz
+      - name: Install Microcks on minikube
+        run: |
+          ./linux-amd64/helm repo add microcks https://microcks.io/helm
+          kubectl create namespace microcks
+          ./linux-amd64/helm install microcks microcks/microcks --version 1.2.0 \
+            --namespace microcks --set microcks.url=microcks.$(minikube ip).nip.io \
+            --set keycloak.url=keycloak.$(minikube ip).nip.io
+      - name: Sleep for 5 minutes to allow objects to be created
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '5m'
       - name: Check status on Minikube
         run : |
           kubectl get pods -n tackle
           kubectl get pods -n microcks
-          echo "---------------------------------------------------------------"
-          echo "---------------------------------------------------------------"
-          kubectl logs --tail=100 -l app.kubernetes.io/name=tackle-pathfinder -n tackle
-          echo "---------------------------------------------------------------"
-          echo "---------------------------------------------------------------"
-          kubectl logs --tail=100 -l app.kubernetes.io/name=keycloak -n tackle
       - name: API simple tests
         run: .github/scripts/check_api.sh
         shell: bash
