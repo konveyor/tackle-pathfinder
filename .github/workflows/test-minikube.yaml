@@ -19,18 +19,18 @@ jobs:
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
           start args: '--addons=registry --addons=ingress'
-      - name: Build Pathfinder image and push it to the minikube docker host
-        run: |
-          cd ${{github.workspace}}
-          ./mvnw -U -B package -DskipTests -Pnative \
-            -Dquarkus.container-image.push=false \
-            -Dquarkus.container-image.build=true \
-            -Dquarkus.container-image.group=${{ github.repository_owner }} \
-            -Dquarkus.container-image.additional-tags=latest-jar \
-            -Dquarkus.container-image.tag=0.0.1-SNAPSHOT-native \
-            -Dquarkus.container-image.registry=quay.io \
-            -Dquarkus.native.container-build=true
-          minikube cache add quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native
+#      - name: Build Pathfinder image and push it to the minikube docker host
+#        run: |
+#          cd ${{github.workspace}}
+#          ./mvnw -U -B package -DskipTests -Pnative \
+#            -Dquarkus.container-image.push=false \
+#           -Dquarkus.container-image.build=true \
+#            -Dquarkus.container-image.group=${{ github.repository_owner }} \
+#            -Dquarkus.container-image.additional-tags=latest-jar \
+#            -Dquarkus.container-image.tag=0.0.1-SNAPSHOT-native \
+#            -Dquarkus.container-image.registry=quay.io \
+#            -Dquarkus.native.container-build=true
+#          minikube cache add quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native
       - name: Install Helm
         run: |
           wget https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz
