@@ -221,7 +221,7 @@ spec:
                 secretKeyRef:
                   name: pathfinder-postgresql
                   key: database-password
-          image: quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native
+          image: quay.io/jonathanvila/tackle-pathfinder:0.0.1-SNAPSHOT-native
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3

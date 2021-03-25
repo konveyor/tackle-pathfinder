@@ -54,7 +54,7 @@ jobs:
       - name: Sleep for 60 seconds to allow objects to be created and ready
         uses: jakejarvis/wait-action@master
         with:
-          time: '180s'
+          time: '240s'
       - name: Check status on Minikube
         run : | 
           kubectl get pods -n tackle
