@@ -31,6 +31,10 @@ jobs:
 #            -Dquarkus.container-image.registry=quay.io \
 #            -Dquarkus.native.container-build=true
 #          minikube cache add quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native
+      - name: Sleep for 60 seconds to allow Minikube to be ready
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '60s'
       - name: Install Helm
         run: |
           wget https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz
