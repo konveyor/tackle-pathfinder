@@ -18,7 +18,7 @@ jobs:
           kubernetes version: 'v1.19.2'
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
-          start args: '--addons=registry --addons=ingress'
+          start args: '--addons=registry --addons=ingress --cpus 2 --memory 6000'
 #      - name: Build Pathfinder image and push it to the minikube docker host
 #        run: |
 #          cd ${{github.workspace}}
@@ -53,6 +53,10 @@ jobs:
         uses: jakejarvis/wait-action@master
         with:
           time: '5m'
+      - name: Check status on Minikube
+        run : |
+          kubectl get pods -n tackle
+          kubectl get pods -n microcks
       - name: Check status on Minikube
         run : |
           set -x
