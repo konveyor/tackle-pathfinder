@@ -34,7 +34,7 @@ jobs:
       - name: Sleep for 120 seconds to allow Minikube to be ready
         uses: jakejarvis/wait-action@master
         with:
-          time: '60s'
+          time: '120s'
       - name: Deploy Pathfinder on minikube
         run: |
           kubectl create namespace tackle
@@ -56,11 +56,9 @@ jobs:
       - name: Check status on Minikube
         run : |
           kubectl get pods -n tackle
-          kubectl get pods -n microcks
       - name: Check status on Minikube
         run : |
           set -x
-          kubectl logs --tail=100 -l app.kubernetes.io/name=tackle-pathfinder -n tackle
           kubectl describe deployment tackle-pathfinder -n tackle
       - name: Install Helm
         run: |
