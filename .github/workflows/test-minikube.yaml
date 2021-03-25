@@ -51,16 +51,16 @@ jobs:
           kubectl create namespace tackle
           kubectl apply -f src/test/resources/test-deployment.yaml -n tackle
           kubectl apply -f src/main/kubernetes/tackle-pathfinder.yaml -n tackle
-      - name: Sleep for 300 seconds to allow objects to be created and ready
+      - name: Sleep for 120 seconds to allow objects to be created and ready
         uses: jakejarvis/wait-action@master
         with:
-          time: '300s'
+          time: '120s'
       - name: Check status on Minikube
         run : | 
           kubectl get pods -n tackle
           kubectl get pods -n microcks
-          kubectl describe deployment tackle-pathfinder -n tackle
-          kubectl describe deployment keycloak -n tackle
+          kubectl logs -l app.kubernetes.io/name=tackle-pathfinder
+          kubectl logs -l app.kubernetes.io/name=keycloak
       - name: API simple tests
         run: .github/scripts/check_api.sh
         shell: bash
