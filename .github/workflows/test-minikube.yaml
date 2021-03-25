@@ -57,7 +57,7 @@ jobs:
         run : |
           set -x
           kubectl logs --tail=100 -l app.kubernetes.io/name=tackle-pathfinder -n tackle
-          kubectl describe deployment takle-pathfinder -n tackle
+          kubectl describe deployment tackle-pathfinder -n tackle
       - name: Install Helm
         run: |
           wget https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz
