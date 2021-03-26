@@ -97,17 +97,13 @@ jobs:
             --user backend-service:secret \
             -H 'content-type: application/x-www-form-urlencoded' \
             -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token')"
-      - name: Microcks test
-        run: |
-          curl -X POST "http://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/tests" -H "accept: application/json" \
-            -H "Content-Type: application/json" -d "{\"serviceId\":\"tackle-pathfinder-0.0.2:0.0.2\",\"testEndpoint\":\"http://${{steps.getMinikubeIp.outputs.value}}/pathfinder\",\"runnerType\":\"OPEN_API_SCHEMA\"}" -L -k
       - name: Microcks execution
         uses: microcks/test-github-action@v1
         with:
           apiNameAndVersion: 'tackle-pathfinder-0.0.2:0.0.2'
           testEndpoint: 'http://${{steps.getMinikubeIp.outputs.value}}/pathfinder'
           runner: OPEN_API_SCHEMA
-          microcksURL: "microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/"
+          microcksURL: "http://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/"
           keycloakClientId:  account
           keycloakClientSecret:  0136c3ef-0dfd-4b13-a6d0-2c8b6358edec
           waitFor: '10sec'
