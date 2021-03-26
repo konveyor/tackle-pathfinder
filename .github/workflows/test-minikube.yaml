@@ -40,6 +40,8 @@ jobs:
         uses: jakejarvis/wait-action@master
         with:
           time: '120s'
+#TODO refactor to an awaitility
+
       - name: Deploy Pathfinder on minikube
         run: |
           kubectl create namespace tackle
@@ -57,6 +59,10 @@ jobs:
           set -x
           kubectl get pods -n tackle
           kubectl describe deployment tackle-pathfinder -n tackle
+      - name: API simple tests
+        run: .github/scripts/check_api.sh
+
+# Microcks
       - name: Install Helm
         run: |
           wget https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz
@@ -79,8 +85,6 @@ jobs:
         run : |
           kubectl get pods -n tackle
           kubectl get pods -n microcks
-      - name: API simple tests
-        run: .github/scripts/check_api.sh
         shell: bash
       - name: Microcks API load
         run: |
@@ -93,6 +97,10 @@ jobs:
             --user backend-service:secret \
             -H 'content-type: application/x-www-form-urlencoded' \
             -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token')"
+      - name: Microcks test
+        run: |
+          curl -X POST "http://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/tests" -H "accept: application/json" \
+            -H "Content-Type: application/json" -d "{\"tackle-pathfinder-0.0.2:0.0.2\":\"string\",\"testEndpoint\":\"http://${{steps.getMinikubeIp.outputs.value}}/pathfinder\",\"runnerType\":[\"OPEN_API_SCHEMA\"]}" -L -k
       - name: Microcks execution
         uses: microcks/test-github-action@v1
         with:
