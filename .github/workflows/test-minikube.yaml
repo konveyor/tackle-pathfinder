@@ -101,7 +101,7 @@ jobs:
       - name: Microcks test
         run: |
           curl -X POST "http://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/tests" -H "accept: application/json" \
-            -H "Content-Type: application/json" -d "{\"serviceId\":\"tackle-pathfinder-0.0.2:0.0.2\",\"testEndpoint\":\"http://${{steps.getMinikubeIp.outputs.value}}/pathfinder\",\"runnerType\":[\"OPEN_API_SCHEMA\"]}" -L -k
+            -H "Content-Type: application/json" -d "{\"serviceId\":\"tackle-pathfinder-0.0.2:0.0.2\",\"testEndpoint\":\"http://${{steps.getMinikubeIp.outputs.value}}/pathfinder\",\"runnerType\":\"OPEN_API_SCHEMA\"}" -L -k
       - name: Microcks execution
         uses: microcks/test-github-action@v1
         with:
