@@ -25,21 +25,22 @@ jobs:
         shell: bash
       - name: Build Pathfinder image and push it to the minikube docker host
         run: |
+          set -x
           cd ${{github.workspace}}
           ./mvnw -U -B package -DskipTests -Pnative \
             -Dquarkus.container-image.push=false \
-           -Dquarkus.container-image.build=true \
+            -Dquarkus.container-image.build=true \
             -Dquarkus.container-image.group=${{ github.repository_owner }} \
             -Dquarkus.container-image.additional-tags=latest-jar \
             -Dquarkus.container-image.tag=0.0.1-SNAPSHOT-native \
             -Dquarkus.container-image.registry=quay.io \
             -Dquarkus.native.container-build=true
-          minikube cache add quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native
+          minikube cache add quay.io/${{ github.repository_owner }}/tackle-pathfinder:0.0.1-SNAPSHOT-native
+          minikube cache list
       - name: Check during max 2 minutes to allow Minikube ingress to be ready
         timeout-minutes: 2
         run: |
           while [[ ! "$(kubectl rollout status deployment ingress-nginx-controller -n kube-system)" =~ "successfully" ]]; do
-            echo "Not ready yet"
             sleep 15
           done
       - name: Deploy Pathfinder on minikube
@@ -51,7 +52,6 @@ jobs:
         timeout-minutes: 10
         run: |
           while [[ ! "$(kubectl rollout status deployment tackle-pathfinder -n tackle)" =~ "successfully" ]]; do
-            echo "Not ready yet"
             sleep 15
           done
       - name: Print status on Minikube
@@ -78,7 +78,6 @@ jobs:
         timeout-minutes: 10
         run: |
           while [[ ! "$(kubectl rollout status deployment microcks -n microcks)" =~ "successfully" ]]; do
-            echo "Not ready yet"
             sleep 15
           done
       - name: Print status on Minikube
