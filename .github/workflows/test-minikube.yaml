@@ -19,6 +19,10 @@ jobs:
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
           start args: '--addons=registry --addons=ingress --cpus 2 --memory 6000'
+      - name: Get minikube IP
+        id: getMinikubeIp
+        run: echo "::set-output name=value::$(minikube ip)"
+        shell: bash
 #      - name: Build Pathfinder image and push it to the minikube docker host
 #        run: |
 #          cd ${{github.workspace}}
@@ -31,6 +35,7 @@ jobs:
 #            -Dquarkus.container-image.registry=quay.io \
 #            -Dquarkus.native.container-build=true
 #          minikube cache add quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native
+
       - name: Sleep for 120 seconds to allow Minikube to be ready
         uses: jakejarvis/wait-action@master
         with:
@@ -61,8 +66,8 @@ jobs:
           ./linux-amd64/helm repo add microcks https://microcks.io/helm
           kubectl create namespace microcks
           ./linux-amd64/helm install microcks microcks/microcks --version 1.2.0 \
-            --namespace microcks --set microcks.url=microcks.$(minikube ip).nip.io \
-            --set keycloak.url=keycloak.$(minikube ip).nip.io
+            --namespace microcks --set microcks.url=microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io \
+            --set keycloak.url=keycloak.${{steps.getMinikubeIp.outputs.value}}.nip.io
       - name: Check during max 10 minutes to allow objects to be created and ready
         timeout-minutes: 10
         run: |
@@ -79,13 +84,20 @@ jobs:
         shell: bash
       - name: Microcks API load
         run: |
-          curl -X POST "https://microcks.$(minikube ip).nip.io/api/artifact/upload" -H "accept: text/plain" -H "Content-Type: multipart/form-data" \
+          curl -X POST "https://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/artifact/upload" -H "accept: text/plain" -H "Content-Type: multipart/form-data" \
             -F "file=@src/main/resources/META-INF/openapi.json;type=application/json" -L -k
+      - name: Get Keycloak Token
+        id: getKeycloakToken
+        run: |
+          echo "::set-output name=value::$(curl -X POST \"http://${{steps.getMinikubeIp.outputs.value}}/auth/realms/quarkus/protocol/openid-connect/token\" \
+            --user backend-service:secret \
+            -H 'content-type: application/x-www-form-urlencoded' \
+            -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token')"
       - name: Microcks execution
         uses: microcks/test-github-action@v1
         with:
           apiNameAndVersion: 'tackle-pathfinder-0.0.2:0.0.2'
-          testEndpoint: 'http://$(minikube ip)/pathfinder'
+          testEndpoint: 'http://${{steps.getMinikubeIp.outputs.value}}/pathfinder'
           runner: OPEN_API_SCHEMA
           microcksURL: microcks.$(minikube ip).nip.io
           keycloakClientId:  account
@@ -96,7 +108,7 @@ jobs:
               "globals": [
                 {
                   "name": "Authorization",
-                  "values": "Bearer ${{env.keycloak_token}}"
+                  "values": "Bearer ${{steps.getKeycloakToken.outputs.value}}"
                 }
               ]
             }
