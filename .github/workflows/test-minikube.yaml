@@ -47,11 +47,11 @@ jobs:
         run: |
           kubectl create namespace tackle
           kubectl apply -f src/test/resources/test-deployment.yaml -n tackle
-          kubectl apply -f src/main/kubernetes/tackle-pathfinder.yaml -n tackle
-      - name: Sleep for 10 seconds to allow operator to start
+          sed 's/imagePullPolicy: Always/imagePullPolicy: Never/g' src/main/kubernetes/tackle-pathfinder.yaml | kubectl apply -f -
+      - name: Sleep for 60 seconds to allow operator to start
         uses: jakejarvis/wait-action@master
         with:
-          time: '180s'
+          time: '60s'
       - name: Print status on Minikube
         run : |
           set -x
@@ -124,3 +124,6 @@ jobs:
                 }
               ]
             }
+
+
+
