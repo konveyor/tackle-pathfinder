@@ -47,7 +47,7 @@ jobs:
         run: |
           kubectl create namespace tackle
           kubectl apply -f src/test/resources/test-deployment.yaml -n tackle
-          sed 's/imagePullPolicy: Always/imagePullPolicy: Never/g' src/main/kubernetes/tackle-pathfinder.yaml | kubectl apply -f -
+          sed 's/imagePullPolicy: Always/imagePullPolicy: Never/g' src/main/kubernetes/tackle-pathfinder.yaml | kubectl apply -n tackle -f -
       - name: Sleep for 60 seconds to allow operator to start
         uses: jakejarvis/wait-action@master
         with:
