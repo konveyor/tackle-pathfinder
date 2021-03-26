@@ -14,15 +14,12 @@ access_token=$(curl -X POST "http://$minikube_ip/auth/realms/quarkus/protocol/op
 req_not_existing_app=$(curl -X GET "http://$minikube_ip/pathfinder/assessments?applicationId=100" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s -w "%{http_code}")
 test "$req_not_existing_app" = "[]200"
-echo $?
 
 req_create_assessment=$(curl "http://$minikube_ip/pathfinder/assessments" \
             -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $access_token" \
-            -d '{ "applicationId": 20 }' -s -w "%{http_code}")
-test "$req_create_assessment" = "{\"id\":1,\"applicationId\":200,\"status\":\"STARTED\"}201"
-echo $?
+            -d '{ "applicationId": 100 }' -s -w "%{http_code}")
+test "$req_create_assessment" = "{\"id\":1,\"applicationId\":100,\"status\":\"STARTED\"}201"
 
 req_existing_app=$(curl -X GET "http://$minikube_ip/pathfinder/assessments?applicationId=100" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s -w "%{http_code}")
 test "$req_existing_app" = "[{\"id\":1,\"applicationId\":100,\"status\":\"STARTED\"}]200"
-echo $?

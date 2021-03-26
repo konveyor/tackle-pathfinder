@@ -40,25 +40,17 @@ jobs:
           kubectl create namespace tackle
           kubectl apply -f src/test/resources/test-deployment.yaml -n tackle
           kubectl apply -f src/main/kubernetes/tackle-pathfinder.yaml -n tackle
-
-#      - name: Check during max 10 minutes to allow objects to be created and ready
-#        timeout-minutes: 10
-#        run: |
-#          while [[ ! "$(kubectl rollout status deployment tackle-pathfinder -n tackle)" =~ "successfully" ]]; do
-#            kubectl rollout status deployment tackle-pathfinder -n tackle
-#            sleep 15
-#          done
-      
-      - name: Sleep for 5 minutes to allow objects to be created
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '5m'
-      - name: Check status on Minikube
-        run : |
-          kubectl get pods -n tackle
-      - name: Check status on Minikube
+      - name: Check during max 10 minutes to allow objects to be created and ready
+        timeout-minutes: 10
+        run: |
+          while [[ ! "$(kubectl rollout status deployment tackle-pathfinder -n tackle)" =~ "successfully" ]]; do
+            echo "Not ready yet"
+            sleep 15
+          done
+      - name: Print status on Minikube
         run : |
           set -x
+          kubectl get pods -n tackle
           kubectl describe deployment tackle-pathfinder -n tackle
       - name: Install Helm
         run: |
@@ -71,11 +63,14 @@ jobs:
           ./linux-amd64/helm install microcks microcks/microcks --version 1.2.0 \
             --namespace microcks --set microcks.url=microcks.$(minikube ip).nip.io \
             --set keycloak.url=keycloak.$(minikube ip).nip.io
-      - name: Sleep for 5 minutes to allow objects to be created
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '5m'
-      - name: Check status on Minikube
+      - name: Check during max 10 minutes to allow objects to be created and ready
+        timeout-minutes: 10
+        run: |
+          while [[ ! "$(kubectl rollout status deployment microcks -n microcks)" =~ "successfully" ]]; do
+            echo "Not ready yet"
+            sleep 15
+          done
+      - name: Print status on Minikube
         run : |
           kubectl get pods -n tackle
           kubectl get pods -n microcks
