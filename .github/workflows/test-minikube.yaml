@@ -36,12 +36,13 @@ jobs:
 #            -Dquarkus.native.container-build=true
 #          minikube cache add quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native
 
-      - name: Sleep for 120 seconds to allow Minikube to be ready
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '120s'
-#TODO refactor to an awaitility
-
+      - name: Check during max 2 minutes to allow Minikube ingress to be ready
+        timeout-minutes: 2
+        run: |
+          while [[ ! "$(kubectl rollout status deployment ingress-nginx-controller -n kube-system)" =~ "successfully" ]]; do
+            echo "Not ready yet"
+            sleep 15
+          done
       - name: Deploy Pathfinder on minikube
         run: |
           kubectl create namespace tackle
@@ -100,7 +101,7 @@ jobs:
       - name: Microcks test
         run: |
           curl -X POST "http://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/tests" -H "accept: application/json" \
-            -H "Content-Type: application/json" -d "{\"tackle-pathfinder-0.0.2:0.0.2\":\"string\",\"testEndpoint\":\"http://${{steps.getMinikubeIp.outputs.value}}/pathfinder\",\"runnerType\":[\"OPEN_API_SCHEMA\"]}" -L -k
+            -H "Content-Type: application/json" -d "{\"serviceId\":\"tackle-pathfinder-0.0.2:0.0.2\",\"testEndpoint\":\"http://${{steps.getMinikubeIp.outputs.value}}/pathfinder\",\"runnerType\":[\"OPEN_API_SCHEMA\"]}" -L -k
       - name: Microcks execution
         uses: microcks/test-github-action@v1
         with:
