@@ -99,7 +99,7 @@ jobs:
           apiNameAndVersion: 'tackle-pathfinder-0.0.2:0.0.2'
           testEndpoint: 'http://${{steps.getMinikubeIp.outputs.value}}/pathfinder'
           runner: OPEN_API_SCHEMA
-          microcksURL: microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io
+          microcksURL: "microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/"
           keycloakClientId:  account
           keycloakClientSecret:  0136c3ef-0dfd-4b13-a6d0-2c8b6358edec
           waitFor: '10sec'
