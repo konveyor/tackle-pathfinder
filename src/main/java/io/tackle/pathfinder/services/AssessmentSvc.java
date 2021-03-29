@@ -9,6 +9,7 @@ import lombok.extern.java.Log;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 
 import java.util.List;
@@ -20,15 +21,15 @@ public class AssessmentSvc {
     @Inject
     AssessmentMapper mapper;
 
-    public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(Long applicationId) {
+    public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
         return assessmentQuery.stream().findFirst().map(e -> mapper.assessmentToAssessmentHeaderDto(e));
     }
 
     @Transactional
-    public AssessmentHeaderDto createAssessment(Long applicationId) {
+    public AssessmentHeaderDto createAssessment(@NotNull Long applicationId) {
         long count = Assessment.count("application_id", applicationId);
-        log.info("Assessment for application_id [ " + applicationId + "] : " + count);
+        log.info("Assessments for application_id [ " + applicationId + "] : " + count);
         if (count == 0) {
             Assessment assessment = new Assessment();
             assessment.applicationId = applicationId;
