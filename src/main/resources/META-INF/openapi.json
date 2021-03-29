@@ -1,0 +1,185 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "tackle-pathfinder",
+        "version": "0.0.1"
+    },
+    "paths": {
+        "/assessments": {
+            "summary": "Path used to manage a single assessment.",
+            "description": "The REST endpoint/path used to get, update, and delete instances of an `assessment`.  \nThis path contains `GET`, `POST` operations used to perform the get a list of assessments and to create one.",
+            "get": {
+                "parameters": [
+                    {
+                        "examples": {
+                            "application_null": {
+                                "value": ""
+                            },
+                            "application_noassessed": {
+                                "value": "1000"
+                            },
+                            "application_alreadyassessed": {
+                                "value": "1"
+                            }
+                        },
+                        "name": "applicationId",
+                        "description": "",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/AssessmentHeaderDto"
+                                    }
+                                },
+                                "examples": {
+                                    "application_noassessed": {
+                                        "value": [
+                                        ]
+                                    },
+                                    "application_alreadyassessed": {
+                                        "value": [
+                                            {
+                                                "status": "EMPTY",
+                                                "applicationId": 68,
+                                                "id": 66
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        "description": "Success"
+                    },
+                    "400": {
+                        "content": {
+                            "text/xml": {
+                                "examples": {
+                                    "application_null": {
+                                        "value": ""
+                                    }
+                                }
+                            }
+                        },
+                        "description": "When the request is not well formed."
+                    }
+                },
+                "operationId": "getApplicationAssessments",
+                "description": ""
+            },
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApplicationDto"
+                            },
+                            "examples": {
+                                "assessment_post_ok": {
+                                    "value": {
+                                        "applicationId": 92
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssessmentHeaderDto"
+                                },
+                                "examples": {
+                                    "assessment_post_ok": {
+                                        "value": {
+                                            "name": "some text",
+                                            "status": "EMPTY",
+                                            "applicationId": 62,
+                                            "id": 3
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "description": "Created"
+                    },
+                    "400": {
+                        "description": "Invalid format"
+                    }
+                },
+                "operationId": "createAssessment"
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AssessmentHeaderDto": {
+                "description": "",
+                "required": [
+                    "id",
+                    "applicationId",
+                    "status"
+                ],
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "description": "",
+                        "enum": [
+                            "EMPTY",
+                            "STARTED",
+                            "COMPLETE"
+                        ],
+                        "type": "string"
+                    },
+                    "applicationId": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "id": {
+                        "description": "",
+                        "type": "integer"
+                    }
+                },
+                "example": {
+                    "status": "STARTED",
+                    "id": 24,
+                    "applicationId": 14
+                }
+            },
+            "ApplicationDto": {
+                "description": "",
+                "required": [
+                    "applicationId"
+                ],
+                "type": "object",
+                "properties": {
+                    "applicationId": {
+                        "description": "",
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "responses": {
+            "404_ERROR": {
+                "content": {
+                    "application/json": {
+
+                    }
+                },
+                "description": ""
+            }
+        }
+    }
+}
