@@ -1,4 +1,4 @@
-package io.tackle.pathfinder.controllers.impl;
+package io.tackle.pathfinder.controllers;
 
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
@@ -37,7 +37,7 @@ import static org.hamcrest.Matchers.greaterThan;
                 @ResourceArg(name = KeycloakTestResource.REALM_NAME, value = "quarkus")
         }
 )
-public class AssessmentsResourceImplTest extends SecuredResourceTest {
+public class AssessmentsResourceTest extends SecuredResourceTest {
 	@Inject
 	AssessmentSvc assessmentSvc;
 
@@ -98,6 +98,18 @@ public class AssessmentsResourceImplTest extends SecuredResourceTest {
 	}
 
 	@Test
+	public void given_NullApplicationId_When_CreateAssessment_Then_Returns400() {
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto())
+		.when()
+			.post("/assessments")
+		.then()
+			.statusCode(400)	;
+	}
+
+	@Test
 	public void given_ApplicationWithAssessment_When_CreateAssessment_Then_Returns400() {
 		assessmentSvc.createAssessment(20L);
 
@@ -112,12 +124,12 @@ public class AssessmentsResourceImplTest extends SecuredResourceTest {
 	}
 
 	@Test
-	public void given_NullApplication_When_GetAssessments_Then_Returns400() {
+	public void given_NullApplicationId_When_GetAssessments_Then_Returns400() {
 		given()
 		    .contentType(ContentType.JSON)
 			.accept(ContentType.JSON)
 		.when()
-			.post("/assessments")
+			.get("/assessments")
 		.then()
 			.statusCode(400);
 	}
@@ -132,5 +144,5 @@ public class AssessmentsResourceImplTest extends SecuredResourceTest {
 		.then()
 			.log().all()
 			.statusCode(400);
-	}	
+	}
 }
