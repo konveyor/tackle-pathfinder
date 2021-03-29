@@ -6,8 +6,8 @@ Pathfinder is an extensible, questionnaire based assessment tool for assessing t
 
 ## API
 
-* use Apicurio to design de API first
-* if the default docker-compose installation doesn't work ( for mysql issues) try full postgre approach ( <https://github.com/carlesarnal/apicurio-studio/tree/expand-docker-compose-db-choice-keycloak> )
+* use Apicurio to design the API first
+* if the default docker-compose installation doesn't work ( for mysql issues) try full PostgreSQL approach ( <https://github.com/carlesarnal/apicurio-studio/tree/expand-docker-compose-db-choice-keycloak> )
 * use [Microcks](https://microcks.io/blog/why-microcks/) to mock the API to test it and decouple Frontend from Backend
 
 ---
