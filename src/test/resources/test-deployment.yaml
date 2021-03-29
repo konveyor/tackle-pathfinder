@@ -2019,3 +2019,10 @@ spec:
                 name: keycloak
                 port:
                   number: 8080
+          - path: /api
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
