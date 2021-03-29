@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 @Builder
@@ -23,5 +25,6 @@ public class ApplicationDto {
      */
     @JsonProperty("applicationId")
     @JsonPropertyDescription("")
+    @NotNull
     private Long applicationId;
 }

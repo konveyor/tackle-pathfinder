@@ -4,6 +4,7 @@ import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.assessment.Assessment;
+import lombok.extern.java.Log;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
+@Log
 public class AssessmentSvc {
     @Inject
     AssessmentMapper mapper;
@@ -25,9 +27,8 @@ public class AssessmentSvc {
 
     @Transactional
     public AssessmentHeaderDto createAssessment(Long applicationId) {
-        System.out.println("Count all : " + Assessment.count());
         long count = Assessment.count("application_id", applicationId);
-        System.out.println("Count : " + count);
+        log.info("Assessment for application_id [ " + applicationId + "] : " + count);
         if (count == 0) {
             Assessment assessment = new Assessment();
             assessment.applicationId = applicationId;
