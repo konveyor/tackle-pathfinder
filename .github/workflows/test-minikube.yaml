@@ -111,7 +111,7 @@ jobs:
       - name: Microcks API load
         run: |
           set -x
-          response="$(curl -X POST https://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/artifact/upload -H \"accept: text/plain\" -H \"Content-Type: multipart/form-data\" -F \"file=@src/main/resources/META-INF/openapi.json;type=application/json\" -L -k)"
+          response="$(curl -X POST https://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/artifact/upload -H 'accept: text/plain' -H 'Content-Type: multipart/form-data' -F 'file=@src/main/resources/META-INF/openapi.json;type=application/json' -L -k)"
           test "$response"="tackle-pathfinder:0.0.2"
       - name: Get Keycloak Token
         id: getKeycloakToken
@@ -127,7 +127,7 @@ jobs:
         uses: microcks/test-github-action@v1
         with:
           apiNameAndVersion: 'tackle-pathfinder:0.0.2'
-          testEndpoint: 'http://${{steps.getMinikubeIp.outputs.value}}/pathfinder'
+          testEndpoint: "http://${{steps.getMinikubeIp.outputs.value}}/pathfinder"
           runner: OPEN_API_SCHEMA
           microcksURL: "https://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/"
           keycloakClientId:  microcks-serviceaccount
