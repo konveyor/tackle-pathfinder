@@ -115,6 +115,8 @@ jobs:
           keycloakClientId:  microcks-serviceaccount
           keycloakClientSecret:  ab54d329-e435-41ae-a900-ec6b3fe15c54
           waitFor: '10sec'
+          verbose: true
+          insecure: true
           operationsHeaders: |
             {
               "globals": [
