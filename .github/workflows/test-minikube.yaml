@@ -96,24 +96,33 @@ jobs:
           while [[ ! "$(kubectl rollout status deployment microcks -n microcks)" =~ "successfully" ]]; do
             sleep 15
           done
+      - name: Check during max 2 minutes to allow Minikube ingress to be ready
+        timeout-minutes: 2
+        run: |
+          while [[ ! "$(kubectl rollout status deployment ingress-nginx-controller -n kube-system)" =~ "successfully" ]]; do
+            sleep 15
+          done
       - name: Print status on Minikube
         run : |
           kubectl get pods -n tackle
           kubectl get pods -n microcks
+          kubectl rollout status deployment ingress-nginx-controller -n kube-system
         shell: bash
       - name: Microcks API load
         run: |
           set -x
-          response=$(curl -X POST "https://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/artifact/upload" -H "accept: text/plain" -H "Content-Type: multipart/form-data" \
-            -F "file=@src/main/resources/META-INF/openapi.json;type=application/json" -L -k)
+          response="$(curl -X POST https://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/artifact/upload -H \"accept: text/plain\" -H \"Content-Type: multipart/form-data\" -F \"file=@src/main/resources/META-INF/openapi.json;type=application/json\" -L -k)"
           test "$response"="tackle-pathfinder:0.0.2"
       - name: Get Keycloak Token
         id: getKeycloakToken
         run: |
-          echo "::set-output name=value::$(curl -X POST \"http://${{steps.getMinikubeIp.outputs.value}}/auth/realms/quarkus/protocol/openid-connect/token\" \
-            --user backend-service:secret \
-            -H 'content-type: application/x-www-form-urlencoded' \
-            -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token')"
+          echo "::set-output name=value::$(curl -X POST http://${{steps.getMinikubeIp.outputs.value}}/auth/realms/quarkus/protocol/openid-connect/token --user backend-service:secret -H 'content-type: application/x-www-form-urlencoded' -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token')"
+      - name: Print status on Minikube
+        run : |
+          kubectl get pods -n tackle
+          kubectl get pods -n microcks
+          kubectl rollout status deployment ingress-nginx-controller -n kube-system
+        shell: bash
       - name: Microcks execution
         uses: microcks/test-github-action@v1
         with:
