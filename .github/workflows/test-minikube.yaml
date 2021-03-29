@@ -26,7 +26,7 @@ jobs:
       - name: Pulling image for test
         run: |
           docker pull quay.io/jonathanvila/tackle-pathfinder:0.0.1-SNAPSHOT-native
-          docker tag quay.io/jonathanvila/tackle-pathfinder quay.io/konveyor/tackle-pathfinder
+          docker tag quay.io/jonathanvila/tackle-pathfinder:0.0.1-SNAPSHOT-native quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native
           minikube cache add quay.io/${{ github.repository_owner }}/tackle-pathfinder:0.0.1-SNAPSHOT-native
           minikube cache list
 
