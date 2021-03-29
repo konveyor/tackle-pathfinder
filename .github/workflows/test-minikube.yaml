@@ -108,10 +108,10 @@ jobs:
       - name: Microcks execution
         uses: microcks/test-github-action@v1
         with:
-          apiNameAndVersion: 'tackle-pathfinder-0.0.2:0.0.1'
+          apiNameAndVersion: 'tackle-pathfinder:0.0.2'
           testEndpoint: 'http://${{steps.getMinikubeIp.outputs.value}}/pathfinder'
           runner: OPEN_API_SCHEMA
-          microcksURL: "http://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/"
+          microcksURL: "https://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/"
           keycloakClientId:  microcks-serviceaccount
           keycloakClientSecret:  ab54d329-e435-41ae-a900-ec6b3fe15c54
           waitFor: '10sec'
