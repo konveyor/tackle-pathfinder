@@ -23,27 +23,26 @@ jobs:
         id: getMinikubeIp
         run: echo "::set-output name=value::$(minikube ip)"
         shell: bash
-      - name: Pulling image for test
+#      - name: Pulling image for test
+#        run: |
+#          docker pull quay.io/jonathanvila/tackle-pathfinder:0.0.1-SNAPSHOT-native
+#          docker tag quay.io/jonathanvila/tackle-pathfinder:0.0.1-SNAPSHOT-native quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native
+#          minikube cache add quay.io/${{ github.repository_owner }}/tackle-pathfinder:0.0.1-SNAPSHOT-native
+#          minikube cache list
+      - name: Build Pathfinder image and push it to the minikube docker host
         run: |
-          docker pull quay.io/jonathanvila/tackle-pathfinder:0.0.1-SNAPSHOT-native
-          docker tag quay.io/jonathanvila/tackle-pathfinder:0.0.1-SNAPSHOT-native quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native
+          set -x
+          cd ${{github.workspace}}
+          ./mvnw -U -B package -DskipTests -Pnative \
+            -Dquarkus.container-image.push=false \
+            -Dquarkus.container-image.build=true \
+            -Dquarkus.container-image.group=${{ github.repository_owner }} \
+            -Dquarkus.container-image.additional-tags=latest-jar \
+            -Dquarkus.container-image.tag=0.0.1-SNAPSHOT-native \
+            -Dquarkus.container-image.registry=quay.io \
+            -Dquarkus.native.container-build=true
           minikube cache add quay.io/${{ github.repository_owner }}/tackle-pathfinder:0.0.1-SNAPSHOT-native
           minikube cache list
-
-      #- name: Build Pathfinder image and push it to the minikube docker host
-      #  run: |
-      #    set -x
-      #    cd ${{github.workspace}}
-      #    ./mvnw -U -B package -DskipTests -Pnative \
-      #      -Dquarkus.container-image.push=false \
-      #      -Dquarkus.container-image.build=true \
-      #      -Dquarkus.container-image.group=${{ github.repository_owner }} \
-      #      -Dquarkus.container-image.additional-tags=latest-jar \
-      #      -Dquarkus.container-image.tag=0.0.1-SNAPSHOT-native \
-      #      -Dquarkus.container-image.registry=quay.io \
-      #      -Dquarkus.native.container-build=true
-      #    minikube cache add quay.io/${{ github.repository_owner }}/tackle-pathfinder:0.0.1-SNAPSHOT-native
-      #    minikube cache list
       - name: Check during max 2 minutes to allow Minikube ingress to be ready
         timeout-minutes: 2
         run: |
@@ -52,13 +51,10 @@ jobs:
           done
       - name: Deploy Pathfinder on minikube
         run: |
+          set -x
           kubectl create namespace tackle
           kubectl apply -f src/test/resources/test-deployment.yaml -n tackle
           sed 's/imagePullPolicy: Always/imagePullPolicy: Never/g' src/main/kubernetes/tackle-pathfinder.yaml | kubectl apply -n tackle -f -
-      - name: Sleep for 60 seconds to allow operator to start
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '60s'
       - name: Print status on Minikube
         run : |
           set -x
@@ -77,73 +73,7 @@ jobs:
           kubectl describe deployment tackle-pathfinder -n tackle
       - name: API simple tests
         run: .github/scripts/check_api.sh
-
-# Microcks
-      - name: Install Helm
-        run: |
-          wget https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz
-          tar -zxvf helm-v3.5.3-linux-amd64.tar.gz
-      - name: Install Microcks on minikube
-        run: |
-          ./linux-amd64/helm repo add microcks https://microcks.io/helm
-          kubectl create namespace microcks
-          ./linux-amd64/helm install microcks microcks/microcks --version 1.2.0 \
-            --namespace microcks --set microcks.url=microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io \
-            --set keycloak.url=keycloak.${{steps.getMinikubeIp.outputs.value}}.nip.io
-      - name: Check during max 10 minutes to allow objects to be created and ready
-        timeout-minutes: 10
-        run: |
-          while [[ ! "$(kubectl rollout status deployment microcks -n microcks)" =~ "successfully" ]]; do
-            sleep 15
-          done
-      - name: Check during max 2 minutes to allow Minikube ingress to be ready
-        timeout-minutes: 2
-        run: |
-          while [[ ! "$(kubectl rollout status deployment ingress-nginx-controller -n kube-system)" =~ "successfully" ]]; do
-            sleep 15
-          done
-      - name: Print status on Minikube
-        run : |
-          kubectl get pods -n tackle
-          kubectl get pods -n microcks
-          kubectl rollout status deployment ingress-nginx-controller -n kube-system
-        shell: bash
-      - name: Microcks API load
-        run: |
-          set -x
-          response="$(curl -X POST https://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/artifact/upload -H 'accept: text/plain' -H 'Content-Type: multipart/form-data' -F 'file=@src/main/resources/META-INF/openapi.json;type=application/json' -L -k)"
-          test "$response"="tackle-pathfinder:0.0.2"
-      - name: Get Keycloak Token
-        id: getKeycloakToken
-        run: |
-          echo "::set-output name=value::$(curl -X POST http://${{steps.getMinikubeIp.outputs.value}}/auth/realms/quarkus/protocol/openid-connect/token --user backend-service:secret -H 'content-type: application/x-www-form-urlencoded' -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token')"
-      - name: Print status on Minikube
-        run : |
-          kubectl get pods -n tackle
-          kubectl get pods -n microcks
-          kubectl rollout status deployment ingress-nginx-controller -n kube-system
-        shell: bash
-      - name: Microcks execution
-        uses: microcks/test-github-action@v1
-        with:
-          apiNameAndVersion: 'tackle-pathfinder:0.0.2'
-          testEndpoint: "http://${{steps.getMinikubeIp.outputs.value}}/pathfinder"
-          runner: OPEN_API_SCHEMA
-          microcksURL: "https://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/"
-          keycloakClientId:  microcks-serviceaccount
-          keycloakClientSecret:  ab54d329-e435-41ae-a900-ec6b3fe15c54
-          waitFor: '10sec'
-          verbose: true
-          insecure: true
-          operationsHeaders: |
-            {
-              "globals": [
-                {
-                  "name": "Authorization",
-                  "values": "Bearer ${{steps.getKeycloakToken.outputs.value}} "
-                }
-              ]
-            }
+        timeout-minutes: 5
 
 
 
