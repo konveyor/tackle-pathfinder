@@ -51,7 +51,7 @@
         updateUser varchar(255),
         option varchar(500) not null,
         singleoption_order int4 not null,
-        risk int4 not null,
+        risk varchar(255) not null,
         selected boolean not null,
         question_id int8 not null,
         primary key (id)

@@ -20,11 +20,10 @@ import java.util.List;
 @Where(clause = "deleted = false")
 @ToString
 public class Questionnaire extends AbstractEntity {
-  
-    @Basic(optional = false)
     @Column(name="language_code", nullable = false)
     String languageCode = "EN";
 
+    @Basic(optional = false)
     String name;
 
     @OneToMany(mappedBy="questionnaire")

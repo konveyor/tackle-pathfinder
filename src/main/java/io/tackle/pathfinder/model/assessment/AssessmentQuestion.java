@@ -8,6 +8,7 @@ import org.hibernate.annotations.Where;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -20,17 +21,28 @@ import java.util.List;
 @Where(clause = "deleted = false")
 @ToString
 public class AssessmentQuestion extends AbstractEntity {
-    @Column(name="question_order")
+    @Column(name="question_order", nullable = false)
     int order;
+
+    @Column(nullable = false)
     String type;
+
+    @Column(nullable = false)
     String name;
+
+    @Column(length = 1000 )
     String tooltip;
-    String text;
+
+    @Column(length = 500 )
+    String questionText;
+
+    @Column(length = 1000)
     String comment;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
+    @JoinColumn(name="category_id", nullable = false)
     AssessmentCategory category;
-    
+
     @OneToMany(mappedBy="question")
     List<AssessmentSingleOption> singleOptions;
 }

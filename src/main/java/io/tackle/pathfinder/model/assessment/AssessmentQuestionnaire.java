@@ -24,20 +24,20 @@ import java.util.List;
 @Where(clause = "deleted = false")
 @ToString
 public class AssessmentQuestionnaire extends AbstractEntity {
-    @Basic(optional = false)
     @Column(name="language_code", nullable = false)
     String languageCode = "EN";
 
+    @Basic(optional = false)
     String name;
 
     @OneToOne
-    @JoinColumn(name = "assessmentId")
+    @JoinColumn(name = "assessment_id", nullable = false)
     Assessment assessment;
 
     @OneToMany(mappedBy="questionnaire")
     List<AssessmentCategory> categories;
 
     @ManyToOne
-    @JoinColumn(name="questionnaireId")
+    @JoinColumn(name="questionnaire_id", nullable = false)
     Questionnaire questionnaire;
 }

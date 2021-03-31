@@ -23,10 +23,11 @@ import java.util.List;
 public class AssessmentCategory extends AbstractEntity {
     @Column(name="category_order")
     int order;
+
     String name;
 
     @ManyToOne
-    @JoinColumn(name="questionnaireId")
+    @JoinColumn(name="questionnaire_id")
     AssessmentQuestionnaire questionnaire;
 
     @OneToMany(mappedBy = "category")

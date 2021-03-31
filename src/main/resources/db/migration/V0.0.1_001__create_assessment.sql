@@ -1,8 +1,16 @@
--- TABLEs
-CREATE TABLE assessment (
-    LIKE audited_table_template INCLUDING ALL,
+-- Hibernate Sequence
+CREATE SEQUENCE IF NOT EXISTS hibernate_sequence START 1 INCREMENT 1 ;
 
-    status code_type NULL,
-    application_id id_type,
-    notes big_text_type NULL
-);
+-- TABLEs
+    create table assessment (
+       id int8 not null,
+        createTime timestamp,
+        createUser varchar(255),
+        deleted boolean,
+        updateTime timestamp,
+        updateUser varchar(255),
+        application_id int8 not null,
+        notes varchar(1000),
+        status varchar(255),
+        primary key (id)
+    )

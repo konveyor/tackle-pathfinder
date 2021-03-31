@@ -6,6 +6,7 @@ import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
+import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -21,12 +22,14 @@ import java.util.List;
 @Where(clause = "deleted = false")
 @ToString
 public class Category extends AbstractEntity {
-    @Column(name="category_order")
+    @Column(name="category_order", nullable = false)
     int order;
+
+    @Basic(optional=false)
     String name;
 
     @ManyToOne
-    @JoinColumn(name="questionnaireId")
+    @JoinColumn(name="questionnaire_id", nullable = false)
     Questionnaire questionnaire;
 
     @OneToMany(mappedBy = "category")
