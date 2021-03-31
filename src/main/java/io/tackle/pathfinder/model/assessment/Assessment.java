@@ -33,5 +33,5 @@ public class Assessment extends AbstractEntity {
     public String notes;
 
     @OneToOne(mappedBy = "assessment")
-    AssessmentQuestionnaire assessmentQuestionnaire;
+    public AssessmentQuestionnaire assessmentQuestionnaire;
 }

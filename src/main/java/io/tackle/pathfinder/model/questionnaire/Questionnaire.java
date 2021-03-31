@@ -1,6 +1,7 @@
  package io.tackle.pathfinder.model.questionnaire;
 
 import io.tackle.commons.entities.AbstractEntity;
+import lombok.Data;
 import lombok.ToString;
 import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
@@ -21,11 +22,11 @@ import java.util.List;
 @ToString
 public class Questionnaire extends AbstractEntity {
     @Column(name="language_code", nullable = false)
-    String languageCode = "EN";
+    public String languageCode = "EN";
 
     @Basic(optional = false)
-    String name;
+    public String name;
 
     @OneToMany(mappedBy="questionnaire")
-    List<Category> categories;
+    public List<Category> categories;
 }
