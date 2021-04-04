@@ -1,0 +1,49 @@
+name: 'Microcks Test GitHub action'
+author: 'Microcks.io'
+description: 'Launch a Microcks test on an API endpoint'
+inputs:
+  apiNameAndVersion:
+    description: "<apiName:apiVersion>: Service to test reference. Exemple: 'Beer Catalog API:0.9'"
+    required: true
+  testEndpoint:
+    description: 'URL where is deployed implementation to test'
+    required: true
+  runner:
+    description: 'Test strategy (one of: HTTP, SOAP, SOAP_UI, POSTMAN, OPEN_API_SCHEMA, ASYNC_API_SCHEMA)'
+    required: true
+    default: 'HTTP'
+  microcksURL:
+    description: 'Microcks instance API endpoint'
+    required: true
+  keycloakClientId:
+    description: 'Keycloak Realm Service Account ClientId'
+    required: true
+  keycloakClientSecret:
+    description: 'Keycloak Realm Service Account ClientSecret'
+    required: true
+  waitFor:
+    description: 'Time to wait for test to finish (int + one of: milli, sec, min)'
+    required: false
+    default: '5sec'
+  secretName:
+    description: 'The name of a Secret to use for connecting test endpoint'
+    required: false
+    default: ''
+  operationsHeaders:
+    description: 'JSON that override some operations headers for the tests to launch'
+    required: false
+    default: ''
+runs:
+  using: 'docker'
+  image: 'quay.io/microcks/microcks-cli:0.3.0'
+  entrypoint: '/usr/bin/bash'
+  args:
+  - '-c'
+  - >-
+    microcks-cli test '${{ inputs.apiNameAndVersion }}' ${{ inputs.testEndpoint }} ${{ inputs.runner }} \
+      --microcksURL=${{ inputs.microcksURL }} --waitFor=${{ inputs.waitFor }} --secretName='${{ inputs.secretName }}' \
+      --keycloakClientId=${{ inputs.keycloakClientId }} --keycloakClientSecret=${{ inputs.keycloakClientSecret }} \
+      --insecure --verbose --operationsHeaders='${{ inputs.operationsHeaders }}'
+branding:
+  icon: 'upload-cloud'  
+  color: 'blue'
