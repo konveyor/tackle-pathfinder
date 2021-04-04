@@ -126,7 +126,7 @@ jobs:
             sleep 15
           done
       - name: Microcks execution
-        uses: microcks/test-github-action@v1
+        uses: ./.github/actions/microcks-test-action
         with:
           apiNameAndVersion: 'tackle-pathfinder:0.0.2'
           testEndpoint: "http://${{steps.getMinikubeIp.outputs.value}}/pathfinder"
