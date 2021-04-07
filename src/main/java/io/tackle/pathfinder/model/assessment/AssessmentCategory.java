@@ -9,6 +9,7 @@ import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -35,6 +36,6 @@ public class AssessmentCategory extends AbstractEntity {
     @JoinColumn(name="questionnaire_id", referencedColumnName="id")
     public AssessmentQuestionnaire questionnaire;
 
-    @OneToMany(mappedBy = "category")
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     public List<AssessmentQuestion> questions;
 }

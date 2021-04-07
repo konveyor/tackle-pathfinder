@@ -11,6 +11,7 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.Basic;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -30,6 +31,7 @@ import java.util.List;
 @NoArgsConstructor
 public class AssessmentQuestionnaire extends AbstractEntity {
     @Column(name="language_code", nullable = false)
+    @Builder.Default
     public String languageCode = "EN";
 
     @Basic(optional = false)
@@ -39,7 +41,7 @@ public class AssessmentQuestionnaire extends AbstractEntity {
     @JoinColumn(name = "assessment_id", referencedColumnName="id", nullable = false)
     public Assessment assessment;
 
-    @OneToMany(mappedBy="questionnaire")
+    @OneToMany(mappedBy="questionnaire", cascade = CascadeType.ALL)
     public List<AssessmentCategory> categories;
 
     @ManyToOne

@@ -4,7 +4,6 @@ import io.tackle.commons.entities.AbstractEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -37,13 +36,10 @@ public class Question extends AbstractEntity {
     public String name;
 
     @Column(length = 1000)
-    public String tooltip;
+    public String description;
 
-    @Column(length = 500, nullable = false)
+    @Column(name="question_text", length = 500, nullable = false)
     public String questionText;
-
-    @Column(length = 1000)
-    public String comment;
 
     @ManyToOne
     @JoinColumn(name="category_id", nullable = false)

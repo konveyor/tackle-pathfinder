@@ -9,6 +9,7 @@ import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -36,9 +37,9 @@ public class AssessmentQuestion extends AbstractEntity {
     public String name;
 
     @Column(length = 1000 )
-    public String tooltip;
+    public String description;
 
-    @Column(length = 500 )
+    @Column(name="question_text", length = 500 )
     public String questionText;
 
     @Column(length = 1000)
@@ -48,6 +49,6 @@ public class AssessmentQuestion extends AbstractEntity {
     @JoinColumn(name="category_id", referencedColumnName="id", nullable = false)
     public AssessmentCategory category;
 
-    @OneToMany(mappedBy="question")
+    @OneToMany(mappedBy="question", cascade = CascadeType.ALL)
     public List<AssessmentSingleOption> singleOptions;
 }

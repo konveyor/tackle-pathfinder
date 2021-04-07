@@ -1,5 +1,5 @@
 package io.tackle.pathfinder.model;
 
 public enum Risk {
-    RED, AMBER, GREEN
+    UNKNOWN, RED, AMBER, GREEN
 }
