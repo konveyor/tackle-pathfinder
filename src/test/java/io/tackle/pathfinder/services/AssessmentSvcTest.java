@@ -35,6 +35,8 @@ public class AssessmentSvcTest {
         // same categories
         log.info("Assess Categories : " + assessment.assessmentQuestionnaire.categories.size());
         log.info("Categories : " + questionnaire.categories.size());
+        assertThat(assessment.assessmentQuestionnaire.categories.size()).isGreaterThan(0);
+        assertThat(questionnaire.categories.size()).isGreaterThan(0);
         assertThat(assessment.assessmentQuestionnaire.categories.size()).isEqualTo(questionnaire.categories.size());
 
         // same questions
