@@ -11,6 +11,7 @@ import io.tackle.pathfinder.dto.ApplicationDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.model.assessment.Assessment;
+import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.services.AssessmentSvc;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,9 +45,11 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 	@BeforeEach
 	@Transactional
 	public void init() {
-		System.out.println("Count : " + Assessment.count());
-		System.out.println("DeleteAll : " + Assessment.deleteAll());
-		System.out.println("Count : " + Assessment.count());
+		System.out.println("Assessments count : " + Assessment.count());
+		System.out.println("Questionnaire count : " + Questionnaire.count());
+		Assessment.streamAll().forEach(e -> e.delete());
+		System.out.println("After delete Assessments count : " + Assessment.count());
+		System.out.println("After delete Questionnaire count : " + Questionnaire.count());
 	}
 
     @Test

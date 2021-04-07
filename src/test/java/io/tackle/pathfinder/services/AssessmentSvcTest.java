@@ -1,8 +1,6 @@
 package io.tackle.pathfinder.services;
 
 import io.quarkus.test.junit.QuarkusTest;
-import io.tackle.pathfinder.dto.AssessmentStatus;
-import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
@@ -27,9 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class AssessmentSvcTest {
     @Inject
     AssessmentSvc assessmentSvc;
-
-    @Inject
-    AssessmentMapper assessmentMapper;
 
     @Test
     @Transactional
@@ -94,7 +89,7 @@ public class AssessmentSvcTest {
 
     private Question createQuestion(Category category, int i) {
         Question question = Question.builder().name("question-" + i).order(i).questionText("questionText-" + i)
-                .tooltip("tooltip-" + i).type("SINGLE").build();
+                .description("tooltip-" + i).type("SINGLE").build();
         question.persistAndFlush();
 
         question.singleOptions = IntStream.range(1, new Random().nextInt(15) + 1)
