@@ -1,4 +1,16 @@
-    create table category (
+    create table questionnaire (
+       id int8 not null,
+        createTime timestamp,
+        createUser varchar(255),
+        deleted boolean,
+        updateTime timestamp,
+        updateUser varchar(255),
+        language_code varchar(255) not null,
+        name varchar(255) not null,
+        primary key (id)
+    );
+   
+   create table category (
        id int8 not null,
         createTime timestamp,
         createUser varchar(255),
@@ -18,25 +30,12 @@
         deleted boolean,
         updateTime timestamp,
         updateUser varchar(255),
-        comment varchar(1000),
         name varchar(255) not null,
         question_order int4 not null,
-        questionText varchar(500) not null,
-        tooltip varchar(1000),
+        question_text varchar(500) not null,
+        description varchar(1000),
         type varchar(255) not null,
         category_id int8,
-        primary key (id)
-    );
-
-    create table questionnaire (
-       id int8 not null,
-        createTime timestamp,
-        createUser varchar(255),
-        deleted boolean,
-        updateTime timestamp,
-        updateUser varchar(255),
-        language_code varchar(255) not null,
-        name varchar(255) not null,
         primary key (id)
     );
 
