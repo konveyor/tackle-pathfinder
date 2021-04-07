@@ -1,6 +1,9 @@
 package io.tackle.pathfinder.model.assessment;
 
 import io.tackle.commons.entities.AbstractEntity;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
@@ -19,17 +22,19 @@ import java.util.List;
 @Table(name = "assessment_category")
 @SQLDelete(sql = "UPDATE assessment_category SET deleted = true WHERE id = ?", check = ResultCheckStyle.COUNT)
 @Where(clause = "deleted = false")
-@ToString
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AssessmentCategory extends AbstractEntity {
     @Column(name="category_order")
-    int order;
+    public int order;
 
-    String name;
+    public String name;
 
     @ManyToOne
-    @JoinColumn(name="questionnaire_id")
-    AssessmentQuestionnaire questionnaire;
+    @JoinColumn(name="questionnaire_id", referencedColumnName="id")
+    public AssessmentQuestionnaire questionnaire;
 
     @OneToMany(mappedBy = "category")
-    List<AssessmentQuestion> questions;
+    public List<AssessmentQuestion> questions;
 }

@@ -1,6 +1,9 @@
 package io.tackle.pathfinder.model.questionnaire;
 
 import io.tackle.commons.entities.AbstractEntity;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
@@ -20,30 +23,32 @@ import java.util.List;
 @Table(name = "question")
 @SQLDelete(sql = "UPDATE question SET deleted = true WHERE id = ?", check = ResultCheckStyle.COUNT)
 @Where(clause = "deleted = false")
-@ToString
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Question extends AbstractEntity {
     @Column(name="question_order", nullable = false)
-    int order;
+    public int order;
 
     @Basic(optional = false)
-    String type;
+    public String type;
 
     @Basic(optional = false)
-    String name;
+    public String name;
 
     @Column(length = 1000)
-    String tooltip;
+    public String tooltip;
 
     @Column(length = 500, nullable = false)
-    String questionText;
+    public String questionText;
 
     @Column(length = 1000)
-    String comment;
+    public String comment;
 
     @ManyToOne
     @JoinColumn(name="category_id", nullable = false)
-    Category category;
+    public Category category;
 
     @OneToMany(mappedBy="question")
-    List<SingleOption> singleOptions;
+    public List<SingleOption> singleOptions;
 }

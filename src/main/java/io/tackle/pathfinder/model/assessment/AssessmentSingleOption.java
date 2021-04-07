@@ -2,6 +2,9 @@ package io.tackle.pathfinder.model.assessment;
 
 import io.tackle.commons.entities.AbstractEntity;
 import io.tackle.pathfinder.model.Risk;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
@@ -20,22 +23,24 @@ import javax.persistence.Table;
 @Table(name = "assessment_singleoption")
 @SQLDelete(sql = "UPDATE assessment_singleoption SET deleted = true WHERE id = ?", check = ResultCheckStyle.COUNT)
 @Where(clause = "deleted = false")
-@ToString
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AssessmentSingleOption extends AbstractEntity {
     @Column(name="singleoption_order", nullable = false)
-    int order;
+    public int order;
 
     @Basic(optional = false)
     @Enumerated(value = EnumType.STRING)
-    Risk risk;
+    public Risk risk;
 
     @Column(length = 500, nullable = false)
-    String option;
+    public String option;
 
-    @JoinColumn(name="question_id", nullable=false)
+    @JoinColumn(name="question_id", referencedColumnName="id", nullable=false)
     @ManyToOne
-    AssessmentQuestion question;
+    public AssessmentQuestion question;
 
     @Basic(optional = false)
-    boolean selected;
+    public boolean selected;
 }
