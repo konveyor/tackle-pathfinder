@@ -1,7 +1,7 @@
 package io.tackle.pathfinder.model.assessment;
 
-import io.tackle.commons.entities.AbstractEntity;
 import io.tackle.pathfinder.dto.AssessmentStatus;
+import io.tackle.pathfinder.model.AbstractEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -22,7 +22,7 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "assessment")
 @SQLDelete(sql = "UPDATE assessment SET deleted = true WHERE id = ?", check = ResultCheckStyle.COUNT)
-@Where(clause = "deleted = false")
+@Where(clause = "deleted is not true")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

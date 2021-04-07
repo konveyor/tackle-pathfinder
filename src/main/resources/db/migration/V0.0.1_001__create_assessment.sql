@@ -6,7 +6,7 @@ CREATE SEQUENCE IF NOT EXISTS hibernate_sequence START 1 INCREMENT 1 ;
        id int8 not null,
         createTime timestamp,
         createUser varchar(255),
-        deleted boolean,
+        deleted boolean not null default false,
         updateTime timestamp,
         updateUser varchar(255),
         application_id int8 not null,
