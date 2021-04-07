@@ -27,7 +27,7 @@
        id int8 not null,
         createTime timestamp,
         createUser varchar(255),
-        deleted boolean not null default false
+        deleted boolean not null default false,
         updateTime timestamp,
         updateUser varchar(255),
         name varchar(255) not null,
@@ -43,7 +43,7 @@
        id int8 not null,
         createTime timestamp,
         createUser varchar(255),
-        deleted boolean not null default false
+        deleted boolean not null default false,
         updateTime timestamp,
         updateUser varchar(255),
         option varchar(500) not null,
