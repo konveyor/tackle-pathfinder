@@ -19,10 +19,10 @@ import java.util.List;
 @Entity
 @Table(name = "questionnaire")
 @SQLDelete(sql = "UPDATE questionnaire SET deleted = true WHERE id = ?", check = ResultCheckStyle.COUNT)
-@Where(clause = "deleted is not true")
+@Where(clause = "deleted = false")
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor
+@AllArgsConstructor 
 public class Questionnaire extends AbstractEntity {
     @Column(name="language_code", nullable = false)
     public String languageCode = "EN";
