@@ -40,8 +40,6 @@ public class AssessmentSvcTest {
         AssessmentQuestionnaire assessmentQuestionnaire = assessment.assessmentQuestionnaire;
         List<AssessmentCategory> categoriesAssessQuestionnaire = assessmentQuestionnaire.categories;
 
-
-
         assertThat(categoriesAssessQuestionnaire.size()).isGreaterThan(0);
         assertThat(categories.size()).isGreaterThan(0);
         assertThat(assessmentQuestionnaire.categories.size()).isEqualTo(categories.size());
@@ -63,12 +61,14 @@ public class AssessmentSvcTest {
         Category firstCategory = categories.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get();
 
         assertThat(assessFirstCategory.name.equals(firstCategory.name) && assessFirstCategory.order == firstCategory.order).isTrue();
-        assertThat(assessFirstCategory.questions.get(assessFirstCategory.questions.size() - 1).questionText)
-                .isEqualTo(firstCategory.questions.get(firstCategory.questions.size() - 1).questionText);
 
-                List<AssessmentSingleOption> aSingleOptions = assessFirstCategory.questions.get(assessFirstCategory.questions.size() - 1).singleOptions;
-        List<SingleOption> qSingleOptions = firstCategory.questions.get(firstCategory.questions.size() - 1).singleOptions;
-        assertThat(aSingleOptions.get(1).option).isEqualTo(qSingleOptions.get(1).option);
+        assertThat(assessFirstCategory.questions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().questionText)
+                .isEqualTo(firstCategory.questions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().questionText);
+
+        List<AssessmentSingleOption> aSingleOptions = assessFirstCategory.questions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().singleOptions;
+        List<SingleOption> qSingleOptions = firstCategory.questions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().singleOptions;
+        assertThat(aSingleOptions.size()).isEqualTo(qSingleOptions.size());
+        assertThat(aSingleOptions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().option).isEqualTo(qSingleOptions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().option);
 
     }
 
@@ -83,8 +83,7 @@ public class AssessmentSvcTest {
         Questionnaire questionnaire = Questionnaire.builder().name("Test").languageCode("EN").build();
         questionnaire.persistAndFlush();
 
-        questionnaire.categories = IntStream.range(1, new Random().nextInt(15) + 1)
-                .mapToObj(e -> createCategory(questionnaire, e)).collect(Collectors.toList());
+        questionnaire.categories = IntStream.range(1, 10).mapToObj(e -> createCategory(questionnaire, e)).collect(Collectors.toList());
 
         return questionnaire;
     }
@@ -94,7 +93,7 @@ public class AssessmentSvcTest {
                 .build();
         category.persistAndFlush();
 
-        category.questions = IntStream.range(1, new Random().nextInt(15) + 1).mapToObj(e -> createQuestion(category, e))
+        category.questions = IntStream.range(1, 20).mapToObj(e -> createQuestion(category, e))
                 .collect(Collectors.toList());
         return category;
     }
@@ -104,7 +103,7 @@ public class AssessmentSvcTest {
                 .description("tooltip-" + i).type("SINGLE").build();
         question.persistAndFlush();
 
-        question.singleOptions = IntStream.range(1, new Random().nextInt(15) + 1)
+        question.singleOptions = IntStream.range(1, new Random().nextInt(10) + 3)
                 .mapToObj(e -> createSingleOption(question, e)).collect(Collectors.toList());
 
         return question;
