@@ -11,6 +11,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -40,6 +41,13 @@ public class AssessmentsResource {
       .entity(service.createAssessment(data.getApplicationId()))
       .type(MediaType.APPLICATION_JSON)
       .build();
+  }
+
+  @GET
+  @Path("{assessmentId}")
+  @Produces("application/json")
+  public Response getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId) {
+    return Response.ok(service.getAssessmentDtoByAssessmentId(assessmentId)).build();
   }
 
 }

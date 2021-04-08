@@ -99,4 +99,8 @@ public class AssessmentSvc {
         return Questionnaire.<Questionnaire>streamAll().findFirst().map(e -> e.id).orElseThrow();
     }
 
+    public Object getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
+        return null;
+    }
+
 }

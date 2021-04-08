@@ -24,6 +24,7 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.is;
 
 @QuarkusTest
 @QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
@@ -149,5 +150,22 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
 			.log().all()
 			.statusCode(400);
+	}
+
+	@Test
+	public void given_Assessment_When_GetAssessment_Then_ReturnsAssessmentQuestionnaire() {
+		given()
+		  .contentType(ContentType.JSON)
+		  .accept(ContentType.JSON)
+		.when()
+			.get("/assessments/20")
+		.then()
+			.statusCode(200)
+			.body("assessment.questionnaire.size()", is(1))
+			.body("assessment.questionnaire.categories.size()", is(10))
+			.body("assessment.questionnaire.categories[9].questions.size()", is(15))
+			.body("assessment.questionnaire.categories[9].questions[14].options.size()", is(5))
+			.body("assessment.questionnaire.categories[9].questions[14].options[4].option", is("example"));
+
 	}
 }
