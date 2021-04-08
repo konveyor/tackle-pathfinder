@@ -13,6 +13,7 @@ import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.services.AssessmentSvc;
+import lombok.extern.java.Log;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -38,6 +39,7 @@ import static org.hamcrest.Matchers.greaterThan;
                 @ResourceArg(name = KeycloakTestResource.REALM_NAME, value = "quarkus")
         }
 )
+@Log
 public class AssessmentsResourceTest extends SecuredResourceTest {
 	@Inject
 	AssessmentSvc assessmentSvc;
@@ -45,11 +47,11 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 	@BeforeEach
 	@Transactional
 	public void init() {
-		System.out.println("Assessments count : " + Assessment.count());
-		System.out.println("Questionnaire count : " + Questionnaire.count());
+		log.info("Assessments count : " + Assessment.count());
+		log.info("Questionnaire count : " + Questionnaire.count());
 		Assessment.streamAll().forEach(e -> e.delete());
-		System.out.println("After delete Assessments count : " + Assessment.count());
-		System.out.println("After delete Questionnaire count : " + Questionnaire.count());
+		log.info("After delete Assessments count : " + Assessment.count());
+		log.info("After delete Questionnaire count : " + Questionnaire.count());
 	}
 
     @Test

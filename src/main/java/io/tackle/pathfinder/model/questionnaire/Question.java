@@ -21,7 +21,7 @@ import java.util.List;
 @Entity
 @Table(name = "question")
 @SQLDelete(sql = "UPDATE question SET deleted = true WHERE id = ?", check = ResultCheckStyle.COUNT)
-@Where(clause = "deleted = false")
+@Where(clause = "deleted is not true")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
