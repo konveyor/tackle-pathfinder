@@ -21,7 +21,6 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,7 +28,7 @@ import java.util.Optional;
 @Log
 public class AssessmentSvc {
     @Inject
-    AssessmentMapper mapper;
+    public AssessmentMapper mapper;
 
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
