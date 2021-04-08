@@ -132,13 +132,8 @@ jobs:
         run: |
           curl -Lo microcks-cli https://github.com/microcks/microcks-cli/releases/download/0.3.0/microcks-cli-linux-amd64 && chmod +x microcks-cli
           curl -k https://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/keycloak/config
-          curl -k https://keycloak.${{steps.getMinikubeIp.outputs.value}}.nip.io//auth/realms/microcks/.well-known/openid-configuration
+          curl -k https://keycloak.${{steps.getMinikubeIp.outputs.value}}.nip.io/auth/realms/microcks/.well-known/openid-configuration
           ./microcks-cli test 'tackle-pathfinder:0.0.2' http://${{steps.getMinikubeIp.outputs.value}}/pathfinder OPEN_API_SCHEMA \
             --microcksURL=https://microcks.${{steps.getMinikubeIp.outputs.value}}.nip.io/api/ --waitFor=10sec --secretName='' \
             --keycloakClientId=microcks-serviceaccount --keycloakClientSecret=ab54d329-e435-41ae-a900-ec6b3fe15c54 \
-            --insecure --verbose --operationsHeaders='{\"globals\": [ { \"name\": \"Authorization\", \"values\": \"Bearer ${{steps.getKeycloakToken.outputs.value}} \" } ] }'
-
-
-
-
-
+            --insecure --verbose --operationsHeaders='{"globals": [{"name":"Authorization", "values": "Bearer ${{steps.getKeycloakToken.outputs.value}}"}]}'
