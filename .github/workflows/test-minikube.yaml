@@ -130,7 +130,7 @@ jobs:
           done
       - name: Microcks-cli test execution
         run: |
-          curl -Lo microcks-cli https://github.com/microcks/microcks-cli/releases/download/0.3.0/microcks-cli-linux-amd64
+          curl -Lo microcks-cli https://github.com/microcks/microcks-cli/releases/download/0.3.0/microcks-cli-linux-amd64 && chmod +x microcks-cli
           ./microcks-cli test 'tackle-pathfinder:0.0.2' http://192.168.49.2/pathfinder OPEN_API_SCHEMA \
             --microcksURL=https://microcks.192.168.49.2.nip.io/api/ --waitFor=10sec --secretName='' \
             --keycloakClientId=microcks-serviceaccount --keycloakClientSecret=ab54d329-e435-41ae-a900-ec6b3fe15c54 \
