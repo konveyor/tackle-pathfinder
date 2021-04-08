@@ -4,6 +4,8 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
+import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
+import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
@@ -14,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -28,37 +32,43 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
-    public void given_Questionnaire_when_CopyQuestionnaireIntoAssessment_should_BeIdentical() {
+    public void given_Questionnaire_when_CopyQuestionnaireIntoAssessment_should_BeIdentical() throws InterruptedException {
         Questionnaire questionnaire = createQuestionnaire();
-        Assessment assessment = createAssessment(questionnaire.id);
+        List<Category> categories = questionnaire.categories;
 
-        // same categories
-        log.info("Assess Categories : " + assessment.assessmentQuestionnaire.categories.size());
-        log.info("Categories : " + questionnaire.categories.size());
-        assertThat(assessment.assessmentQuestionnaire.categories.size()).isGreaterThan(0);
-        assertThat(questionnaire.categories.size()).isGreaterThan(0);
-        assertThat(assessment.assessmentQuestionnaire.categories.size()).isEqualTo(questionnaire.categories.size());
+        Assessment assessment = createAssessment(questionnaire.id);
+        AssessmentQuestionnaire assessmentQuestionnaire = assessment.assessmentQuestionnaire;
+        List<AssessmentCategory> categoriesAssessQuestionnaire = assessmentQuestionnaire.categories;
+
+
+
+        assertThat(categoriesAssessQuestionnaire.size()).isGreaterThan(0);
+        assertThat(categories.size()).isGreaterThan(0);
+        assertThat(assessmentQuestionnaire.categories.size()).isEqualTo(categories.size());
 
         // same questions
-        assertThat(assessment.assessmentQuestionnaire.categories.stream()
+        assertThat(assessmentQuestionnaire.categories.stream()
                 .collect(Collectors.summarizingInt(p -> p.questions.size())).getSum())
-                        .isEqualTo(questionnaire.categories.stream()
+                        .isEqualTo(categories.stream()
                                 .collect(Collectors.summarizingInt(p -> p.questions.size())).getSum());
 
         // same options
-        assertThat(assessment.assessmentQuestionnaire.categories.stream()
+        assertThat(assessmentQuestionnaire.categories.stream()
                 .mapToInt(e -> e.questions.stream().mapToInt(f -> f.singleOptions.size()).sum()).sum())
-                        .isEqualTo(questionnaire.categories.stream()
+                        .isEqualTo(categories.stream()
                                 .mapToInt(e -> e.questions.stream().mapToInt(f -> f.singleOptions.size()).sum()).sum());
 
         // check few values
-        AssessmentCategory assessCategory = assessment.assessmentQuestionnaire.categories.stream().findFirst().get();
-        Category category = questionnaire.categories.stream().findFirst().get();
-        assertThat(assessCategory.name.equals(category.name) && assessCategory.order == category.order).isTrue();
-        assertThat(assessCategory.questions.get(assessCategory.questions.size() - 1).questionText)
-                .isEqualTo(category.questions.get(category.questions.size() - 1).questionText);
-        assertThat(assessCategory.questions.get(assessCategory.questions.size() - 1).singleOptions.get(1).option)
-                .isEqualTo(category.questions.get(category.questions.size() - 1).singleOptions.get(1).option);
+        AssessmentCategory assessFirstCategory = categoriesAssessQuestionnaire.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get();
+        Category firstCategory = categories.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get();
+
+        assertThat(assessFirstCategory.name.equals(firstCategory.name) && assessFirstCategory.order == firstCategory.order).isTrue();
+        assertThat(assessFirstCategory.questions.get(assessFirstCategory.questions.size() - 1).questionText)
+                .isEqualTo(firstCategory.questions.get(firstCategory.questions.size() - 1).questionText);
+
+                List<AssessmentSingleOption> aSingleOptions = assessFirstCategory.questions.get(assessFirstCategory.questions.size() - 1).singleOptions;
+        List<SingleOption> qSingleOptions = firstCategory.questions.get(firstCategory.questions.size() - 1).singleOptions;
+        assertThat(aSingleOptions.get(1).option).isEqualTo(qSingleOptions.get(1).option);
 
     }
 
