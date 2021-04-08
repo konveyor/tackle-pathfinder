@@ -1,5 +1,6 @@
 package io.tackle.pathfinder.services;
 
+import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
@@ -19,6 +20,7 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,8 +101,10 @@ public class AssessmentSvc {
         return Questionnaire.<Questionnaire>streamAll().findFirst().map(e -> e.id).orElseThrow();
     }
 
-    public Object getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
-        return null;
+    public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
+        log.info("Requesting Assessment " + assessmentId);
+        return mapper.assessmentToAssessmentDto(
+                (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(() -> new NotFoundException()));
     }
 
 }
