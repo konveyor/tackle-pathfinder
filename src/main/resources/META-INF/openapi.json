@@ -2,7 +2,12 @@
     "openapi": "3.0.2",
     "info": {
         "title": "tackle-pathfinder",
-        "version": "0.0.1"
+        "version": "0.0.1",
+        "description": "Tackle Pathfinder , v0.0.1",
+        "contact": {
+            "name": "Konveyor",
+            "url": "http://github.com/konveyor/tackle-pathfinder"
+        }
     },
     "paths": {
         "/assessments": {
@@ -12,9 +17,6 @@
                 "parameters": [
                     {
                         "examples": {
-                            "application_null": {
-                                "value": ""
-                            },
                             "application_noassessed": {
                                 "value": "1000"
                             },
@@ -61,10 +63,15 @@
                     },
                     "400": {
                         "content": {
-                            "text/xml": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                },
                                 "examples": {
                                     "application_null": {
-                                        "value": ""
+                                        "value": {
+
+                                        }
                                     }
                                 }
                             }
@@ -85,7 +92,7 @@
                             "examples": {
                                 "assessment_post_ok": {
                                     "value": {
-                                        "applicationId": 92
+                                        "applicationId": 10
                                     }
                                 }
                             }

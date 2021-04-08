@@ -9,6 +9,8 @@ import javax.ws.rs.ext.Provider;
 public class BadRequestExceptionMapper implements ExceptionMapper<BadRequestException> {
     @Override
     public Response toResponse(BadRequestException exception) {
-        return Response.status(400).build();
+        return Response
+        .status(400)
+        .build();
     }
 }
