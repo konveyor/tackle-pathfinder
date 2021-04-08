@@ -57,6 +57,7 @@ jobs:
           set -x
           kubectl create namespace tackle
           kubectl apply -f src/test/resources/test-deployment.yaml -n tackle
+          sed 's/image: quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native/image: quay.io/${{ github.repository_owner }}/tackle-pathfinder:0.0.1-SNAPSHOT-native/g' src/main/kubernetes/tackle-pathfinder.yaml | kubectl apply -n tackle -f -
           sed 's/imagePullPolicy: Always/imagePullPolicy: Never/g' src/main/kubernetes/tackle-pathfinder.yaml | kubectl apply -n tackle -f -
       - name: Print status on Minikube
         run : |
