@@ -160,8 +160,6 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 	@Test
 
 	public void given_Assessment_When_GetAssessment_Then_ReturnsAssessmentQuestionnaire() throws InterruptedException {
-		
-		Thread.sleep(60000);
 		AssessmentHeaderDto header = given()
 			.contentType(ContentType.JSON)
 			.accept(ContentType.JSON)
