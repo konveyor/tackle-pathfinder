@@ -154,18 +154,31 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 	@Test
 	public void given_Assessment_When_GetAssessment_Then_ReturnsAssessmentQuestionnaire() {
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(100L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		log.info("Header DTO : " + header);
+		log.info("Assessment App 100 : " + Assessment.findById(header.getId()));
 		given()
 		  .contentType(ContentType.JSON)
 		  .accept(ContentType.JSON)
 		.when()
-			.get("/assessments/20")
+			.get("/assessments/" + header.getId())
 		.then()
+    		.log().all()
 			.statusCode(200)
-			.body("assessment.questionnaire.size()", is(1))
-			.body("assessment.questionnaire.categories.size()", is(10))
-			.body("assessment.questionnaire.categories[9].questions.size()", is(15))
-			.body("assessment.questionnaire.categories[9].questions[14].options.size()", is(5))
-			.body("assessment.questionnaire.categories[9].questions[14].options[4].option", is("example"));
+			.body("questionnaire.categories.size()", is(5))
+			.body("questionnaire.categories[4].questions.size()", is(6))
+			.body("questionnaire.categories[4].questions[5].options.size()", is(6))
+			.body("questionnaire.categories[4].questions[5].options[5].option", is("Application containerisation not attempted as yet"));
 
 	}
 }
