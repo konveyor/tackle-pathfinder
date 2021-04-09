@@ -1,4 +1,4 @@
-ypackage io.tackle.pathfinder.mapper;
+package io.tackle.pathfinder.mapper;
 
 import io.tackle.pathfinder.dto.AssessmentCategoryDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
