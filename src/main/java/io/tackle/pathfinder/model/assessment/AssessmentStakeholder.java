@@ -15,7 +15,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "assessment")
+@Table(name = "assessment_stakeholder")
 @SQLDelete(sql = "UPDATE assessment_stakeholder SET deleted = true WHERE id = ?", check = ResultCheckStyle.COUNT)
 @Where(clause = "deleted is not true")
 @NoArgsConstructor
