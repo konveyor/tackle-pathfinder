@@ -11,6 +11,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 
 /**
  * Root Type for section
@@ -67,7 +69,7 @@ public class AssessmentCategoryDto {
      */
     @JsonProperty("questions")
     @JsonPropertyDescription("A question")
-    private AssessmentQuestionDto questions;
+    private List<AssessmentQuestionDto> questions;
     /**
      * Comment from the user to the category
      * 

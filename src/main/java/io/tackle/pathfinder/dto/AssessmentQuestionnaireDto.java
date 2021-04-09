@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -41,7 +40,7 @@ public class AssessmentQuestionnaireDto {
     @JsonProperty("categories")
     @JsonPropertyDescription("")
     @Builder.Default
-    private List<AssessmentCategory> categories = new ArrayList<AssessmentCategory>();
+    private List<AssessmentCategoryDto> categories = new ArrayList<AssessmentCategoryDto>();
     /**
      * 
      * (Required)

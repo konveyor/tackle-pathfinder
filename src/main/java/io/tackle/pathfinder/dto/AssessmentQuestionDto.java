@@ -67,6 +67,7 @@ public class AssessmentQuestionDto {
      */
     @JsonProperty("options")
     @JsonPropertyDescription("List of possible answers to the question. Applicable if variant=checkbox|radioButton.")
+    @Builder.Default
     private List<AssessmentQuestionOptionDto> options = new ArrayList<AssessmentQuestionOptionDto>();
     /**
      * Extra info. This will appear in the tooltip
