@@ -9,6 +9,8 @@ import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
@@ -25,6 +27,7 @@ import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 @Log
@@ -45,9 +48,9 @@ public class AssessmentSvc {
             Assessment assessment = new Assessment();
             assessment.applicationId = applicationId;
             assessment.status = AssessmentStatus.STARTED;
-            assessment.persist();
+            assessment.persistAndFlush();
 
-            copyQuestionnaireIntoAssessment(assessment.id, defaultQuestionnaire());
+            copyQuestionnaireIntoAssessment(assessment, defaultQuestionnaire());
 
             return mapper.assessmentToAssessmentHeaderDto(assessment);
         } else {
@@ -56,33 +59,46 @@ public class AssessmentSvc {
     }
 
     @Transactional
-    public Assessment copyQuestionnaireIntoAssessment(Long assessmentId, Long questionnaireId) {
-        Questionnaire questionnaire = Questionnaire.findById(questionnaireId);
-        Assessment assessment = Assessment.findById(assessmentId);
+    public Assessment copyQuestionnaireIntoAssessment(Assessment assessment, Questionnaire questionnaire) {
 
-        AssessmentQuestionnaire assessQuestionnaire = AssessmentQuestionnaire.builder().name(questionnaire.name)
-                .questionnaire(questionnaire).assessment(assessment).languageCode(questionnaire.languageCode).build();
+        AssessmentQuestionnaire assessQuestionnaire = AssessmentQuestionnaire.builder()
+                .name(questionnaire.name)
+                .questionnaire(questionnaire)
+                .assessment(assessment)
+                .languageCode(questionnaire.languageCode)
+                .build();
         assessQuestionnaire.persist();
 
         assessment.assessmentQuestionnaire = assessQuestionnaire;
 
         assessment.assessmentQuestionnaire.categories = new ArrayList<AssessmentCategory>();
         for (Category category : questionnaire.categories) {
-            AssessmentCategory assessmentCategory = AssessmentCategory.builder().name(category.name)
-                    .order(category.order).questionnaire(assessment.assessmentQuestionnaire )
-                    .questions(new ArrayList<>()).build();
+            AssessmentCategory assessmentCategory = AssessmentCategory.builder()
+                    .name(category.name)
+                    .order(category.order)
+                    .questionnaire(assessment.assessmentQuestionnaire )
+                    .build();
             assessmentCategory.persist();
 
             for (Question question : category.questions) {
-                AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder().category(assessmentCategory)
-                        .name(question.name).order(question.order).questionText(question.questionText).type("SINGLE")
-                        .singleOptions(new ArrayList<>()).build();
+                AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder()
+                        .category(assessmentCategory)
+                        .name(question.name)
+                        .order(question.order)
+                        .questionText(question.questionText)
+                        .type("SINGLE")
+                        .build();
 
                 assessmentQuestion.persist();
 
                 for (SingleOption so : question.singleOptions) {
-                    AssessmentSingleOption singleOption = AssessmentSingleOption.builder().option(so.option)
-                            .order(so.order).question(assessmentQuestion).risk(so.risk).selected(false).build();
+                    AssessmentSingleOption singleOption = AssessmentSingleOption.builder()
+                        .option(so.option)
+                        .order(so.order)
+                        .question(assessmentQuestion)
+                        .risk(so.risk)
+                        .selected(false)
+                        .build();
 
                     singleOption.persist();
 
@@ -96,15 +112,26 @@ public class AssessmentSvc {
         return assessment;
     }
 
-    private Long defaultQuestionnaire() {
+    private Questionnaire defaultQuestionnaire() {
         log.info("questionnaires : " + Questionnaire.count());
-        return Questionnaire.<Questionnaire>streamAll().findFirst().map(e -> e.id).orElseThrow();
+        return Questionnaire.<Questionnaire>streamAll().findFirst().orElseThrow();
     }
 
     public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
         log.info("Requesting Assessment " + assessmentId);
-        return mapper.assessmentToAssessmentDto(
-                (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(() -> new NotFoundException()));
+        Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(() -> new NotFoundException());        
+        List<AssessmentStakeholdergroup> stakeholdergroups = assessment.stakeholdergroups;
+        List<AssessmentStakeholder> stakeholders = assessment.stakeholders;
+        log.info("X11111 " + stakeholdergroups.stream().count() + "--" + stakeholders.stream().count());
+        log.info("X22222 " + AssessmentStakeholder.count());
+        log.info("X33333 " + AssessmentStakeholdergroup.count());
+        log.info("X44444 " + Assessment.count());
+        log.info("X55555 " + AssessmentSingleOption.count());
+
+        log.info("XXXXXX " + AssessmentStakeholder.<AssessmentStakeholder>listAll().stream().map(e -> "id: " + e.id + " -- stakeholderid:" + e.stakeholderId).collect(Collectors.joining("===")));
+        log.info("XXXXXX " + AssessmentStakeholdergroup.<AssessmentStakeholdergroup>listAll().stream().map(e -> "id: " + e.id + " -- stakeholdergroupid:" + e.stakeholdergroupId).collect(Collectors.joining("===")));
+
+        return mapper.assessmentToAssessmentDto(assessment);
     }
 
 }

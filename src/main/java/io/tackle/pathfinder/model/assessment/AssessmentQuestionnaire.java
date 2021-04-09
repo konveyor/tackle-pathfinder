@@ -5,7 +5,6 @@ import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -20,6 +19,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -41,8 +41,9 @@ public class AssessmentQuestionnaire extends AbstractEntity {
     @JoinColumn(name = "assessment_id", referencedColumnName="id", nullable = false)
     public Assessment assessment;
 
-    @OneToMany(mappedBy="questionnaire", cascade = CascadeType.ALL)
-    public List<AssessmentCategory> categories;
+    @OneToMany(mappedBy="questionnaire", cascade = CascadeType.REMOVE)
+    @Builder.Default
+    public List<AssessmentCategory> categories=new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name="questionnaire_id", referencedColumnName="id", nullable = false)

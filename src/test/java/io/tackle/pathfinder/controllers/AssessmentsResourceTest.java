@@ -11,6 +11,9 @@ import io.tackle.pathfinder.dto.ApplicationDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.model.assessment.Assessment;
+import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.services.AssessmentSvc;
 import lombok.extern.java.Log;
@@ -20,9 +23,13 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 
+import java.util.stream.Collectors;
+
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.is;
 
 @QuarkusTest
 @QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
@@ -151,11 +158,14 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 	}
 
 	@Test
-	public void given_Assessment_When_GetAssessment_Then_ReturnsAssessmentQuestionnaire() {
+
+	public void given_Assessment_When_GetAssessment_Then_ReturnsAssessmentQuestionnaire() throws InterruptedException {
+		
+		Thread.sleep(60000);
 		AssessmentHeaderDto header = given()
 			.contentType(ContentType.JSON)
 			.accept(ContentType.JSON)
-			.body(new ApplicationDto(100L))
+			.body(new ApplicationDto(400L))
 		.when()
 			.post("/assessments")
 		.then()
@@ -163,8 +173,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.statusCode(201)
 			.extract().as(AssessmentHeaderDto.class);
 
-		log.info("Header DTO : " + header);
-		log.info("Assessment App 100 : " + Assessment.findById(header.getId()));
+		addStakeholdersToAssessment(header.getId());
+
 		given()
 		  .contentType(ContentType.JSON)
 		  .accept(ContentType.JSON)
@@ -173,10 +183,37 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
     		.log().all()
 			.statusCode(200)
+			.body("stakeholders.size()", is(3))
+			.body("stakeholderGroups.size()", is(2))
 			.body("questionnaire.categories.size()", is(5))
 			.body("questionnaire.categories[4].questions.size()", is(6))
 			.body("questionnaire.categories[4].questions[5].options.size()", is(6))
 			.body("questionnaire.categories[4].questions[5].options[5].option", is("Application containerisation not attempted as yet"));
-
 	}
+
+	@Transactional
+	public void addStakeholdersToAssessment(Long assessmentId) {
+		Assessment assessment = Assessment.findById(assessmentId);
+		AssessmentStakeholder stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(1100L)
+				.build();
+		stakeholder.persist();
+		assessment.stakeholders.add(stakeholder);
+
+		stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(1200L).build();
+		stakeholder.persist();
+		assessment.stakeholders.add(stakeholder);
+
+		stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(1300L).build();
+		stakeholder.persist();
+		assessment.stakeholders.add(stakeholder);
+
+		AssessmentStakeholdergroup group = AssessmentStakeholdergroup.builder().assessment(assessment).stakeholdergroupId(1500L).build();
+		group.persist();
+		assessment.stakeholdergroups.add(group);
+
+		group = AssessmentStakeholdergroup.builder().assessment(assessment).stakeholdergroupId(1600L).build();
+		group.persist();
+		assessment.stakeholdergroups.add(group);
+    }
+
 }

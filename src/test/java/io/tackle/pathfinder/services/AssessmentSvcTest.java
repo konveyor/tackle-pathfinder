@@ -1,16 +1,20 @@
 package io.tackle.pathfinder.services;
 
+import io.quarkus.test.common.QuarkusTestResource;
+import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
+import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
-import lombok.extern.java.Log;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
@@ -23,9 +27,16 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThat;
 
 @QuarkusTest
-@Log
+@QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
+        initArgs = {
+                @ResourceArg(name = PostgreSQLDatabaseTestResource.DB_NAME, value = "pathfinder_db"),
+                @ResourceArg(name = PostgreSQLDatabaseTestResource.USER, value = "pathfinder"),
+                @ResourceArg(name = PostgreSQLDatabaseTestResource.PASSWORD, value = "pathfinder")
+        }
+)
 public class AssessmentSvcTest {
     @Inject
     AssessmentSvc assessmentSvc;
@@ -36,10 +47,12 @@ public class AssessmentSvcTest {
         Questionnaire questionnaire = createQuestionnaire();
         List<Category> categories = questionnaire.categories;
 
-        Assessment assessment = createAssessment(questionnaire.id);
+        Assessment assessment = createAssessment(questionnaire);
         AssessmentQuestionnaire assessmentQuestionnaire = assessment.assessmentQuestionnaire;
         List<AssessmentCategory> categoriesAssessQuestionnaire = assessmentQuestionnaire.categories;
 
+        assertThat(assessment.stakeholdergroups.size()).isEqualTo(2);
+        assertThat(assessment.stakeholders.size()).isEqualTo(3);
         assertThat(categoriesAssessQuestionnaire.size()).isGreaterThan(0);
         assertThat(categories.size()).isGreaterThan(0);
         assertThat(assessmentQuestionnaire.categories.size()).isEqualTo(categories.size());
@@ -72,11 +85,35 @@ public class AssessmentSvcTest {
 
     }
 
-    private Assessment createAssessment(Long questionnaireId) {
+    private Assessment createAssessment(Questionnaire questionnaire) {
         Assessment assessment = Assessment.builder().applicationId(10L).build();
-        assessment.persistAndFlush();
+        assessment.persist();
 
-        return assessmentSvc.copyQuestionnaireIntoAssessment(assessment.id, questionnaireId);
+        addStakeholdersToAssessment(assessment);
+
+        return assessmentSvc.copyQuestionnaireIntoAssessment(assessment, questionnaire);
+    }
+
+    private void addStakeholdersToAssessment(Assessment assessment) {
+        AssessmentStakeholder stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(100L).build();
+        stakeholder.persist();
+        assessment.stakeholders.add(stakeholder);
+
+        stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(200L).build();
+        stakeholder.persist();
+        assessment.stakeholders.add(stakeholder);
+
+        stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(300L).build();
+        stakeholder.persist();
+        assessment.stakeholders.add(stakeholder);
+
+        AssessmentStakeholdergroup group = AssessmentStakeholdergroup.builder().assessment(assessment).stakeholdergroupId(500L).build();
+        group.persist();
+        assessment.stakeholdergroups.add(group);
+
+        group = AssessmentStakeholdergroup.builder().assessment(assessment).stakeholdergroupId(600L).build();
+        group.persist();
+        assessment.stakeholdergroups.add(group);
     }
 
     private Questionnaire createQuestionnaire() {

@@ -1,4 +1,4 @@
-package io.tackle.pathfinder.mapper;
+ypackage io.tackle.pathfinder.mapper;
 
 import io.tackle.pathfinder.dto.AssessmentCategoryDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
@@ -11,10 +11,14 @@ import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
+import lombok.extern.java.Log;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = "cdi")
 public interface AssessmentMapper {
@@ -34,6 +38,15 @@ public interface AssessmentMapper {
     @Mapping(target="language", source="languageCode")
     AssessmentQuestionnaireDto assessmentQuestionnaireToAssessmentQuestionnaireDto(AssessmentQuestionnaire questionnaire);
 
+
+    default List<Long> assessmentStakeholderListToLongList(List<AssessmentStakeholder> stakeholder) {
+        return stakeholder.stream().map(e -> e.stakeholderId).collect(Collectors.toList());
+    }
+    default List<Long> assessmentStakeholderGroupListToLongList(List<AssessmentStakeholdergroup> stakeholdergroup) {
+        return stakeholdergroup.stream().map(e -> e.stakeholdergroupId).collect(Collectors.toList());
+    }
+
     @Mapping(target = "questionnaire", source = "assessmentQuestionnaire")
+    @Mapping(target = "stakeholderGroups", source = "stakeholdergroups")
     AssessmentDto assessmentToAssessmentDto(Assessment assessment);
 }

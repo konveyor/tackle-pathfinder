@@ -16,6 +16,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -48,6 +49,7 @@ public class AssessmentQuestion extends AbstractEntity {
     @JoinColumn(name="category_id", referencedColumnName="id", nullable = false)
     public AssessmentCategory category;
 
-    @OneToMany(mappedBy="question", cascade = CascadeType.ALL)
-    public List<AssessmentSingleOption> singleOptions;
+    @OneToMany(mappedBy="question", cascade = CascadeType.REMOVE)
+    @Builder.Default
+    public List<AssessmentSingleOption> singleOptions=new ArrayList<>();
 }
