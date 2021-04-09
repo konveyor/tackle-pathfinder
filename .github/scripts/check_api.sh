@@ -20,7 +20,11 @@ req_create_assessment=$(curl "http://$minikube_ip/pathfinder/assessments" \
             -d '{ "applicationId": 100 }' -s -w "%{http_code}")
 test "$req_create_assessment" = "{\"id\":1,\"applicationId\":100,\"status\":\"STARTED\"}201"
 
-# Given an assessed app When Get Assessment ThenResult AssessmentHeader body with 200 http code
+# Given an assessed app When Get AssessmentHeader ThenResult AssessmentHeader body with 200 http code
 req_existing_app=$(curl -X GET "http://$minikube_ip/pathfinder/assessments?applicationId=100" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s -w "%{http_code}")
 test "$req_existing_app" = "[{\"id\":1,\"applicationId\":100,\"status\":\"STARTED\"}]200"
+
+# Given an assessed app When Get Assessment ThenResult Assessment body with 200 http code
+curl -X GET "http://$minikube_ip/pathfinder/assessments/1" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -s -w "%{http_code}" | grep '"order": 5,"option":"Application containerisation not attempted as yet"'
