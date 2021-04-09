@@ -37,4 +37,6 @@ public class AssessmentCategory extends AbstractEntity {
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     public List<AssessmentQuestion> questions;
+
+    public String comment;
 }
