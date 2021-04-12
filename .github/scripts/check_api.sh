@@ -15,12 +15,12 @@ req_not_existing_app=$(curl -X GET "http://$minikube_ip/pathfinder/assessments?a
 test "$req_not_existing_app" = "[]200"
 
 # Given a NOT assessed app When Create Assessment ThenResult AssessmentHeader body with 201 http code
-req_create_assessment=$(curl "http://$minikube_ip/pathfinder/assessments" \
+curl "http://$minikube_ip/pathfinder/assessments" \
             -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $access_token" \
-            -d '{ "applicationId": 100 }' -s -w "%{http_code}")
-test "$req_create_assessment" = "{\"id\":1,\"applicationId\":100,\"status\":\"STARTED\"}201"
+            -d '{ "applicationId": 100 }' -w "%{http_code}" | \
+grep '"applicationId":100,"status":"STARTED"}201'
 
 # Given an assessed app When Get Assessment ThenResult AssessmentHeader body with 200 http code
-req_existing_app=$(curl -X GET "http://$minikube_ip/pathfinder/assessments?applicationId=100" -H 'Accept: application/json' \
-            -H "Authorization: Bearer $access_token" -s -w "%{http_code}")
-test "$req_existing_app" = "[{\"id\":1,\"applicationId\":100,\"status\":\"STARTED\"}]200"
+curl -X GET "http://$minikube_ip/pathfinder/assessments?applicationId=100" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}" | \
+grep '"applicationId":100,"status":"STARTED"}]200'
