@@ -29,7 +29,7 @@ import java.util.Optional;
 @Log
 public class AssessmentSvc {
     @Inject
-    public AssessmentMapper mapper;
+    AssessmentMapper mapper;
 
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
