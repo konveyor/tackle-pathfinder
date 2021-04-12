@@ -1,6 +1,9 @@
 package io.tackle.pathfinder.services;
 
+import io.quarkus.test.common.QuarkusTestResource;
+import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
+import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
@@ -11,24 +14,38 @@ import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.extern.java.Log;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
+@QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
+        initArgs = {
+                @ResourceArg(name = PostgreSQLDatabaseTestResource.DB_NAME, value = "pathfinder_db"),
+                @ResourceArg(name = PostgreSQLDatabaseTestResource.USER, value = "pathfinder"),
+                @ResourceArg(name = PostgreSQLDatabaseTestResource.PASSWORD, value = "pathfinder")
+        }
+)
 @QuarkusTest
 @Log
 public class AssessmentSvcTest {
     @Inject
-    AssessmentSvc assessmentSvc;
+    AssessmentSvc assessmentSvc; 
+
+    @Inject
+    ManagedExecutor managedExecutor;
 
     @Test
     @Transactional
@@ -36,7 +53,7 @@ public class AssessmentSvcTest {
         Questionnaire questionnaire = createQuestionnaire();
         List<Category> categories = questionnaire.categories;
 
-        Assessment assessment = createAssessment(questionnaire.id);
+        Assessment assessment = createAssessment(questionnaire.id, 10L);
         AssessmentQuestionnaire assessmentQuestionnaire = assessment.assessmentQuestionnaire;
         List<AssessmentCategory> categoriesAssessQuestionnaire = assessmentQuestionnaire.categories;
 
@@ -69,17 +86,44 @@ public class AssessmentSvcTest {
         List<SingleOption> qSingleOptions = firstCategory.questions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().singleOptions;
         assertThat(aSingleOptions.size()).isEqualTo(qSingleOptions.size());
         assertThat(aSingleOptions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().option).isEqualTo(qSingleOptions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().option);
-
     }
 
-    private Assessment createAssessment(Long questionnaireId) {
-        Assessment assessment = Assessment.builder().applicationId(10L).build();
+    @Test
+    public void given_SameApplication_when_SeveralAssessmentCreation_should_ThrowException() {
+        Questionnaire questionnaire = createQuestionnaire();
+        CompletableFuture<Assessment> future1 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire.id, 5L));
+        CompletableFuture<Assessment> future4 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire.id, 5L));
+        assertThat(future1).succeedsWithin(Duration.ofSeconds(10)).matches(e -> e.id > 0);
+        assertThat(future4).failsWithin(Duration.ofSeconds(1));
+    }    
+    
+    @Test
+    public void given_SameApplicationButDeletedTrue_when_SeveralAssessmentCreation_should_NotThrowException() {
+        Questionnaire questionnaire = createQuestionnaire();
+        Assessment assessment1 = createAssessment(questionnaire.id, 200L);
+        assertThat(assessment1).matches(e -> e.id > 0);
+        assertThatThrownBy(() -> createAssessment(questionnaire.id, 200L));
+        deleteAssessment(assessment1.id);  
+        Assessment assessment2 = createAssessment(questionnaire.id, 200L);
+        assertThat(assessment2).matches(e -> e.id > 0);
+    }
+
+    @Transactional
+    public void deleteAssessment(Long assessmentId) {
+        Assessment.findById(assessmentId).delete();
+    }
+
+    @Transactional
+    public Assessment createAssessment(Long questionnaireId, long applicationId) {
+        log.info("Creating an assessment : " + LocalTime.now());
+        Assessment assessment = Assessment.builder().applicationId(applicationId).build();
         assessment.persistAndFlush();
 
         return assessmentSvc.copyQuestionnaireIntoAssessment(assessment.id, questionnaireId);
     }
 
-    private Questionnaire createQuestionnaire() {
+    @Transactional
+    public Questionnaire createQuestionnaire() {
         Questionnaire questionnaire = Questionnaire.builder().name("Test").languageCode("EN").build();
         questionnaire.persistAndFlush();
 

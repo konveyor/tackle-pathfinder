@@ -20,6 +20,7 @@ import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -38,12 +39,12 @@ public class AssessmentSvc {
     @Transactional
     public AssessmentHeaderDto createAssessment(@NotNull Long applicationId) {
         long count = Assessment.count("application_id", applicationId);
-        log.info("Assessments for application_id [ " + applicationId + "] : " + count);
+        log.info("Assessments (" + LocalTime.now() + ") for application_id [ " + applicationId + "] : " + count);
         if (count == 0) {
             Assessment assessment = new Assessment();
             assessment.applicationId = applicationId;
             assessment.status = AssessmentStatus.STARTED;
-            assessment.persist();
+            assessment.persistAndFlush();
 
             copyQuestionnaireIntoAssessment(assessment.id, defaultQuestionnaire());
 
