@@ -89,9 +89,10 @@ public class AssessmentSvcTest {
     }
 
     @Test
-    public void given_SameApplication_when_SeveralAssessmentCreation_should_ThrowException() {
+    public void given_SameApplication_when_SeveralAssessmentCreation_should_ThrowException() throws InterruptedException {
         Questionnaire questionnaire = createQuestionnaire();
         CompletableFuture<Assessment> future1 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire.id, 5L));
+        Thread.sleep(500);
         CompletableFuture<Assessment> future4 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire.id, 5L));
         assertThat(future1).succeedsWithin(Duration.ofSeconds(10)).matches(e -> e.id > 0);
         assertThat(future4).failsWithin(Duration.ofSeconds(1));
