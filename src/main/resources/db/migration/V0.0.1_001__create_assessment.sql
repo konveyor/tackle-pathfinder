@@ -10,7 +10,7 @@ CREATE SEQUENCE IF NOT EXISTS hibernate_sequence START 1 INCREMENT 1 ;
         updateTime timestamp,
         updateUser varchar(255),
         application_id int8 not null,
-        notes varchar(1000),
+        comment varchar(1000),
         status varchar(255),
         primary key (id)
     )
