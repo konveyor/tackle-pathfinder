@@ -45,7 +45,7 @@ public class AssessmentQuestion extends AbstractEntity {
     public String comment;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name="category_id", referencedColumnName="id", nullable = false)
+    @JoinColumn(name="assessment_category_id", referencedColumnName="id", nullable = false)
     public AssessmentCategory category;
 
     @OneToMany(mappedBy="question", cascade = CascadeType.ALL)
