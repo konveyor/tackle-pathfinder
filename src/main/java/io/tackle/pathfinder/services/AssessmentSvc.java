@@ -24,6 +24,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 
 @ApplicationScoped
 @Log
@@ -39,7 +40,7 @@ public class AssessmentSvc {
     @Transactional
     public AssessmentHeaderDto createAssessment(@NotNull Long applicationId) {
         long count = Assessment.count("application_id", applicationId);
-        log.info("Assessments (" + LocalTime.now() + ") for application_id [ " + applicationId + "] : " + count);
+        log.log(Level.FINE,"Assessments for application_id [ " + applicationId + "] : " + count);
         if (count == 0) {
             Assessment assessment = new Assessment();
             assessment.applicationId = applicationId;
@@ -96,7 +97,7 @@ public class AssessmentSvc {
     }
 
     private Long defaultQuestionnaire() {
-        log.info("questionnaires : " + Questionnaire.count());
+        log.log(Level.FINE, "questionnaires : " + Questionnaire.count());
         return Questionnaire.<Questionnaire>streamAll().findFirst().map(e -> e.id).orElseThrow();
     }
 
