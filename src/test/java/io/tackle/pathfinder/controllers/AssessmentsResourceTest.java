@@ -78,7 +78,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.hasSize(1)
 			.usingRecursiveComparison()
 				.ignoringFields("id")
-				.isEqualTo(AssessmentHeaderDto.builder().applicationId(20L).notes("").status(AssessmentStatus.STARTED).build());
+				.isEqualTo(AssessmentHeaderDto.builder().applicationId(20L).comment("").status(AssessmentStatus.STARTED).build());
   	}
 
 	@Test
