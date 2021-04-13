@@ -25,11 +25,15 @@ public interface AssessmentMapper {
 
     AssessmentHeaderDto assessmentToAssessmentHeaderDto(Assessment assessment);
 
+    @Mapping(target="checked", source="selected")
     AssessmentQuestionOptionDto assessmentSingleOptionToAssessmentQuestionOptionDto(AssessmentSingleOption option);
     List<AssessmentQuestionOptionDto> assessmentSingleOptionListToassessmentQuestionOptionDtoList(List<AssessmentSingleOption> optionList);
+    
     @Mapping(target = "options", source="singleOptions")
+    @Mapping(target = "question", source="questionText")
     AssessmentQuestionDto assessmentQuestionToAssessmentQuestionDto(AssessmentQuestion question);
     List<AssessmentQuestionDto> assessmentQuestionListToassessmentQuestionDtoList(List<AssessmentQuestion> questionList);
+   
     @Mapping(target="title", source="name")
     AssessmentCategoryDto assessmentCategoryToAssessmentCategoryDto(AssessmentCategory category);
     List<AssessmentCategoryDto> assessmentCategoryListToAssessmentCategoryDtoList(List<AssessmentCategory> categoryList);
@@ -37,7 +41,6 @@ public interface AssessmentMapper {
     @Mapping(target="title", source="name")
     @Mapping(target="language", source="languageCode")
     AssessmentQuestionnaireDto assessmentQuestionnaireToAssessmentQuestionnaireDto(AssessmentQuestionnaire questionnaire);
-
 
     default List<Long> assessmentStakeholderListToLongList(List<AssessmentStakeholder> stakeholder) {
         return stakeholder.stream().map(e -> e.stakeholderId).collect(Collectors.toList());

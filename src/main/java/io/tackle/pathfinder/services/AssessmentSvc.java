@@ -86,7 +86,8 @@ public class AssessmentSvc {
                         .name(question.name)
                         .order(question.order)
                         .questionText(question.questionText)
-                        .type("SINGLE")
+                        .type(question.type)
+                        .description(question.description)
                         .build();
 
                 assessmentQuestion.persist();

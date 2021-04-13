@@ -42,9 +42,6 @@ public class AssessmentQuestion extends AbstractEntity {
     @Column(name="question_text", length = 500 )
     public String questionText;
 
-    @Column(length = 1000)
-    public String comment;
-
     @ManyToOne(optional = false)
     @JoinColumn(name="category_id", referencedColumnName="id", nullable = false)
     public AssessmentCategory category;

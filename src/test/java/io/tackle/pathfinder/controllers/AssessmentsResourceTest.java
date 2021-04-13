@@ -11,6 +11,7 @@ import io.tackle.pathfinder.dto.ApplicationDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.model.assessment.Assessment;
+import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
 import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
 import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
@@ -23,13 +24,12 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 
-import java.util.stream.Collectors;
-
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 @QuarkusTest
 @QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
@@ -171,7 +171,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.statusCode(201)
 			.extract().as(AssessmentHeaderDto.class);
 
-		addStakeholdersToAssessment(header.getId());
+		addUserEnteredInfoToAssessment(header.getId());
 
 		given()
 		  .contentType(ContentType.JSON)
@@ -181,16 +181,22 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
     		.log().all()
 			.statusCode(200)
+			.body("applicationId", is(400))
+			.body("status", is("STARTED"))
 			.body("stakeholders.size()", is(3))
 			.body("stakeholderGroups.size()", is(2))
 			.body("questionnaire.categories.size()", is(5))
-			.body("questionnaire.categories[4].questions.size()", is(6))
-			.body("questionnaire.categories[4].questions[5].options.size()", is(6))
-			.body("questionnaire.categories[4].questions[5].options[5].option", is("Application containerisation not attempted as yet"));
+			.body("questionnaire.categories.findAll{it.order==2}[0].comment", is("This is a test comment"))
+			.body("questionnaire.categories.findAll{it.order==5}[0].title", is("Application Cross-Cutting concerns"))
+			.body("questionnaire.categories.findAll{it.order==5}[0].questions.size()", is(6))
+
+			.body("questionnaire.categories.findAll{it.order==1}[0].questions.findAll{it.question=='What is the Mean Time to Recover (MTTR) when a fault is found with the application in production?'}[0].description", is("Gauge the problem resolution time, MTTR (mean time to recover) is the average time it takes to repair/recover a system"))
+			.body("questionnaire.categories.findAll{it.order==1}[0].questions.findAll{it.question=='What is the Mean Time to Recover (MTTR) when a fault is found with the application in production?'}[0].options.size()", is(6))
+			.body("questionnaire.categories.findAll{it.order==5}[0].questions.findAll{it.question=='How mature is the existing containerisation process, if any?'}[0].options.findAll{it.option=='Application containerisation not attempted as yet'}[0].checked", is(true));
 	}
 
 	@Transactional
-	public void addStakeholdersToAssessment(Long assessmentId) {
+	public void addUserEnteredInfoToAssessment(Long assessmentId) {
 		Assessment assessment = Assessment.findById(assessmentId);
 		AssessmentStakeholder stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(1100L)
 				.build();
@@ -212,6 +218,9 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		group = AssessmentStakeholdergroup.builder().assessment(assessment).stakeholdergroupId(1600L).build();
 		group.persist();
 		assessment.stakeholdergroups.add(group);
+
+		AssessmentSingleOption.update("set selected = true where option = 'Application containerisation not attempted as yet'");
+		AssessmentCategory.update("set comment = 'This is a test comment' where name='Application Dependencies'");
     }
 
 }
