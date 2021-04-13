@@ -61,7 +61,7 @@ public class AssessmentHeaderDto {
     @JsonPropertyDescription("")
     private AssessmentStatus status;
 
-    @JsonProperty("notes")
+    @JsonProperty("comment")
     @JsonPropertyDescription("")
-    private String notes;
+    private String comment;
 }
