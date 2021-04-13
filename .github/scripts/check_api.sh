@@ -45,3 +45,11 @@ assessmentId=$(echo $req_get_assessment | jq '.[0].id')
 curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s -w "%{http_code}" | \
     grep '"order":5,"option":"Application containerisation not attempted as yet"'
+    
+echo 
+echo
+echo '>>> Given a NOT assessed app When Get Assessment ThenResult 404 http code'
+assessmentId="1000"
+req_get_not_assessed=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}")
+test "$req_get_not_assessed" = "404"
