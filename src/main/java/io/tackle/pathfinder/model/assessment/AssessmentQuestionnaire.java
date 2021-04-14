@@ -1,6 +1,6 @@
 package io.tackle.pathfinder.model.assessment;
 
-import io.tackle.pathfinder.model.AbstractEntity;
+import io.tackle.commons.entities.AbstractEntity;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

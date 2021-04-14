@@ -1,6 +1,6 @@
 package io.tackle.pathfinder.model.assessment;
 
-import io.tackle.pathfinder.model.AbstractEntity;
+import io.tackle.commons.entities.AbstractEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -12,7 +12,6 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -32,13 +31,11 @@ public class AssessmentCategory extends AbstractEntity {
 
     public String name;
 
-    @ManyToOne
-    @JoinColumn(name="questionnaire_id", referencedColumnName="id")
-    public AssessmentQuestionnaire questionnaire;
-
     @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE)
     @Builder.Default
     public List<AssessmentQuestion> questions=new ArrayList<>();
 
     public String comment;
+    @JoinColumn(name="assessment_questionnaire_id", referencedColumnName="id")
+    public AssessmentQuestionnaire questionnaire;
 }

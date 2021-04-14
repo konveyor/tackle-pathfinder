@@ -9,8 +9,6 @@ import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
-import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
-import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
@@ -27,7 +25,7 @@ import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.logging.Level;
 
 @ApplicationScoped
 @Log
@@ -43,7 +41,7 @@ public class AssessmentSvc {
     @Transactional
     public AssessmentHeaderDto createAssessment(@NotNull Long applicationId) {
         long count = Assessment.count("application_id", applicationId);
-        log.info("Assessments for application_id [ " + applicationId + "] : " + count);
+        log.log(Level.FINE,"Assessments for application_id [ " + applicationId + "] : " + count);
         if (count == 0) {
             Assessment assessment = new Assessment();
             assessment.applicationId = applicationId;
@@ -114,23 +112,13 @@ public class AssessmentSvc {
     }
 
     private Questionnaire defaultQuestionnaire() {
-        log.info("questionnaires : " + Questionnaire.count());
+        log.log(Level.FINE, "questionnaires : " + Questionnaire.count());
         return Questionnaire.<Questionnaire>streamAll().findFirst().orElseThrow();
     }
 
     public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
-        log.info("Requesting Assessment " + assessmentId);
-        Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(() -> new NotFoundException());        
-        List<AssessmentStakeholdergroup> stakeholdergroups = assessment.stakeholdergroups;
-        List<AssessmentStakeholder> stakeholders = assessment.stakeholders;
-        log.info("X11111 " + stakeholdergroups.stream().count() + "--" + stakeholders.stream().count());
-        log.info("X22222 " + AssessmentStakeholder.count());
-        log.info("X33333 " + AssessmentStakeholdergroup.count());
-        log.info("X44444 " + Assessment.count());
-        log.info("X55555 " + AssessmentSingleOption.count());
-
-        log.info("XXXXXX " + AssessmentStakeholder.<AssessmentStakeholder>listAll().stream().map(e -> "id: " + e.id + " -- stakeholderid:" + e.stakeholderId).collect(Collectors.joining("===")));
-        log.info("XXXXXX " + AssessmentStakeholdergroup.<AssessmentStakeholdergroup>listAll().stream().map(e -> "id: " + e.id + " -- stakeholdergroupid:" + e.stakeholdergroupId).collect(Collectors.joining("===")));
+        log.log(Level.FINE,"Requesting Assessment " + assessmentId);
+        Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(() -> new NotFoundException());
 
         return mapper.assessmentToAssessmentDto(assessment);
     }

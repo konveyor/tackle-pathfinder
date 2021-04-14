@@ -1,6 +1,6 @@
 package io.tackle.pathfinder.model.assessment;
 
-import io.tackle.pathfinder.model.AbstractEntity;
+import io.tackle.commons.entities.AbstractEntity;
 import io.tackle.pathfinder.model.Risk;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,7 +36,7 @@ public class AssessmentSingleOption extends AbstractEntity {
     @Column(length = 500, nullable = false)
     public String option;
 
-    @JoinColumn(name="question_id", referencedColumnName="id", nullable=false)
+    @JoinColumn(name="assessment_question_id", referencedColumnName="id", nullable=false)
     @ManyToOne
     public AssessmentQuestion question;
 

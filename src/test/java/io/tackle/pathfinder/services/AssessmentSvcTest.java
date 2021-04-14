@@ -15,6 +15,7 @@ import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
@@ -26,10 +27,8 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
-@QuarkusTest
 @QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
         initArgs = {
                 @ResourceArg(name = PostgreSQLDatabaseTestResource.DB_NAME, value = "pathfinder_db"),
@@ -37,9 +36,13 @@ import static org.junit.Assert.assertThat;
                 @ResourceArg(name = PostgreSQLDatabaseTestResource.PASSWORD, value = "pathfinder")
         }
 )
+@QuarkusTest
 public class AssessmentSvcTest {
     @Inject
-    AssessmentSvc assessmentSvc;
+    AssessmentSvc assessmentSvc; 
+
+    @Inject
+    ManagedExecutor managedExecutor;
 
     @Test
     @Transactional

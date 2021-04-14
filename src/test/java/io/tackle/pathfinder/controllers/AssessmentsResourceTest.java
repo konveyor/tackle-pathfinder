@@ -4,6 +4,7 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
+import io.restassured.response.ValidatableResponse;
 import io.tackle.commons.testcontainers.KeycloakTestResource;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.commons.tests.SecuredResourceTest;
@@ -18,18 +19,22 @@ import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.services.AssessmentSvc;
 import lombok.extern.java.Log;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 
+import java.time.Duration;
+import java.time.LocalTime;
+import java.util.concurrent.CompletableFuture;
+
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 
 @QuarkusTest
 @QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
@@ -49,6 +54,9 @@ import static org.junit.Assert.assertThat;
 public class AssessmentsResourceTest extends SecuredResourceTest {
 	@Inject
 	AssessmentSvc assessmentSvc;
+
+	@Inject
+    ManagedExecutor managedExecutor;
 
 	@BeforeEach
 	@Transactional
@@ -76,7 +84,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.hasSize(1)
 			.usingRecursiveComparison()
 				.ignoringFields("id")
-				.isEqualTo(AssessmentHeaderDto.builder().applicationId(20L).notes("").status(AssessmentStatus.STARTED).build());
+				.isEqualTo(AssessmentHeaderDto.builder().applicationId(20L).comment("").status(AssessmentStatus.STARTED).build());
   	}
 
 	@Test
@@ -155,10 +163,51 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
 			.log().all()
 			.statusCode(400);
+	}	
+	
+	@Test
+	public void given_SameApplication_When_SeveralCreateAssessment_Then_Returns400() throws InterruptedException {
+		CompletableFuture<ValidatableResponse> future1 = managedExecutor.supplyAsync(() -> {
+			log.info("Async 1 request Assessment : " + LocalTime.now());
+			ValidatableResponse response = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(new ApplicationDto(330L))
+			.when()
+				.post("/assessments")
+			.then()
+				.log().all()
+				.statusCode(201);
+			log.info("End Async 1 request Assessment : " + LocalTime.now());
+
+			return response;
+		});
+		
+		// To force second call starts a bit later than first one
+		Thread.sleep(500);
+		
+		CompletableFuture<ValidatableResponse> future2 = managedExecutor.supplyAsync(() -> {
+			log.info("Async 2 request Assessment : " + LocalTime.now());
+
+			ValidatableResponse response =  given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(new ApplicationDto(330L))
+			.when()
+				.post("/assessments")
+			.then()
+				.log().all()
+				.statusCode(400);
+
+			log.info("End Async 2 request Assessment : " + LocalTime.now());
+			return response;
+		});
+
+		assertThat(future1).succeedsWithin(Duration.ofSeconds(10));
+		assertThat(future2).succeedsWithin(Duration.ofSeconds(10));
 	}
 
 	@Test
-
 	public void given_Assessment_When_GetAssessment_Then_ReturnsAssessmentQuestionnaire() throws InterruptedException {
 		AssessmentHeaderDto header = given()
 			.contentType(ContentType.JSON)
