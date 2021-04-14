@@ -45,14 +45,14 @@ public class AssessmentDto {
      */
     @JsonProperty("id")
     @JsonPropertyDescription("Assessment id")
-    private Integer id;
+    private Long id;
     /**
      * Application id
      * 
      */
     @JsonProperty("applicationId")
     @JsonPropertyDescription("Application id")
-    private Integer applicationId;
+    private Long applicationId;
     /**
      * Current status of the assessment
      * 

@@ -43,7 +43,7 @@ public class AssessmentCategoryDto {
      */
     @JsonProperty("id")
     @JsonPropertyDescription("DB id")
-    private Integer id;
+    private Long id;
     /**
      * Used for sorting multiple sections
      * (Required)

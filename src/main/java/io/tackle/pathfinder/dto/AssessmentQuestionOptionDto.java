@@ -39,7 +39,7 @@ public class AssessmentQuestionOptionDto {
      */
     @JsonProperty("id")
     @JsonPropertyDescription("The DB id")
-    private Integer id;
+    private Long id;
     /**
      * For sorting multiple radioButtons/checkboxes
      * (Required)
