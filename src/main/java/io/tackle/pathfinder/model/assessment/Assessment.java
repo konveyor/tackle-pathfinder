@@ -39,7 +39,7 @@ public class Assessment extends AbstractEntity {
     public Long applicationId;
 
     @Column(length = 1000)
-    public String notes;
+    public String comment;
 
     @OneToOne(mappedBy = "assessment", cascade = CascadeType.REMOVE)
     public AssessmentQuestionnaire assessmentQuestionnaire;

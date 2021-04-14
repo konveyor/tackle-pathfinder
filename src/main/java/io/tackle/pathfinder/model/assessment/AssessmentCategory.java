@@ -12,6 +12,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -36,6 +37,8 @@ public class AssessmentCategory extends AbstractEntity {
     public List<AssessmentQuestion> questions=new ArrayList<>();
 
     public String comment;
+
+    @ManyToOne
     @JoinColumn(name="assessment_questionnaire_id", referencedColumnName="id")
     public AssessmentQuestionnaire questionnaire;
 }

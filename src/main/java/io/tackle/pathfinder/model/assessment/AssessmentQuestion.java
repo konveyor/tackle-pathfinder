@@ -45,9 +45,6 @@ public class AssessmentQuestion extends AbstractEntity {
     @OneToMany(mappedBy="question", cascade = CascadeType.REMOVE)
     @Builder.Default
     public List<AssessmentSingleOption> singleOptions=new ArrayList<>();
-    
-    @Column(length = 1000)
-    public String comment;
 
     @ManyToOne(optional = false)
     @JoinColumn(name="assessment_category_id", referencedColumnName="id", nullable = false)
