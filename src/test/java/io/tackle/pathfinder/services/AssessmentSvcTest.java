@@ -4,6 +4,7 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
+import io.tackle.pathfinder.model.QuestionType;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
@@ -173,7 +174,7 @@ public class AssessmentSvcTest {
 
     private Question createQuestion(Category category, int i) {
         Question question = Question.builder().name("question-" + i).order(i).questionText("questionText-" + i)
-                .description("tooltip-" + i).type("SINGLE").build();
+                .description("tooltip-" + i).type(QuestionType.SINGLE).build();
         question.persistAndFlush();
 
         question.singleOptions = IntStream.range(1, new Random().nextInt(10) + 3)

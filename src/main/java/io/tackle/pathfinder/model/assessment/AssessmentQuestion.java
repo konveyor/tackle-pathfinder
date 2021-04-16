@@ -1,6 +1,7 @@
 package io.tackle.pathfinder.model.assessment;
 
 import io.tackle.commons.entities.AbstractEntity;
+import io.tackle.pathfinder.model.QuestionType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,8 @@ import org.hibernate.annotations.Where;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -31,7 +34,8 @@ public class AssessmentQuestion extends AbstractEntity {
     public int order;
 
     @Column(nullable = false)
-    public String type;
+    @Enumerated(value = EnumType.STRING)
+    public QuestionType type;
 
     @Column(nullable = false)
     public String name;

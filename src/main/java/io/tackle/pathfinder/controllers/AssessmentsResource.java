@@ -1,6 +1,7 @@
 package io.tackle.pathfinder.controllers;
 
 import io.tackle.pathfinder.dto.ApplicationDto;
+import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
 
@@ -46,8 +47,8 @@ public class AssessmentsResource {
   @GET
   @Path("{assessmentId}")
   @Produces("application/json")
-  public Response getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId) {
-    return Response.ok(service.getAssessmentDtoByAssessmentId(assessmentId)).build();
+  public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId) {
+    return service.getAssessmentDtoByAssessmentId(assessmentId);
   }
 
 }
