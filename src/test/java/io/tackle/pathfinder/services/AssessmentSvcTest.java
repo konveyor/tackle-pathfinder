@@ -4,9 +4,15 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
+import io.tackle.pathfinder.dto.AssessmentCategoryDto;
+import io.tackle.pathfinder.dto.AssessmentDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
+import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
+import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
 import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
@@ -16,6 +22,7 @@ import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.Test;
 
@@ -47,6 +54,9 @@ public class AssessmentSvcTest {
 
     @Inject
     ManagedExecutor managedExecutor;
+
+    @Inject
+    AssessmentMapper assessmentMapper;
 
     @Test
     @Transactional
@@ -90,6 +100,56 @@ public class AssessmentSvcTest {
         assertThat(aSingleOptions.size()).isEqualTo(qSingleOptions.size());
         assertThat(aSingleOptions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().option).isEqualTo(qSingleOptions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().option);
 
+    }
+
+    @Test
+    @Transactional
+    public void given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent() {
+        Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 1410L);
+
+        assertThat(assessment.stakeholdergroups).hasSize(2);
+        assertThat(assessment.stakeholders).hasSize(3);
+
+        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment);
+        assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
+        assertThat(assessmentDto.getStakeholders()).hasSize(3); 
+
+        // Stakeholders and Stakeholdergroups always override the entire list
+        assessmentDto.getStakeholderGroups().clear();
+        assessmentDto.getStakeholderGroups().add(8100L);
+        assessmentDto.getStakeholderGroups().add(8200L);
+        
+        assessmentDto.getStakeholders().clear();
+        assessmentDto.getStakeholders().add(8500L);
+        assessmentDto.getStakeholders().add(8600L);
+
+        AssessmentCategoryDto assessmentCategoryDto = assessmentDto.getQuestionnaire().getCategories().get(0);
+        assessmentCategoryDto.setComment("This is a test comment");
+        AssessmentQuestionDto assessmentQuestionDto = assessmentCategoryDto.getQuestions().get(0);
+        AssessmentQuestionOptionDto assessmentQuestionOptionDto = assessmentQuestionDto.getOptions().get(0);
+        assessmentQuestionOptionDto.setChecked(true);
+
+        assessmentSvc.updateAssessment(assessment.id, assessmentDto);
+
+        Assessment assessmentUpdated = Assessment.findById(assessment.id);
+        assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(8500L, 8600L);
+        assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(8100L, 8200L);
+        
+        assertThat(assessmentUpdated.assessmentQuestionnaire.categories).extracting(e -> e.comment)
+                .containsOnlyOnce("This is a test comment");
+
+        assertThat(getCheckedForOption(assessmentUpdated, assessmentCategoryDto.getId(), assessmentQuestionDto.getId(),
+                assessmentQuestionOptionDto.getId())).isTrue();
+    }
+
+    private boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId) {
+        AssessmentCategory category = assessment.assessmentQuestionnaire.categories.stream()
+                .filter(e -> e.id == categoryId).findFirst().orElseThrow();
+        AssessmentQuestion question = category.questions.stream().filter(e -> e.id == questionId).findFirst()
+                .orElseThrow();
+        AssessmentSingleOption option = question.singleOptions.stream().filter(e -> e.id == optionId).findFirst()
+                .orElseThrow();
+        return option.selected;
     }
 
     private void addStakeholdersToAssessment(Assessment assessment) {

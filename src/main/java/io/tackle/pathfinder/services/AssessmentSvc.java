@@ -4,11 +4,7 @@ import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
-import io.tackle.pathfinder.model.assessment.Assessment;
-import io.tackle.pathfinder.model.assessment.AssessmentCategory;
-import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
-import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
-import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
+import io.tackle.pathfinder.model.assessment.*;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
@@ -18,6 +14,7 @@ import lombok.extern.java.Log;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
@@ -118,9 +115,53 @@ public class AssessmentSvc {
 
     public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
         log.log(Level.FINE,"Requesting Assessment " + assessmentId);
-        Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(() -> new NotFoundException());
+        Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
 
         return mapper.assessmentToAssessmentDto(assessment);
+    }
+
+    public AssessmentHeaderDto updateAssessment(@NotNull Long assessmentId, @NotNull @Valid AssessmentDto assessmentDto) {
+        Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
+        if (null != assessmentDto.getStakeholderGroups()) {
+            assessmentDto.getStakeholderGroups().forEach(e -> {
+                log.info("Considering Stakeholdergroup : " + e);
+                if (assessment.stakeholdergroups.stream().noneMatch(o -> o.stakeholdergroupId == e)) {
+                    log.info("Adding Stakeholdergroup : " + e);
+                    AssessmentStakeholdergroup.builder()
+                            .assessment(assessment)
+                            .stakeholdergroupId(e)
+                            .build().persist();
+                }
+            });
+        }
+        if (null != assessmentDto.getStakeholders()) {
+            assessmentDto.getStakeholders().forEach(e -> {
+                log.info("Considering Stakeholder : " + e);
+                if (assessment.stakeholders.stream().noneMatch(o -> o.stakeholderId == e)) {
+                    log.info("Adding Stakeholder : " + e);
+                    AssessmentStakeholder.builder()
+                        .assessment(assessment)
+                        .stakeholderId(e)
+                        .build().persist();
+                }
+            });
+        }
+
+        assessmentDto.getQuestionnaire().getCategories().forEach(categ -> {
+            AssessmentCategory category = AssessmentCategory.find("assessment_questionnaire_id=?1 and id=?2", assessment.assessmentQuestionnaire.id, categ.getId()).<AssessmentCategory>firstResultOptional().orElseThrow(BadRequestException::new);
+            category.comment = categ.getComment();
+
+            categ.getQuestions().forEach(que -> {
+                AssessmentQuestion question = AssessmentQuestion.find("assessment_category_id=?1 and id=?2", categ.getId(), que.getId()).<AssessmentQuestion>firstResultOptional().orElseThrow(BadRequestException::new);
+
+                que.getOptions().forEach(opt -> {
+                    AssessmentSingleOption option = AssessmentSingleOption.find("assessment_question_id=?1 and id=?2", question.id, opt.getId()).<AssessmentSingleOption>firstResultOptional().orElseThrow(BadRequestException::new);
+                    option.selected = opt.getChecked();
+                });
+            });
+        });
+        
+        return mapper.assessmentToAssessmentHeaderDto(assessment);
     }
 
 }
