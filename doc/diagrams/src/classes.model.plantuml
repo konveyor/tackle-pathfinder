@@ -1,7 +1,20 @@
 @startuml "Model"
 
+interface common_fields {
+    id : long
+    createTime : timestamp
+    createUser : long
+    deleted : boolean
+    updateTime: timestamp
+    updateUser: timestamp
+}
+
 package ExternalEntities {
     entity stakeholder {
+        id : long
+        name : string
+    }    
+    entity stakeholdergroup {
         id : long
         name : string
     }
@@ -12,27 +25,23 @@ package ExternalEntities {
 }
 
 package Assessment {
-
     entity assessment {
-        id : long
-        date : timestamp
-        user : long
-        status : [EMPTY, STARTED, COMPLETE, DISCARDED]
+        status : [EMPTY, STARTED, COMPLETE]
         application_id : long
-        notes: string
+        comment : string
     }
-    entity assess_questionaire {
-        id : long
+    entity assessment_questionaire {
+        assessment_id : long
         name : string
         language : [ES,FR,EN,IT]
     }
-    entity assess_category {
-        id : long
+    entity assessment_category {
+        assessment_questionnaire_id : long
         order : integer
         name : string
     }
-    entity assess_question {
-        id : long
+    entity assessment_question {
+        assessment_category_id : long
         order : integer
         type: [SINGLE]
         name : string
@@ -41,23 +50,28 @@ package Assessment {
         comment : string
     }
 
-    entity assess_single_option {
-        id : long
+    entity assessment_single_option {
+        assessment_question_id : long
         order : integer
         risk : [RED,AMBER,GREEN]
         option : string
         selected : boolean
     }
 
-    entity assess_stake {
+    entity assessment_stakeholder {
+        assessment_id : long
         stakeholder_id : long
+    }    
+    
+    entity assessment_stakeholdergroup {
+        assessment_id : long
+        stakeholdergroup_id : long
     }
 
-    assess_questionaire ||--o{ assess_category
-    assess_category ||--o{ assess_question
-    assess_question ||--o{ assess_single_option
-    assessment ||--o| assess_questionaire
-
+    assessment_questionaire ||--o{ assessment_category
+    assessment_category ||--o{ assessment_question
+    assessment_question ||--o{ assessment_single_option
+    assessment ||--o| assessment_questionaire
 }
 package Review {
     entity review {
@@ -106,12 +120,12 @@ package Translation {
     }
 }
 
-assessment ||--o{ assess_stake
+assessment ||--o{ assessment_stakeholder
+assessment ||--o{ assessment_stakeholdergroup
 assessment ||--o| review
 
-application ||..o{ assessment
-stakeholder ||..o{ assess_stake
+application ||..o| assessment
 
-questionaire ||..o{ assess_questionaire
+questionaire ||..o{ assessment_questionaire
 
 @enduml

@@ -4,11 +4,14 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
+import io.tackle.pathfinder.model.QuestionType;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
@@ -21,7 +24,6 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 
 import java.time.Duration;
-import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
@@ -53,10 +55,12 @@ public class AssessmentSvcTest {
         Questionnaire questionnaire = createQuestionnaire();
         List<Category> categories = questionnaire.categories;
 
-        Assessment assessment = createAssessment(questionnaire.id, 10L);
+        Assessment assessment = createAssessment(questionnaire, 10L);
         AssessmentQuestionnaire assessmentQuestionnaire = assessment.assessmentQuestionnaire;
         List<AssessmentCategory> categoriesAssessQuestionnaire = assessmentQuestionnaire.categories;
 
+        assertThat(assessment.stakeholdergroups.size()).isEqualTo(2);
+        assertThat(assessment.stakeholders.size()).isEqualTo(3);
         assertThat(categoriesAssessQuestionnaire.size()).isGreaterThan(0);
         assertThat(categories.size()).isGreaterThan(0);
         assertThat(assessmentQuestionnaire.categories.size()).isEqualTo(categories.size());
@@ -86,14 +90,37 @@ public class AssessmentSvcTest {
         List<SingleOption> qSingleOptions = firstCategory.questions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().singleOptions;
         assertThat(aSingleOptions.size()).isEqualTo(qSingleOptions.size());
         assertThat(aSingleOptions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().option).isEqualTo(qSingleOptions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().option);
+
+    }
+
+    private void addStakeholdersToAssessment(Assessment assessment) {
+        AssessmentStakeholder stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(100L).build();
+        stakeholder.persist();
+        assessment.stakeholders.add(stakeholder);
+
+        stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(200L).build();
+        stakeholder.persist();
+        assessment.stakeholders.add(stakeholder);
+
+        stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(300L).build();
+        stakeholder.persist();
+        assessment.stakeholders.add(stakeholder);
+
+        AssessmentStakeholdergroup group = AssessmentStakeholdergroup.builder().assessment(assessment).stakeholdergroupId(500L).build();
+        group.persist();
+        assessment.stakeholdergroups.add(group);
+
+        group = AssessmentStakeholdergroup.builder().assessment(assessment).stakeholdergroupId(600L).build();
+        group.persist();
+        assessment.stakeholdergroups.add(group);
     }
 
     @Test
     public void given_SameApplication_when_SeveralAssessmentCreation_should_ThrowException() throws InterruptedException {
         Questionnaire questionnaire = createQuestionnaire();
-        CompletableFuture<Assessment> future1 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire.id, 5L));
+        CompletableFuture<Assessment> future1 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire, 5L));
         Thread.sleep(500);
-        CompletableFuture<Assessment> future4 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire.id, 5L));
+        CompletableFuture<Assessment> future4 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire, 5L));
         assertThat(future1).succeedsWithin(Duration.ofSeconds(10)).matches(e -> e.id > 0);
         assertThat(future4).failsWithin(Duration.ofSeconds(1));
     }    
@@ -101,11 +128,11 @@ public class AssessmentSvcTest {
     @Test
     public void given_SameApplicationButDeletedTrue_when_SeveralAssessmentCreation_should_NotThrowException() {
         Questionnaire questionnaire = createQuestionnaire();
-        Assessment assessment1 = createAssessment(questionnaire.id, 200L);
+        Assessment assessment1 = createAssessment(questionnaire, 200L);
         assertThat(assessment1).matches(e -> e.id > 0);
-        assertThatThrownBy(() -> createAssessment(questionnaire.id, 200L));
+        assertThatThrownBy(() -> createAssessment(questionnaire, 200L));
         deleteAssessment(assessment1.id);  
-        Assessment assessment2 = createAssessment(questionnaire.id, 200L);
+        Assessment assessment2 = createAssessment(questionnaire, 200L);
         assertThat(assessment2).matches(e -> e.id > 0);
     }
 
@@ -115,12 +142,14 @@ public class AssessmentSvcTest {
     }
 
     @Transactional
-    public Assessment createAssessment(Long questionnaireId, long applicationId) {
-        log.info("Creating an assessment : " + LocalTime.now());
+    public Assessment createAssessment(Questionnaire questionnaire, long applicationId) {
+        log.info("Creating an assessment ");
         Assessment assessment = Assessment.builder().applicationId(applicationId).build();
         assessment.persistAndFlush();
 
-        return assessmentSvc.copyQuestionnaireIntoAssessment(assessment.id, questionnaireId);
+        addStakeholdersToAssessment(assessment);
+
+        return assessmentSvc.copyQuestionnaireIntoAssessment(assessment, questionnaire);
     }
 
     @Transactional
@@ -145,7 +174,7 @@ public class AssessmentSvcTest {
 
     private Question createQuestion(Category category, int i) {
         Question question = Question.builder().name("question-" + i).order(i).questionText("questionText-" + i)
-                .description("tooltip-" + i).type("SINGLE").build();
+                .description("tooltip-" + i).type(QuestionType.SINGLE).build();
         question.persistAndFlush();
 
         question.singleOptions = IntStream.range(1, new Random().nextInt(10) + 3)

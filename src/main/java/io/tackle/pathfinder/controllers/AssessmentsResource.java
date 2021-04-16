@@ -1,6 +1,7 @@
 package io.tackle.pathfinder.controllers;
 
 import io.tackle.pathfinder.dto.ApplicationDto;
+import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
 
@@ -11,6 +12,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -40,6 +42,13 @@ public class AssessmentsResource {
       .entity(service.createAssessment(data.getApplicationId()))
       .type(MediaType.APPLICATION_JSON)
       .build();
+  }
+
+  @GET
+  @Path("{assessmentId}")
+  @Produces("application/json")
+  public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId) {
+    return service.getAssessmentDtoByAssessmentId(assessmentId);
   }
 
 }

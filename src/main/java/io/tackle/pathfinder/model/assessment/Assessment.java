@@ -15,8 +15,12 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Entity
@@ -39,4 +43,12 @@ public class Assessment extends AbstractEntity {
 
     @OneToOne(mappedBy = "assessment", cascade = CascadeType.REMOVE)
     public AssessmentQuestionnaire assessmentQuestionnaire;
+
+    @OneToMany(mappedBy = "assessment", cascade = CascadeType.REMOVE)
+    @Builder.Default
+    public List<AssessmentStakeholder> stakeholders= new ArrayList<>();
+
+    @OneToMany(mappedBy = "assessment", cascade = CascadeType.REMOVE)
+    @Builder.Default
+    public List<AssessmentStakeholdergroup> stakeholdergroups = new ArrayList<>();
 }

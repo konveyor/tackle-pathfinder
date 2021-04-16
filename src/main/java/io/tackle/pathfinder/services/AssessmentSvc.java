@@ -1,5 +1,6 @@
 package io.tackle.pathfinder.services;
 
+import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
@@ -19,8 +20,8 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +48,7 @@ public class AssessmentSvc {
             assessment.status = AssessmentStatus.STARTED;
             assessment.persistAndFlush();
 
-            copyQuestionnaireIntoAssessment(assessment.id, defaultQuestionnaire());
+            copyQuestionnaireIntoAssessment(assessment, defaultQuestionnaire());
 
             return mapper.assessmentToAssessmentHeaderDto(assessment);
         } else {
@@ -56,33 +57,47 @@ public class AssessmentSvc {
     }
 
     @Transactional
-    public Assessment copyQuestionnaireIntoAssessment(Long assessmentId, Long questionnaireId) {
-        Questionnaire questionnaire = Questionnaire.findById(questionnaireId);
-        Assessment assessment = Assessment.findById(assessmentId);
+    public Assessment copyQuestionnaireIntoAssessment(Assessment assessment, Questionnaire questionnaire) {
 
-        AssessmentQuestionnaire assessQuestionnaire = AssessmentQuestionnaire.builder().name(questionnaire.name)
-                .questionnaire(questionnaire).assessment(assessment).languageCode(questionnaire.languageCode).build();
+        AssessmentQuestionnaire assessQuestionnaire = AssessmentQuestionnaire.builder()
+                .name(questionnaire.name)
+                .questionnaire(questionnaire)
+                .assessment(assessment)
+                .languageCode(questionnaire.languageCode)
+                .build();
         assessQuestionnaire.persist();
 
         assessment.assessmentQuestionnaire = assessQuestionnaire;
 
         assessment.assessmentQuestionnaire.categories = new ArrayList<AssessmentCategory>();
         for (Category category : questionnaire.categories) {
-            AssessmentCategory assessmentCategory = AssessmentCategory.builder().name(category.name)
-                    .order(category.order).questionnaire(assessment.assessmentQuestionnaire )
-                    .questions(new ArrayList<>()).build();
+            AssessmentCategory assessmentCategory = AssessmentCategory.builder()
+                    .name(category.name)
+                    .order(category.order)
+                    .questionnaire(assessment.assessmentQuestionnaire )
+                    .build();
             assessmentCategory.persist();
 
             for (Question question : category.questions) {
-                AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder().category(assessmentCategory)
-                        .name(question.name).order(question.order).questionText(question.questionText).type("SINGLE")
-                        .singleOptions(new ArrayList<>()).build();
+                AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder()
+                        .category(assessmentCategory)
+                        .name(question.name)
+                        .order(question.order)
+                        .questionText(question.questionText)
+                        .type(question.type)
+                        .description(question.description)
+                        .build();
 
                 assessmentQuestion.persist();
 
                 for (SingleOption so : question.singleOptions) {
-                    AssessmentSingleOption singleOption = AssessmentSingleOption.builder().option(so.option)
-                            .order(so.order).question(assessmentQuestion).risk(so.risk).selected(false).build();
+                    AssessmentSingleOption singleOption = AssessmentSingleOption.builder()
+                        .option(so.option)
+                        .order(so.order)
+                        .question(assessmentQuestion)
+                        .risk(so.risk)
+                        .selected(false)
+                        .build();
 
                     singleOption.persist();
 
@@ -96,9 +111,16 @@ public class AssessmentSvc {
         return assessment;
     }
 
-    private Long defaultQuestionnaire() {
+    private Questionnaire defaultQuestionnaire() {
         log.log(Level.FINE, "questionnaires : " + Questionnaire.count());
-        return Questionnaire.<Questionnaire>streamAll().findFirst().map(e -> e.id).orElseThrow();
+        return Questionnaire.<Questionnaire>streamAll().findFirst().orElseThrow();
+    }
+
+    public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
+        log.log(Level.FINE,"Requesting Assessment " + assessmentId);
+        Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(() -> new NotFoundException());
+
+        return mapper.assessmentToAssessmentDto(assessment);
     }
 
 }

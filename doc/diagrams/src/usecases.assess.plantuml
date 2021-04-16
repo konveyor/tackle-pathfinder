@@ -11,6 +11,8 @@ package Copy {
     usecase "Copy Assessment" as copyfromto
 }
 package Assess {
+    usecase "Create new unique Assessment for Application" as newassessment
+    usecase "Copy Questionnaire into Assessment" as copyquestionnaire
     usecase "Select Stakeholders" as selectstake
     usecase "Answer Questions" as answer
 }
@@ -41,7 +43,9 @@ selectapp --> selectfrom
 selectto --> copyfromto
 selectfrom ..> selectto
 
-selectapp --> selectstake
+selectapp --> newassessment
+newassessment --> copyquestionnaire : include
+copyquestionnaire --> selectstake
 selectstake ..> answer
 answer ..> navigate : include
 answer ..> save : include
