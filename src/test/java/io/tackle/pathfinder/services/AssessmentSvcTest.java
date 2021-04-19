@@ -141,6 +141,50 @@ public class AssessmentSvcTest {
         assertThat(getCheckedForOption(assessmentUpdated, assessmentCategoryDto.getId(), assessmentQuestionDto.getId(),
                 assessmentQuestionOptionDto.getId())).isTrue();
     }
+
+    @Test
+    public void given_CreatedAssessment_When_UpdateWithStakeholdersNull_Then_ItDoesntChangeStakeholders() throws InterruptedException {
+        Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 2410L);
+
+        assertThat(assessment.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
+        assertThat(assessment.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
+
+        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment);
+        assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
+        assertThat(assessmentDto.getStakeholders()).hasSize(3); 
+
+        // Stakeholders and Stakeholdergroups NOT send will imply leave what is there without touching it
+        assessmentDto.setStakeholderGroups(null);
+        assessmentDto.setStakeholders(null);
+
+        assessmentSvc.updateAssessment(assessment.id, assessmentDto);
+
+        Assessment assessmentUpdated = Assessment.findById(assessment.id);
+        assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
+        assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
+    }    
+    
+    @Test
+    public void given_CreatedAssessment_When_UpdateWithStakeholdersEmpty_Then_ItDeleteAllStakeholders() throws InterruptedException {
+        Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 3410L);
+
+        assertThat(assessment.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
+        assertThat(assessment.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
+
+        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment);
+        assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
+        assertThat(assessmentDto.getStakeholders()).hasSize(3); 
+
+        // Stakeholders and Stakeholdergroups NOT send will imply leave what is there without touching it
+        assessmentDto.getStakeholderGroups().clear();
+        assessmentDto.getStakeholders().clear();
+
+        assessmentSvc.updateAssessment(assessment.id, assessmentDto);
+
+        Assessment assessmentUpdated = Assessment.findById(assessment.id);
+        assertThat(assessmentUpdated.stakeholders).hasSize(0);
+        assertThat(assessmentUpdated.stakeholdergroups).hasSize(0);
+    }
     
     @Transactional
     private boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId) throws InterruptedException {
