@@ -331,6 +331,87 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.body("questionnaire.categories.find{it.id==" + category.getId() + "}.questions.find{it.id==" + question.getId() + "}.options.findAll{it.checked==true}.size()", is(1))
 			.body("questionnaire.categories.find{it.id==" + category.getId() + "}.questions.find{it.id==" + question.getId() + "}.options.size()", greaterThan(1));
 	}
+	
+	@Test
+	public void given_AssessmentCreated_When_UpdatingStatus_Then_StatusIsStored_And_ResponseIsOK() {
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(5500L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Modification of status to complete
+		given()
+		  .contentType(ContentType.JSON)
+		  .accept(ContentType.JSON)
+		  .body(AssessmentDto.builder()
+		  		.status(AssessmentStatus.COMPLETE)
+		  		.build())
+		.when()
+			.patch("/assessments/" + header.getId())
+		.then()
+    		.log().all()
+			.statusCode(200)
+			.body("id", equalTo(header.getId().intValue()),
+				  "applicationId", equalTo(5500),
+				  "status", equalTo("COMPLETE"));
+
+		// Retrieval of the assessment again to check updated values
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/assessments/" + header.getId())
+		.then()
+			.log().all()
+			.statusCode(200)
+			.body("status", is("COMPLETE"));
+	}	
+	
+	@Test
+	public void given_AssessmentCreated_When_UpdatingWithIncorrectIds_Then_ResponseIsBadRequest() {
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(6500L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Retrieval of the assessment created
+		AssessmentDto assessment = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/assessments/" + header.getId())
+		.then()
+			.log().all()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+
+		// Changing to an incorrect ID internally
+		assessment.getQuestionnaire().getCategories().get(0).setId(assessment.getQuestionnaire().getCategories().get(0).getId() + 6000L);
+		// Modification of status to complete
+		given()
+		  .contentType(ContentType.JSON)
+		  .accept(ContentType.JSON)
+		  .body(assessment)
+		.when()
+			.patch("/assessments/" + header.getId())
+		.then()
+    		.log().all()
+			.statusCode(400);
+	}
 
 	@Transactional
 	public void addUserEnteredInfoToAssessment(Long assessmentId) {

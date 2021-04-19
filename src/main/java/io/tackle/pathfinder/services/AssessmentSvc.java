@@ -127,7 +127,11 @@ public class AssessmentSvc {
     @Transactional
     public AssessmentHeaderDto updateAssessment(@NotNull Long assessmentId, @NotNull @Valid AssessmentDto assessmentDto) {
         Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
-        AssessmentQuestionnaire assessment_questionnaire = AssessmentQuestionnaire.find("assessment_id=?1 and id=?2", assessment.id, assessment.assessmentQuestionnaire.id).<AssessmentQuestionnaire>firstResultOptional().orElseThrow(BadRequestException::new);
+        AssessmentQuestionnaire assessment_questionnaire = AssessmentQuestionnaire.find("assessment_id=?1", assessmentId).<AssessmentQuestionnaire>firstResultOptional().orElseThrow(BadRequestException::new);
+
+        if (null != assessmentDto.getStatus()) {
+            assessment.status = assessmentDto.getStatus();
+        }
 
         if (null != assessmentDto.getStakeholderGroups()) {
             // Delete existing stakeholdergroups not included in current array
@@ -170,25 +174,31 @@ public class AssessmentSvc {
             });
         }
 
-        assessmentDto.getQuestionnaire().getCategories().forEach(categ -> {
-            AssessmentCategory category = AssessmentCategory.find("assessment_questionnaire_id=?1 and id=?2", assessment_questionnaire.id, categ.getId()).<AssessmentCategory>firstResultOptional().orElseThrow(BadRequestException::new);
-            if (categ.getComment() != null) {
-              category.comment = categ.getComment();
-                log.info("Setting category comment : " + category.comment);
-            }
+        if (assessmentDto.getQuestionnaire() != null && assessmentDto.getQuestionnaire().getCategories() != null) {
+            assessmentDto.getQuestionnaire().getCategories().forEach(categ -> {
+                AssessmentCategory category = AssessmentCategory.find("assessment_questionnaire_id=?1 and id=?2", assessment_questionnaire.id, categ.getId()).<AssessmentCategory>firstResultOptional().orElseThrow(BadRequestException::new);
+                if (categ.getComment() != null) {
+                category.comment = categ.getComment();
+                    log.info("Setting category comment : " + category.comment);
+                }
 
-            categ.getQuestions().forEach(que -> {
-                AssessmentQuestion question = AssessmentQuestion.find("assessment_category_id=?1 and id=?2", categ.getId(), que.getId()).<AssessmentQuestion>firstResultOptional().orElseThrow(BadRequestException::new);
+                if (categ.getQuestions() != null) {
+                    categ.getQuestions().forEach(que -> {
+                        AssessmentQuestion question = AssessmentQuestion.find("assessment_category_id=?1 and id=?2", categ.getId(), que.getId()).<AssessmentQuestion>firstResultOptional().orElseThrow(BadRequestException::new);
 
-                que.getOptions().forEach(opt -> {
-                    AssessmentSingleOption option = AssessmentSingleOption.find("assessment_question_id=?1 and id=?2", question.id, opt.getId()).<AssessmentSingleOption>firstResultOptional().orElseThrow(BadRequestException::new);
-                    if (opt.getChecked() != null) {
-                      option.selected = opt.getChecked();
-                        log.log(Level.FINE, "Setting option checked : " + option.selected);
-                    }
-                });
+                        if (que.getOptions() != null) {
+                            que.getOptions().forEach(opt -> {
+                                AssessmentSingleOption option = AssessmentSingleOption.find("assessment_question_id=?1 and id=?2", question.id, opt.getId()).<AssessmentSingleOption>firstResultOptional().orElseThrow(BadRequestException::new);
+                                if (opt.getChecked() != null) {
+                                option.selected = opt.getChecked();
+                                    log.log(Level.FINE, "Setting option checked : " + option.selected);
+                                }
+                            });
+                        }
+                    });
+                }
             });
-        });
+        }
         
         return mapper.assessmentToAssessmentHeaderDto(assessment);
     }
