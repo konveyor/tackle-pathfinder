@@ -4,7 +4,13 @@ import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
-import io.tackle.pathfinder.model.assessment.*;
+import io.tackle.pathfinder.model.assessment.Assessment;
+import io.tackle.pathfinder.model.assessment.AssessmentCategory;
+import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
+import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
+import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
@@ -19,7 +25,6 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -122,19 +127,21 @@ public class AssessmentSvc {
     @Transactional
     public AssessmentHeaderDto updateAssessment(@NotNull Long assessmentId, @NotNull @Valid AssessmentDto assessmentDto) {
         Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
+        AssessmentQuestionnaire assessment_questionnaire = AssessmentQuestionnaire.find("assessment_id=?1 and id=?2", assessment.id, assessment.assessmentQuestionnaire.id).<AssessmentQuestionnaire>firstResultOptional().orElseThrow(BadRequestException::new);
+
         if (null != assessmentDto.getStakeholderGroups()) {
             // Delete existing stakeholdergroups not included in current array
             assessment.stakeholdergroups.forEach(stakegroup -> {
                 if (!assessmentDto.getStakeholderGroups().contains(stakegroup.stakeholdergroupId)) {
-                    log.info("Deleted stakegroup : " + stakegroup.stakeholdergroupId);
+                    log.log(Level.FINE,"Deleted stakegroup : " + stakegroup.stakeholdergroupId);
                     stakegroup.delete();
                 }
             });
             // Add not existing stakeholdergroups included in the current array
             assessmentDto.getStakeholderGroups().forEach(e -> {
-                log.info("Considering Stakeholdergroup : " + e);
+                log.log(Level.FINE, "Considering Stakeholdergroup : " + e);
                 if (assessment.stakeholdergroups.stream().noneMatch(o -> o.stakeholdergroupId == e)) {
-                    log.info("Adding Stakeholdergroup : " + e);
+                    log.log(Level.FINE,"Adding Stakeholdergroup : " + e);
                     AssessmentStakeholdergroup.builder()
                             .assessment(assessment)
                             .stakeholdergroupId(e)
@@ -146,15 +153,15 @@ public class AssessmentSvc {
             // Delete existing stakeholders not included in current array
             assessment.stakeholders.forEach(stake -> {
                 if (!assessmentDto.getStakeholders().contains(stake.stakeholderId)) {
-                    log.info("Deleted stake : " + stake.stakeholderId);
+                    log.log(Level.FINE,"Deleted stake : " + stake.stakeholderId);
                     stake.delete();
                 }
             });
             // Add not existing stakeholders included in the current array
             assessmentDto.getStakeholders().forEach(e -> {
-                log.info("Considering Stakeholder : " + e);
+                log.log(Level.FINE,"Considering Stakeholder : " + e);
                 if (assessment.stakeholders.stream().noneMatch(o -> o.stakeholderId == e)) {
-                    log.info("Adding Stakeholder : " + e);
+                    log.log(Level.FINE,"Adding Stakeholder : " + e);
                     AssessmentStakeholder.builder()
                         .assessment(assessment)
                         .stakeholderId(e)
@@ -164,7 +171,7 @@ public class AssessmentSvc {
         }
 
         assessmentDto.getQuestionnaire().getCategories().forEach(categ -> {
-            AssessmentCategory category = AssessmentCategory.find("assessment_questionnaire_id=?1 and id=?2", assessment.assessmentQuestionnaire.id, categ.getId()).<AssessmentCategory>firstResultOptional().orElseThrow(BadRequestException::new);
+            AssessmentCategory category = AssessmentCategory.find("assessment_questionnaire_id=?1 and id=?2", assessment_questionnaire.id, categ.getId()).<AssessmentCategory>firstResultOptional().orElseThrow(BadRequestException::new);
             if (categ.getComment() != null) {
               category.comment = categ.getComment();
                 log.info("Setting category comment : " + category.comment);
@@ -177,7 +184,7 @@ public class AssessmentSvc {
                     AssessmentSingleOption option = AssessmentSingleOption.find("assessment_question_id=?1 and id=?2", question.id, opt.getId()).<AssessmentSingleOption>firstResultOptional().orElseThrow(BadRequestException::new);
                     if (opt.getChecked() != null) {
                       option.selected = opt.getChecked();
-                        log.info("Setting category comment : " + category.comment);
+                        log.log(Level.FINE, "Setting option checked : " + option.selected);
                     }
                 });
             });

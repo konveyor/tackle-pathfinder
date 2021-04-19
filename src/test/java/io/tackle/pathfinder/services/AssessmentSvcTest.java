@@ -23,7 +23,6 @@ import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.extern.java.Log;
-import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.Test;
 
@@ -175,7 +174,7 @@ public class AssessmentSvcTest {
         assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
         assertThat(assessmentDto.getStakeholders()).hasSize(3); 
 
-        // Stakeholders and Stakeholdergroups NOT send will imply leave what is there without touching it
+        // Stakeholders and Stakeholdergroups sent EMPTY send will imply deleting every element in DB in stakeholders/stakeholdergroups
         assessmentDto.getStakeholderGroups().clear();
         assessmentDto.getStakeholders().clear();
 
