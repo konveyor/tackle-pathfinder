@@ -9,6 +9,7 @@ import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentQuestionDto;
 import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
+import io.tackle.pathfinder.model.QuestionType;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
@@ -50,7 +51,7 @@ import static org.assertj.core.api.Assertions.*;
 @Log
 public class AssessmentSvcTest {
     @Inject
-    AssessmentSvc assessmentSvc; 
+    AssessmentSvc assessmentSvc;
 
     @Inject
     ManagedExecutor managedExecutor;
@@ -149,7 +150,7 @@ public class AssessmentSvcTest {
         log.info("ids " + categoryId + "--" + questionId + "--" + optionId);
         AssessmentCategory category = assessment.assessmentQuestionnaire.categories.stream()
                 .filter(e -> e.id.equals(categoryId)).findFirst().orElseThrow();
-                
+
         AssessmentQuestion question = category.questions.stream().filter(e -> e.id.equals(questionId)).findFirst()
                 .orElseThrow();
         AssessmentSingleOption option = question.singleOptions.stream().filter(e -> e.id.equals(optionId)).findFirst()
@@ -187,15 +188,15 @@ public class AssessmentSvcTest {
         CompletableFuture<Assessment> future4 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire, 5L));
         assertThat(future1).succeedsWithin(Duration.ofSeconds(10)).matches(e -> e.id > 0);
         assertThat(future4).failsWithin(Duration.ofSeconds(1));
-    }    
-    
+    }
+
     @Test
     public void given_SameApplicationButDeletedTrue_when_SeveralAssessmentCreation_should_NotThrowException() {
         Questionnaire questionnaire = createQuestionnaire();
         Assessment assessment1 = createAssessment(questionnaire, 200L);
         assertThat(assessment1).matches(e -> e.id > 0);
         assertThatThrownBy(() -> createAssessment(questionnaire, 200L));
-        deleteAssessment(assessment1.id);  
+        deleteAssessment(assessment1.id);
         Assessment assessment2 = createAssessment(questionnaire, 200L);
         assertThat(assessment2).matches(e -> e.id > 0);
     }
@@ -238,7 +239,7 @@ public class AssessmentSvcTest {
 
     private Question createQuestion(Category category, int i) {
         Question question = Question.builder().name("question-" + i).order(i).questionText("questionText-" + i)
-                .description("tooltip-" + i).type("SINGLE").build();
+                .description("tooltip-" + i).type(QuestionType.SINGLE).build();
         question.persistAndFlush();
 
         question.singleOptions = IntStream.range(1, new Random().nextInt(10) + 3)
