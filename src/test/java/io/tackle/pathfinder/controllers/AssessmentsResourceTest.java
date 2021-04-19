@@ -314,7 +314,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
     		.log().all()
 			.statusCode(200)
-			.body("id", is(header.getId()),
+			.body("id", equalTo(header.getId().intValue()),
 				  "applicationId", equalTo(500),
 				  "status", equalTo("STARTED"));
 

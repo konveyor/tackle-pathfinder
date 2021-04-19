@@ -103,8 +103,7 @@ public class AssessmentSvcTest {
     }
 
     @Test
-    @Transactional
-    public void given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent() {
+    public void given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent() throws InterruptedException {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 1410L);
 
         assertThat(assessment.stakeholdergroups).hasSize(2);
@@ -118,7 +117,7 @@ public class AssessmentSvcTest {
         assessmentDto.getStakeholderGroups().clear();
         assessmentDto.getStakeholderGroups().add(8100L);
         assessmentDto.getStakeholderGroups().add(8200L);
-        
+
         assessmentDto.getStakeholders().clear();
         assessmentDto.getStakeholders().add(8500L);
         assessmentDto.getStakeholders().add(8600L);
@@ -134,20 +133,26 @@ public class AssessmentSvcTest {
         Assessment assessmentUpdated = Assessment.findById(assessment.id);
         assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(8500L, 8600L);
         assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(8100L, 8200L);
-        
+
         assertThat(assessmentUpdated.assessmentQuestionnaire.categories).extracting(e -> e.comment)
                 .containsOnlyOnce("This is a test comment");
 
         assertThat(getCheckedForOption(assessmentUpdated, assessmentCategoryDto.getId(), assessmentQuestionDto.getId(),
                 assessmentQuestionOptionDto.getId())).isTrue();
     }
+    
+    @Transactional
+    private boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId) throws InterruptedException {
+        log.info("categories to check " + assessment.assessmentQuestionnaire.categories.stream().count());
+        log.info("categories to check " + assessment.assessmentQuestionnaire.categories.stream().map(e -> e.id.toString()).collect(Collectors.joining(" ## ")));
 
-    private boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId) {
+        log.info("ids " + categoryId + "--" + questionId + "--" + optionId);
         AssessmentCategory category = assessment.assessmentQuestionnaire.categories.stream()
-                .filter(e -> e.id == categoryId).findFirst().orElseThrow();
-        AssessmentQuestion question = category.questions.stream().filter(e -> e.id == questionId).findFirst()
+                .filter(e -> e.id.equals(categoryId)).findFirst().orElseThrow();
+                
+        AssessmentQuestion question = category.questions.stream().filter(e -> e.id.equals(questionId)).findFirst()
                 .orElseThrow();
-        AssessmentSingleOption option = question.singleOptions.stream().filter(e -> e.id == optionId).findFirst()
+        AssessmentSingleOption option = question.singleOptions.stream().filter(e -> e.id.equals(optionId)).findFirst()
                 .orElseThrow();
         return option.selected;
     }
