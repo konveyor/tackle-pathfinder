@@ -10,6 +10,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -49,6 +50,16 @@ public class AssessmentsResource {
   @Produces("application/json")
   public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId) {
     return service.getAssessmentDtoByAssessmentId(assessmentId);
+  }  
+  
+  @PATCH
+  @Path("{assessmentId}")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public AssessmentHeaderDto updateAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @NotNull @Valid AssessmentDto assessment) {
+    return service.updateAssessment(assessmentId, assessment);
   }
+
+
 
 }

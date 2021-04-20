@@ -257,6 +257,130 @@
                     }
                 }
             },
+            "patch": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Pach_Assessment"
+                            },
+                            "examples": {
+                                "path_assessment_rq_body": {
+                                    "value": {
+                                        "status": "DISCARDED",
+                                        "stakeholders": [
+                                            4,
+                                            93
+                                        ],
+                                        "stakeholdersgroups": [
+                                            63,
+                                            63
+                                        ],
+                                        "questionnaire": {
+                                            "categories": [
+                                                {
+                                                    "questions": [
+                                                        {
+                                                            "id": 51,
+                                                            "options": [
+                                                                {
+                                                                    "id": 31,
+                                                                    "selected": true
+                                                                },
+                                                                {
+                                                                    "id": 67,
+                                                                    "selected": true
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "id": 47,
+                                                            "options": [
+                                                                {
+                                                                    "id": 43,
+                                                                    "selected": true
+                                                                },
+                                                                {
+                                                                    "id": 99,
+                                                                    "selected": true
+                                                                }
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "id": 97,
+                                                    "comment": "some text"
+                                                },
+                                                {
+                                                    "questions": [
+                                                        {
+                                                            "id": 18,
+                                                            "options": [
+                                                                {
+                                                                    "id": 25,
+                                                                    "selected": true
+                                                                },
+                                                                {
+                                                                    "id": 58,
+                                                                    "selected": true
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "id": 0,
+                                                            "options": [
+                                                                {
+                                                                    "id": 91,
+                                                                    "selected": true
+                                                                },
+                                                                {
+                                                                    "id": 90,
+                                                                    "selected": true
+                                                                }
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "id": 52,
+                                                    "comment": "some text"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssessmentHeader"
+                                },
+                                "examples": {
+                                    "path_assessment_rs_200_body": {
+                                        "value": {
+                                            "status": "STARTED",
+                                            "applicationId": 36,
+                                            "id": 79
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "description": "when the update has been successful"
+                    },
+                    "404": {
+                        "description": "When the assessment can not be found"
+                    },
+                    "400": {
+                        "description": "When the body content is somehow incorrect : wrong ids, wrong values."
+                    }
+                },
+                "summary": "This operation will update the current Assessment using the assessmentId on the pathparam.",
+                "description": "This operation will only consider the assessmentId specified in the pathparam to find the related Assessment.\n\nUpdatable values :\n* status\n* stakeholders\n* stakeholderGroups\n* questionnaire.category.comment\n* questionnaire.category.question.option.checked\n\nOnly the information != null will be considered and modified. The rest will remain untouched."
+            },
             "parameters": [
                 {
                     "examples": {
@@ -299,13 +423,8 @@
                 "type": "object",
                 "properties": {
                     "status": {
-                        "description": "",
-                        "enum": [
-                            "EMPTY",
-                            "STARTED",
-                            "COMPLETE"
-                        ],
-                        "type": "string"
+                        "$ref": "#/components/schemas/Status",
+                        "description": ""
                     },
                     "applicationId": {
                         "description": "",
@@ -340,13 +459,8 @@
                         "type": "integer"
                     },
                     "status": {
-                        "description": "Current status of the assessment",
-                        "enum": [
-                            "EMPTY",
-                            "STARTED",
-                            "COMPLETED"
-                        ],
-                        "type": "string"
+                        "$ref": "#/components/schemas/Status",
+                        "description": "Current status of the assessment"
                     },
                     "stakeholders": {
                         "description": "List of ids of stakeholders",
@@ -720,17 +834,12 @@
             "Pach_Assessment": {
                 "description": "",
                 "required": [
-                    "id"
                 ],
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "description": "",
-                        "type": "integer"
-                    },
                     "status": {
-                        "description": "",
-                        "type": "string"
+                        "$ref": "#/components/schemas/Status",
+                        "description": ""
                     },
                     "stakeholders": {
                         "description": "",
@@ -806,7 +915,7 @@
                         "description": "",
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/Get_Question"
+                            "$ref": "#/components/schemas/Patch_Question"
                         }
                     },
                     "id": {
@@ -856,6 +965,15 @@
                         "type": "boolean"
                     }
                 }
+            },
+            "Status": {
+                "description": "Status of an Assessment",
+                "enum": [
+                    "STARTED",
+                    "COMPLETE",
+                    "DISCARDED"
+                ],
+                "type": "string"
             }
         },
         "responses": {
