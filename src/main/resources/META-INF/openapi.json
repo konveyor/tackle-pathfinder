@@ -267,80 +267,79 @@
                             "examples": {
                                 "path_assessment_rq_body": {
                                     "value": {
-                                        "id": 23,
-                                        "status": "some text",
+                                        "status": "DISCARDED",
                                         "stakeholders": [
-                                            42,
-                                            69
+                                            4,
+                                            93
                                         ],
                                         "stakeholdersgroups": [
-                                            74,
-                                            13
+                                            63,
+                                            63
                                         ],
                                         "questionnaire": {
                                             "categories": [
                                                 {
                                                     "questions": [
                                                         {
-                                                            "id": 91,
+                                                            "id": 51,
                                                             "options": [
                                                                 {
-                                                                    "id": 63,
+                                                                    "id": 31,
                                                                     "selected": true
                                                                 },
                                                                 {
-                                                                    "id": 92,
+                                                                    "id": 67,
                                                                     "selected": true
                                                                 }
                                                             ]
                                                         },
                                                         {
-                                                            "id": 10,
+                                                            "id": 47,
                                                             "options": [
                                                                 {
-                                                                    "id": 15,
+                                                                    "id": 43,
                                                                     "selected": true
                                                                 },
                                                                 {
-                                                                    "id": 33,
+                                                                    "id": 99,
                                                                     "selected": true
                                                                 }
                                                             ]
                                                         }
                                                     ],
-                                                    "id": 45,
+                                                    "id": 97,
                                                     "comment": "some text"
                                                 },
                                                 {
                                                     "questions": [
                                                         {
-                                                            "id": 17,
+                                                            "id": 18,
                                                             "options": [
                                                                 {
-                                                                    "id": 53,
+                                                                    "id": 25,
                                                                     "selected": true
                                                                 },
                                                                 {
-                                                                    "id": 6,
+                                                                    "id": 58,
                                                                     "selected": true
                                                                 }
                                                             ]
                                                         },
                                                         {
-                                                            "id": 76,
+                                                            "id": 0,
                                                             "options": [
                                                                 {
-                                                                    "id": 21,
+                                                                    "id": 91,
                                                                     "selected": true
                                                                 },
                                                                 {
-                                                                    "id": 77,
+                                                                    "id": 90,
                                                                     "selected": true
                                                                 }
                                                             ]
                                                         }
                                                     ],
-                                                    "id": 42,
+                                                    "id": 52,
                                                     "comment": "some text"
                                                 }
                                             ]
