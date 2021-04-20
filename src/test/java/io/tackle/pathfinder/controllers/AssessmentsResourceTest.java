@@ -373,6 +373,42 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.statusCode(200)
 			.body("status", is("COMPLETE"));
 	}	
+	@Test
+	public void given_AssessmentCreated_When_UpdatingStatusWithWrongValue_Then_ResponseIs400() {
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(6500L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Modification of status to complete
+		given()
+		  .contentType(ContentType.JSON)
+		  .accept(ContentType.JSON)
+		  .body("{ \"status\" : \"WHATEVER\"}")
+		.when()
+			.patch("/assessments/" + header.getId())
+		.then()
+    		.log().all()
+			.statusCode(400);
+
+		// Retrieval of the assessment again to check updated values
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/assessments/" + header.getId())
+		.then()
+			.log().all()
+			.statusCode(200)
+			.body("status", is("STARTED"));
+	}	
 	
 	@Test
 	public void given_AssessmentCreated_When_UpdatingWithIncorrectIds_Then_ResponseIsBadRequest() {
