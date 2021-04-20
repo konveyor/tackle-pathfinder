@@ -416,7 +416,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		AssessmentHeaderDto header = given()
 			.contentType(ContentType.JSON)
 			.accept(ContentType.JSON)
-			.body(new ApplicationDto(6500L))
+			.body(new ApplicationDto(7500L))
 		.when()
 			.post("/assessments")
 		.then()
@@ -447,7 +447,108 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
     		.log().all()
 			.statusCode(400);
+	}	
+	
+	@Test
+	public void given_AssessmentCreated_When_Deleting_Then_ResponseIsOKAndAssessmentIsNotReachable() {
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(29500L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Retrieval of the assessment created
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/assessments/" + header.getId())
+		.then()
+			.log().all()
+			.statusCode(200);
+
+		// Deleting the assessment
+		given()
+		  .contentType(ContentType.JSON)
+		  .accept(ContentType.JSON)
+		.when()
+			.delete("/assessments/" + header.getId())
+		.then()
+    		.log().all()
+			.statusCode(204);
+
+		// Checking again the get
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/assessments/" + header.getId())
+		.then()
+			.log().all()
+			.statusCode(404);
+	}	
+	@Test
+	public void given_AssessmentDeleted_When_Deleting_Then_ResponseIs404() {
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(19500L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Retrieval of the assessment created
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/assessments/" + header.getId())
+		.then()
+			.log().all()
+			.statusCode(200);
+
+		// Deleting the assessment
+		given()
+		  .contentType(ContentType.JSON)
+		  .accept(ContentType.JSON)
+		.when()
+			.delete("/assessments/" + header.getId())
+		.then()
+    		.log().all()
+			.statusCode(204);
+
+		// Checking again the get
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/assessments/" + header.getId())
+		.then()
+			.log().all()
+			.statusCode(404);
+
+		// Deleting the assessment again
+		given()
+		  .contentType(ContentType.JSON)
+		  .accept(ContentType.JSON)
+		.when()
+			.delete("/assessments/" + header.getId())
+		.then()
+    		.log().all()
+			.statusCode(404);
 	}
+
+
 
 	@Transactional
 	public void addUserEnteredInfoToAssessment(Long assessmentId) {

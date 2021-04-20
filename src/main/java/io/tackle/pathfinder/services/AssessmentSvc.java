@@ -199,8 +199,15 @@ public class AssessmentSvc {
                 }
             });
         }
-        
+
         return mapper.assessmentToAssessmentHeaderDto(assessment);
+    }
+
+    @Transactional
+    public void deleteAssessment(@NotNull Long assessmentId) {
+        Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
+        boolean deleted = Assessment.deleteById(assessment.id);
+        log.log(Level.FINE, "Deleted assessment : " + assessmentId + " = " + deleted);
     }
 
 }

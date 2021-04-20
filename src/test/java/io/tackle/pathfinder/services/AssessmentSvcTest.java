@@ -1,5 +1,6 @@
 package io.tackle.pathfinder.services;
 
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
@@ -24,6 +25,7 @@ import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.context.ManagedExecutor;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
@@ -59,6 +61,7 @@ public class AssessmentSvcTest {
     AssessmentMapper assessmentMapper;
 
     @Test
+    @DisplayName("given_Questionnaire_when_CopyQuestionnaireIntoAssessment_should_BeIdentical")
     @Transactional
     public void given_Questionnaire_when_CopyQuestionnaireIntoAssessment_should_BeIdentical() throws InterruptedException {
         Questionnaire questionnaire = createQuestionnaire();
@@ -103,6 +106,7 @@ public class AssessmentSvcTest {
     }
 
     @Test
+    @DisplayName("given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent")
     public void given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent() throws InterruptedException {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 1410L);
 
@@ -142,6 +146,7 @@ public class AssessmentSvcTest {
     }
 
     @Test
+    @DisplayName("given_CreatedAssessment_When_UpdateWithStakeholdersNull_Then_ItDoesntChangeStakeholders")
     public void given_CreatedAssessment_When_UpdateWithStakeholdersNull_Then_ItDoesntChangeStakeholders() throws InterruptedException {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 2410L);
 
@@ -164,6 +169,7 @@ public class AssessmentSvcTest {
     }    
     
     @Test
+    @DisplayName("given_CreatedAssessment_When_UpdateWithStakeholdersEmpty_Then_ItDeleteAllStakeholders")
     public void given_CreatedAssessment_When_UpdateWithStakeholdersEmpty_Then_ItDeleteAllStakeholders() throws InterruptedException {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 3410L);
 
@@ -239,14 +245,36 @@ public class AssessmentSvcTest {
         Assessment assessment1 = createAssessment(questionnaire, 200L);
         assertThat(assessment1).matches(e -> e.id > 0);
         assertThatThrownBy(() -> createAssessment(questionnaire, 200L));
-        deleteAssessment(assessment1.id);
+        assessmentSvc.deleteAssessment(assessment1.id);
         Assessment assessment2 = createAssessment(questionnaire, 200L);
         assertThat(assessment2).matches(e -> e.id > 0);
     }
 
+    @Test
+    public void given_CreatedAssessment_When_DeleteAssessment_should_DeleteIt() {
+        Questionnaire questionnaire = createQuestionnaire();
+        Assessment assessment = createAssessment(questionnaire, 1200L);
+        assessmentSvc.deleteAssessment(assessment.id);
+        assertThat(Assessment.findByIdOptional(assessment.id)).isEmpty();
+    }    
+    
+    @Test
+    public void given_NotExistingAssessment_When_DeleteAssessment_should_ThrowException() {
+        assertThatThrownBy(() -> assessmentSvc.deleteAssessment(8888L));
+    }    
+    
+    @Test
     @Transactional
-    public void deleteAssessment(Long assessmentId) {
-        Assessment.findById(assessmentId).delete();
+    public void given_AlreadyDeletedAssessment_When_DeleteAssessment_should_ThrowException() {
+        Questionnaire questionnaire = createQuestionnaire();
+        Assessment assessment = createAssessment(questionnaire, 897200L);
+        
+        assertThat(Assessment.findByIdOptional(assessment.id)).isNotEmpty();
+
+        assessmentSvc.deleteAssessment(assessment.id);
+
+        assertThat(Assessment.findByIdOptional(assessment.id)).isEmpty();
+        assertThatThrownBy(() -> assessmentSvc.deleteAssessment(8888L));
     }
 
     @Transactional
