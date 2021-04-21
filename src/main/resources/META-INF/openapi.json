@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "tackle-pathfinder",
-        "version": "0.0.2",
+        "version": "0.0.3",
         "description": "Tackle PathFinder 0.0.2"
     },
     "paths": {
@@ -257,6 +257,15 @@
                     }
                 }
             },
+            "delete": {
+                "responses": {
+                    "200": {
+                        "description": "If the deletion succeeds."
+                    }
+                },
+                "summary": "Deletes an assessment",
+                "description": "Checks if an assessment exists and deletes it."
+            },
             "patch": {
                 "requestBody": {
                     "content": {
@@ -267,7 +276,7 @@
                             "examples": {
                                 "path_assessment_rq_body": {
                                     "value": {
-                                        "status": "DISCARDED",
+                                        "status": "STARTED",
                                         "stakeholders": [
                                             4,
                                             93
@@ -371,11 +380,11 @@
                         },
                         "description": "when the update has been successful"
                     },
-                    "404": {
-                        "description": "When the assessment can not be found"
-                    },
                     "400": {
                         "description": "When the body content is somehow incorrect : wrong ids, wrong values."
+                    },
+                    "404": {
+                        "description": "When the assessment can not be found"
                     }
                 },
                 "summary": "This operation will update the current Assessment using the assessmentId on the pathparam.",
@@ -970,8 +979,7 @@
                 "description": "Status of an Assessment",
                 "enum": [
                     "STARTED",
-                    "COMPLETE",
-                    "DISCARDED"
+                    "COMPLETE"
                 ],
                 "type": "string"
             }
