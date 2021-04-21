@@ -85,4 +85,27 @@ test "$(echo $assessment_updated_json | jq '.stakeholderGroups | length')" = "3"
 test "$(echo $assessment_updated_json | jq ".questionnaire.categories[] | select(.id == $categoryid) | .comment // \"empty\"")" = '"This is a test comment"'
 test "$(echo $assessment_updated_json | jq ".questionnaire.categories[] | select(.id == $categoryid) | .questions[] | select(.id == $questionid) | .options[] | select(.id == $optionid) | .checked")" = "true"
 
+echo
+echo
+echo '>>> Given a created assessment, delete it and expect 204 as return code'
+req_delete_assessment=$(curl -X DELETE "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}")
+test "$req_delete_assessment" = "204"
+
+echo
+echo
+echo '>>> Given a deleted assessment, request it and receive 404 as return code'
+req_get_delete_assessment=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}")
+test "$req_get_delete_assessment" = "404"
+
+echo
+echo
+echo '>>> Given a deleted assessment, request assessments by application id and receive empty list'
+req_find_delete_assessment=$(curl -X GET "http://$api_ip/pathfinder/assessments?applicationId=100" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}")
+test "$req_find_delete_assessment" = "[]200"
+
+
+    
 echo " +++++ API CHECK SUCCESSFUL ++++++"
