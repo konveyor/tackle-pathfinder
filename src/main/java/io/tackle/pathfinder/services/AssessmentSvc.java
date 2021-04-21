@@ -28,6 +28,7 @@ import javax.ws.rs.NotFoundException;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 @Log
@@ -208,6 +209,83 @@ public class AssessmentSvc {
         Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
         boolean deleted = Assessment.deleteById(assessment.id);
         log.log(Level.FINE, "Deleted assessment : " + assessmentId + " = " + deleted);
+    }
+
+    @Transactional
+    public AssessmentHeaderDto copyAssessment(@NotNull Long sourceApplicationId, @NotNull Long targetApplicationId) {
+        Assessment assessmentSource = (Assessment) Assessment.find("applicationId", sourceApplicationId).firstResultOptional().orElseThrow();
+        if (assessmentSource != null) {
+            if (Assessment.find("applicationId", targetApplicationId).firstResultOptional().isEmpty()) {
+                Assessment assessmentTarget = Assessment.builder()
+                                                .applicationId(targetApplicationId)
+                                                .status(assessmentSource.status)
+                                                .build();
+                assessmentTarget.persist();
+
+                assessmentTarget.assessmentQuestionnaire = copyQuestionnaireBetweenAssessments(assessmentSource, assessmentTarget);
+
+                assessmentTarget.stakeholdergroups = assessmentSource.stakeholdergroups.stream().map(e -> AssessmentStakeholdergroup.builder()
+                                                                                                    .assessment(assessmentTarget)
+                                                                                                    .stakeholdergroupId(e.stakeholdergroupId)
+                                                                                                    .build())
+                                                                                                .collect(Collectors.toList());
+                assessmentTarget.stakeholders = assessmentSource.stakeholders.stream().map(e -> AssessmentStakeholder.builder()
+                                                                                                    .assessment(assessmentTarget)
+                                                                                                    .stakeholderId(e.stakeholderId)
+                                                                                                    .build())
+                                                                                        .collect(Collectors.toList());
+                assessmentTarget.persist();
+                return mapper.assessmentToAssessmentHeaderDto(assessmentTarget);
+            }
+        }
+
+        throw new BadRequestException();
+    }
+
+    @Transactional
+    private AssessmentQuestionnaire copyQuestionnaireBetweenAssessments(Assessment sourceAssessment, Assessment targetAssessment) {
+        AssessmentQuestionnaire questionnaire = AssessmentQuestionnaire.builder()
+                                                .assessment(targetAssessment)
+                                                .questionnaire(sourceAssessment.assessmentQuestionnaire.questionnaire)
+                                                .name(sourceAssessment.assessmentQuestionnaire.name)
+                                                .languageCode(sourceAssessment.assessmentQuestionnaire.languageCode)
+                                                .build();
+        questionnaire.persist();
+        questionnaire.categories = sourceAssessment.assessmentQuestionnaire.categories.stream().map(cat -> {
+            AssessmentCategory assessmentCategory = AssessmentCategory.builder()
+                .comment(cat.comment)
+                .name(cat.name)
+                .order(cat.order)
+                .questionnaire(questionnaire)
+                .build();
+            assessmentCategory.persist();
+            assessmentCategory.questions = cat.questions.stream().map(que -> {
+                AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder()
+                .category(assessmentCategory)
+                .description(que.description)
+                .name(que.name)
+                .order(que.order)
+                .questionText(que.questionText)
+                .type(que.type)
+                .build();
+                assessmentQuestion.persist();
+                assessmentQuestion.singleOptions = que.singleOptions.stream().map(opt -> {
+                    AssessmentSingleOption singleOption = AssessmentSingleOption.builder()
+                    .option(opt.option)
+                    .order(opt.order)
+                    .question(assessmentQuestion)
+                    .risk(opt.risk)
+                    .selected(opt.selected)
+                    .build();
+                    singleOption.persist();
+                    return singleOption; 
+                }).collect(Collectors.toList());
+                return assessmentQuestion;
+            }).collect(Collectors.toList());
+            return assessmentCategory;
+        }).collect(Collectors.toList());
+        
+        return questionnaire;
     }
 
 }

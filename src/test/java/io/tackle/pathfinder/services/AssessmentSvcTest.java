@@ -6,8 +6,10 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.pathfinder.dto.AssessmentCategoryDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
+import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentQuestionDto;
 import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
+import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.QuestionType;
 import io.tackle.pathfinder.model.Risk;
@@ -269,6 +271,27 @@ public class AssessmentSvcTest {
 
         assertThat(Assessment.findByIdOptional(assessment.id)).isEmpty();
         assertThatThrownBy(() -> assessmentSvc.deleteAssessment(8888L));
+    }
+
+    @Test
+    @Transactional
+    public void given_AlreadyAssessedApplication_When_CopyAssessment_ShouldCopyAllUserFieldValues() {
+        Questionnaire questionnaire = createQuestionnaire();
+        Assessment assessment = createAssessment(questionnaire, 8897200L);
+        assessment.assessmentQuestionnaire.categories.get(0).comment = "My special comment";
+        assessment.assessmentQuestionnaire.categories.get(0).questions.get(0).singleOptions.get(0).selected = true;
+        assessment.status = AssessmentStatus.COMPLETE;
+
+        AssessmentHeaderDto copyHeader = assessmentSvc.copyAssessment(8897200L, 9997200L);
+        Assessment assessmentCopied = Assessment.findById(copyHeader.getId());
+
+        AssessmentDto assessmentSourceDto = assessmentMapper.assessmentToAssessmentDto(assessment);
+        AssessmentDto assessmentTargetDto = assessmentMapper.assessmentToAssessmentDto(assessmentCopied);
+        		// Compare Values
+		assertThat(assessmentTargetDto)
+        .usingRecursiveComparison()
+            .ignoringFieldsMatchingRegexes(".*\\.id",".*Id", ".*create.*", "update.*", "id")
+            .ignoringCollectionOrder().isEqualTo(assessmentSourceDto);
     }
 
     @Transactional

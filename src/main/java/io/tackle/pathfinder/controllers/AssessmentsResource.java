@@ -69,6 +69,11 @@ public class AssessmentsResource {
     return Response.ok().status(Response.Status.NO_CONTENT).build();
   }
 
-
+  @POST
+  @Path("/copy")
+  @Produces("application/json")
+  public Response copyAssessment(@NotNull @QueryParam("sourceApplicationId") Long sourceApplicationId, @NotNull @QueryParam("targetApplicationId") Long targetApplicationId) {
+    return Response.ok(service.copyAssessment(sourceApplicationId, targetApplicationId)).status(Status.CREATED).build();
+  }
 
 }
