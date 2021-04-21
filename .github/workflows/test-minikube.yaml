@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 jobs:
-  microcks-api-validation:
+  minikube-api-validation:
     runs-on: ubuntu-latest
 
     steps:
