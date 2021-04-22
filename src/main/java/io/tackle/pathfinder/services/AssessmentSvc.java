@@ -180,7 +180,7 @@ public class AssessmentSvc {
                 AssessmentCategory category = AssessmentCategory.find("assessment_questionnaire_id=?1 and id=?2", assessment_questionnaire.id, categ.getId()).<AssessmentCategory>firstResultOptional().orElseThrow(BadRequestException::new);
                 if (categ.getComment() != null) {
                 category.comment = categ.getComment();
-                    log.info("Setting category comment : " + category.comment);
+                    log.log(Level.FINE, "Setting category comment : " + category.comment);
                 }
 
                 if (categ.getQuestions() != null) {
