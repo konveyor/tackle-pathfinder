@@ -1,6 +1,7 @@
 package io.tackle.pathfinder.model.assessment;
 
 import io.tackle.commons.entities.AbstractEntity;
+import io.tackle.pathfinder.model.QuestionType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -11,11 +12,14 @@ import org.hibernate.annotations.Where;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -30,7 +34,8 @@ public class AssessmentQuestion extends AbstractEntity {
     public int order;
 
     @Column(nullable = false)
-    public String type;
+    @Enumerated(value = EnumType.STRING)
+    public QuestionType type;
 
     @Column(nullable = false)
     public String name;
@@ -41,13 +46,11 @@ public class AssessmentQuestion extends AbstractEntity {
     @Column(name="question_text", length = 500 )
     public String questionText;
 
-    @Column(length = 1000)
-    public String comment;
+    @OneToMany(mappedBy="question", cascade = CascadeType.REMOVE)
+    @Builder.Default
+    public List<AssessmentSingleOption> singleOptions=new ArrayList<>();
 
     @ManyToOne(optional = false)
     @JoinColumn(name="assessment_category_id", referencedColumnName="id", nullable = false)
     public AssessmentCategory category;
-
-    @OneToMany(mappedBy="question", cascade = CascadeType.ALL)
-    public List<AssessmentSingleOption> singleOptions;
 }

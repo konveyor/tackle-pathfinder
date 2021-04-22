@@ -1,5 +1,6 @@
 package io.tackle.pathfinder.services;
 
+import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
@@ -8,6 +9,8 @@ import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
@@ -17,11 +20,11 @@ import lombok.extern.java.Log;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 
-import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -47,7 +50,7 @@ public class AssessmentSvc {
             assessment.status = AssessmentStatus.STARTED;
             assessment.persistAndFlush();
 
-            copyQuestionnaireIntoAssessment(assessment.id, defaultQuestionnaire());
+            copyQuestionnaireIntoAssessment(assessment, defaultQuestionnaire());
 
             return mapper.assessmentToAssessmentHeaderDto(assessment);
         } else {
@@ -56,33 +59,46 @@ public class AssessmentSvc {
     }
 
     @Transactional
-    public Assessment copyQuestionnaireIntoAssessment(Long assessmentId, Long questionnaireId) {
-        Questionnaire questionnaire = Questionnaire.findById(questionnaireId);
-        Assessment assessment = Assessment.findById(assessmentId);
+    public Assessment copyQuestionnaireIntoAssessment(Assessment assessment, Questionnaire questionnaire) {
 
-        AssessmentQuestionnaire assessQuestionnaire = AssessmentQuestionnaire.builder().name(questionnaire.name)
-                .questionnaire(questionnaire).assessment(assessment).languageCode(questionnaire.languageCode).build();
+        AssessmentQuestionnaire assessQuestionnaire = AssessmentQuestionnaire.builder()
+                .name(questionnaire.name)
+                .questionnaire(questionnaire)
+                .assessment(assessment)
+                .languageCode(questionnaire.languageCode)
+                .build();
         assessQuestionnaire.persist();
 
         assessment.assessmentQuestionnaire = assessQuestionnaire;
 
-        assessment.assessmentQuestionnaire.categories = new ArrayList<AssessmentCategory>();
         for (Category category : questionnaire.categories) {
-            AssessmentCategory assessmentCategory = AssessmentCategory.builder().name(category.name)
-                    .order(category.order).questionnaire(assessment.assessmentQuestionnaire )
-                    .questions(new ArrayList<>()).build();
+            AssessmentCategory assessmentCategory = AssessmentCategory.builder()
+                    .name(category.name)
+                    .order(category.order)
+                    .questionnaire(assessment.assessmentQuestionnaire )
+                    .build();
             assessmentCategory.persist();
 
             for (Question question : category.questions) {
-                AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder().category(assessmentCategory)
-                        .name(question.name).order(question.order).questionText(question.questionText).type("SINGLE")
-                        .singleOptions(new ArrayList<>()).build();
+                AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder()
+                        .category(assessmentCategory)
+                        .name(question.name)
+                        .order(question.order)
+                        .questionText(question.questionText)
+                        .type(question.type)
+                        .description(question.description)
+                        .build();
 
                 assessmentQuestion.persist();
 
                 for (SingleOption so : question.singleOptions) {
-                    AssessmentSingleOption singleOption = AssessmentSingleOption.builder().option(so.option)
-                            .order(so.order).question(assessmentQuestion).risk(so.risk).selected(false).build();
+                    AssessmentSingleOption singleOption = AssessmentSingleOption.builder()
+                        .option(so.option)
+                        .order(so.order)
+                        .question(assessmentQuestion)
+                        .risk(so.risk)
+                        .selected(false)
+                        .build();
 
                     singleOption.persist();
 
@@ -96,9 +112,95 @@ public class AssessmentSvc {
         return assessment;
     }
 
-    private Long defaultQuestionnaire() {
+    private Questionnaire defaultQuestionnaire() {
         log.log(Level.FINE, "questionnaires : " + Questionnaire.count());
-        return Questionnaire.<Questionnaire>streamAll().findFirst().map(e -> e.id).orElseThrow();
+        return Questionnaire.<Questionnaire>streamAll().findFirst().orElseThrow();
+    }
+
+    public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
+        log.log(Level.FINE,"Requesting Assessment " + assessmentId);
+        Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
+
+        return mapper.assessmentToAssessmentDto(assessment);
+    }
+
+    @Transactional
+    public AssessmentHeaderDto updateAssessment(@NotNull Long assessmentId, @NotNull @Valid AssessmentDto assessmentDto) {
+        Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
+        AssessmentQuestionnaire assessment_questionnaire = AssessmentQuestionnaire.find("assessment_id=?1", assessmentId).<AssessmentQuestionnaire>firstResultOptional().orElseThrow(BadRequestException::new);
+
+        if (null != assessmentDto.getStatus()) {
+            assessment.status = assessmentDto.getStatus();
+        }
+
+        if (null != assessmentDto.getStakeholderGroups()) {
+            // Delete existing stakeholdergroups not included in current array
+            assessment.stakeholdergroups.forEach(stakegroup -> {
+                if (!assessmentDto.getStakeholderGroups().contains(stakegroup.stakeholdergroupId)) {
+                    log.log(Level.FINE,"Deleted stakegroup : " + stakegroup.stakeholdergroupId);
+                    stakegroup.delete();
+                }
+            });
+            // Add not existing stakeholdergroups included in the current array
+            assessmentDto.getStakeholderGroups().forEach(e -> {
+                log.log(Level.FINE, "Considering Stakeholdergroup : " + e);
+                if (assessment.stakeholdergroups.stream().noneMatch(o -> o.stakeholdergroupId == e)) {
+                    log.log(Level.FINE,"Adding Stakeholdergroup : " + e);
+                    AssessmentStakeholdergroup.builder()
+                            .assessment(assessment)
+                            .stakeholdergroupId(e)
+                            .build().persist();
+                }
+            });
+        }
+        if (null != assessmentDto.getStakeholders()) {
+            // Delete existing stakeholders not included in current array
+            assessment.stakeholders.forEach(stake -> {
+                if (!assessmentDto.getStakeholders().contains(stake.stakeholderId)) {
+                    log.log(Level.FINE,"Deleted stake : " + stake.stakeholderId);
+                    stake.delete();
+                }
+            });
+            // Add not existing stakeholders included in the current array
+            assessmentDto.getStakeholders().forEach(e -> {
+                log.log(Level.FINE,"Considering Stakeholder : " + e);
+                if (assessment.stakeholders.stream().noneMatch(o -> o.stakeholderId == e)) {
+                    log.log(Level.FINE,"Adding Stakeholder : " + e);
+                    AssessmentStakeholder.builder()
+                        .assessment(assessment)
+                        .stakeholderId(e)
+                        .build().persist();
+                }
+            });
+        }
+
+        if (assessmentDto.getQuestionnaire() != null && assessmentDto.getQuestionnaire().getCategories() != null) {
+            assessmentDto.getQuestionnaire().getCategories().forEach(categ -> {
+                AssessmentCategory category = AssessmentCategory.find("assessment_questionnaire_id=?1 and id=?2", assessment_questionnaire.id, categ.getId()).<AssessmentCategory>firstResultOptional().orElseThrow(BadRequestException::new);
+                if (categ.getComment() != null) {
+                category.comment = categ.getComment();
+                    log.info("Setting category comment : " + category.comment);
+                }
+
+                if (categ.getQuestions() != null) {
+                    categ.getQuestions().forEach(que -> {
+                        AssessmentQuestion question = AssessmentQuestion.find("assessment_category_id=?1 and id=?2", categ.getId(), que.getId()).<AssessmentQuestion>firstResultOptional().orElseThrow(BadRequestException::new);
+
+                        if (que.getOptions() != null) {
+                            que.getOptions().forEach(opt -> {
+                                AssessmentSingleOption option = AssessmentSingleOption.find("assessment_question_id=?1 and id=?2", question.id, opt.getId()).<AssessmentSingleOption>firstResultOptional().orElseThrow(BadRequestException::new);
+                                if (opt.getChecked() != null) {
+                                option.selected = opt.getChecked();
+                                    log.log(Level.FINE, "Setting option checked : " + option.selected);
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+        
+        return mapper.assessmentToAssessmentHeaderDto(assessment);
     }
 
 }

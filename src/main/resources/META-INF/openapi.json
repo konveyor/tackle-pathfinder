@@ -2,12 +2,8 @@
     "openapi": "3.0.2",
     "info": {
         "title": "tackle-pathfinder",
-        "version": "0.0.1",
-        "description": "Tackle Pathfinder , v0.0.1",
-        "contact": {
-            "name": "Konveyor",
-            "url": "http://github.com/konveyor/tackle-pathfinder"
-        }
+        "version": "0.0.2",
+        "description": "Tackle PathFinder 0.0.2"
     },
     "paths": {
         "/assessments": {
@@ -17,6 +13,9 @@
                 "parameters": [
                     {
                         "examples": {
+                            "application_null": {
+                                "value": ""
+                            },
                             "application_noassessed": {
                                 "value": "1000"
                             },
@@ -39,7 +38,7 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/components/schemas/AssessmentHeaderDto"
+                                        "$ref": "#/components/schemas/AssessmentHeader"
                                     }
                                 },
                                 "examples": {
@@ -63,15 +62,10 @@
                     },
                     "400": {
                         "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "string"
-                                },
+                            "text/xml": {
                                 "examples": {
                                     "application_null": {
-                                        "value": {
-
-                                        }
+                                        "value": ""
                                     }
                                 }
                             }
@@ -87,12 +81,12 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/ApplicationDto"
+                                "$ref": "#/components/schemas/Application"
                             },
                             "examples": {
                                 "assessment_post_ok": {
                                     "value": {
-                                        "applicationId": 10
+                                        "applicationId": 92
                                     }
                                 }
                             }
@@ -105,14 +99,14 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/AssessmentHeaderDto"
+                                    "$ref": "#/components/schemas/AssessmentHeader"
                                 },
                                 "examples": {
                                     "assessment_post_ok": {
                                         "value": {
                                             "name": "some text",
                                             "status": "EMPTY",
-                                            "applicationId": 62,
+                                            "applicationId": 92,
                                             "id": 3
                                         }
                                     }
@@ -127,11 +121,299 @@
                 },
                 "operationId": "createAssessment"
             }
+        },
+        "/assessments/{assessmentId}": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Get_Assessment"
+                                },
+                                "examples": {
+                                    "Get_Assessment_OK": {
+                                        "value": {
+                                            "id": 40,
+                                            "applicationId": 35,
+                                            "status": "COMPLETED",
+                                            "stakeholders": [
+                                                36,
+                                                86
+                                            ],
+                                            "stakeholderGroups": [
+                                                31,
+                                                73
+                                            ],
+                                            "questionnaire": {
+                                                "categories": [
+                                                    {
+                                                        "id": 72,
+                                                        "order": 19,
+                                                        "title": "some text",
+                                                        "questions": [
+                                                            {
+                                                                "id": 1,
+                                                                "order": 84,
+                                                                "question": "some text",
+                                                                "options": [
+                                                                    {
+                                                                        "id": 85,
+                                                                        "order": 77,
+                                                                        "option": "some text",
+                                                                        "checked": true
+                                                                    },
+                                                                    {
+                                                                        "id": 16,
+                                                                        "order": 88,
+                                                                        "option": "some text",
+                                                                        "checked": true
+                                                                    }
+                                                                ],
+                                                                "description": "some text"
+                                                            },
+                                                            {
+                                                                "id": 19,
+                                                                "order": 30,
+                                                                "question": "some text",
+                                                                "options": [
+                                                                    {
+                                                                        "id": 45,
+                                                                        "order": 36,
+                                                                        "option": "some text",
+                                                                        "checked": true
+                                                                    },
+                                                                    {
+                                                                        "id": 37,
+                                                                        "order": 57,
+                                                                        "option": "some text",
+                                                                        "checked": true
+                                                                    }
+                                                                ],
+                                                                "description": "some text"
+                                                            }
+                                                        ],
+                                                        "comment": "some text"
+                                                    },
+                                                    {
+                                                        "id": 74,
+                                                        "order": 9,
+                                                        "title": "some text",
+                                                        "questions": [
+                                                            {
+                                                                "id": 85,
+                                                                "order": 21,
+                                                                "question": "some text",
+                                                                "options": [
+                                                                    {
+                                                                        "id": 79,
+                                                                        "order": 3,
+                                                                        "option": "some text",
+                                                                        "checked": true
+                                                                    },
+                                                                    {
+                                                                        "id": 7,
+                                                                        "order": 65,
+                                                                        "option": "some text",
+                                                                        "checked": false
+                                                                    }
+                                                                ],
+                                                                "description": "some text"
+                                                            },
+                                                            {
+                                                                "id": 19,
+                                                                "order": 33,
+                                                                "question": "some text",
+                                                                "options": [
+                                                                    {
+                                                                        "id": 62,
+                                                                        "order": 32,
+                                                                        "option": "some text",
+                                                                        "checked": true
+                                                                    },
+                                                                    {
+                                                                        "id": 66,
+                                                                        "order": 98,
+                                                                        "option": "some text",
+                                                                        "checked": true
+                                                                    }
+                                                                ],
+                                                                "description": "some text"
+                                                            }
+                                                        ],
+                                                        "comment": "some text"
+                                                    }
+                                                ],
+                                                "title": "some text",
+                                                "description": "some text",
+                                                "language": "some text"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "description": "Successfull response"
+                    }
+                }
+            },
+            "patch": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Pach_Assessment"
+                            },
+                            "examples": {
+                                "path_assessment_rq_body": {
+                                    "value": {
+                                        "status": "DISCARDED",
+                                        "stakeholders": [
+                                            4,
+                                            93
+                                        ],
+                                        "stakeholdersgroups": [
+                                            63,
+                                            63
+                                        ],
+                                        "questionnaire": {
+                                            "categories": [
+                                                {
+                                                    "questions": [
+                                                        {
+                                                            "id": 51,
+                                                            "options": [
+                                                                {
+                                                                    "id": 31,
+                                                                    "selected": true
+                                                                },
+                                                                {
+                                                                    "id": 67,
+                                                                    "selected": true
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "id": 47,
+                                                            "options": [
+                                                                {
+                                                                    "id": 43,
+                                                                    "selected": true
+                                                                },
+                                                                {
+                                                                    "id": 99,
+                                                                    "selected": true
+                                                                }
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "id": 97,
+                                                    "comment": "some text"
+                                                },
+                                                {
+                                                    "questions": [
+                                                        {
+                                                            "id": 18,
+                                                            "options": [
+                                                                {
+                                                                    "id": 25,
+                                                                    "selected": true
+                                                                },
+                                                                {
+                                                                    "id": 58,
+                                                                    "selected": true
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "id": 0,
+                                                            "options": [
+                                                                {
+                                                                    "id": 91,
+                                                                    "selected": true
+                                                                },
+                                                                {
+                                                                    "id": 90,
+                                                                    "selected": true
+                                                                }
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "id": 52,
+                                                    "comment": "some text"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssessmentHeader"
+                                },
+                                "examples": {
+                                    "path_assessment_rs_200_body": {
+                                        "value": {
+                                            "status": "STARTED",
+                                            "applicationId": 36,
+                                            "id": 79
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "description": "when the update has been successful"
+                    },
+                    "404": {
+                        "description": "When the assessment can not be found"
+                    },
+                    "400": {
+                        "description": "When the body content is somehow incorrect : wrong ids, wrong values."
+                    }
+                },
+                "summary": "This operation will update the current Assessment using the assessmentId on the pathparam.",
+                "description": "This operation will only consider the assessmentId specified in the pathparam to find the related Assessment.\n\nUpdatable values :\n* status\n* stakeholders\n* stakeholderGroups\n* questionnaire.category.comment\n* questionnaire.category.question.option.checked\n\nOnly the information != null will be considered and modified. The rest will remain untouched."
+            },
+            "parameters": [
+                {
+                    "examples": {
+                        "get_assessment_assessmentid": {
+                            "value": "92"
+                        }
+                    },
+                    "name": "assessmentId",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "in": "path",
+                    "required": true
+                }
+            ]
         }
     },
     "components": {
         "schemas": {
-            "AssessmentHeaderDto": {
+            "Application": {
+                "description": "",
+                "required": [
+                    "applicationId"
+                ],
+                "type": "object",
+                "properties": {
+                    "applicationId": {
+                        "description": "",
+                        "type": "integer"
+                    }
+                }
+            },
+            "AssessmentHeader": {
                 "description": "",
                 "required": [
                     "id",
@@ -141,13 +423,8 @@
                 "type": "object",
                 "properties": {
                     "status": {
-                        "description": "",
-                        "enum": [
-                            "EMPTY",
-                            "STARTED",
-                            "COMPLETE"
-                        ],
-                        "type": "string"
+                        "$ref": "#/components/schemas/Status",
+                        "description": ""
                     },
                     "applicationId": {
                         "description": "",
@@ -164,18 +441,539 @@
                     "applicationId": 14
                 }
             },
-            "ApplicationDto": {
-                "description": "",
+            "Get_Assessment": {
+                "title": "Root Type for assessment",
+                "description": "The application's assessment",
                 "required": [
-                    "applicationId"
+                    "id",
+                    "questionnaire"
                 ],
                 "type": "object",
                 "properties": {
-                    "applicationId": {
-                        "description": "",
+                    "id": {
+                        "description": "Assessment id",
                         "type": "integer"
+                    },
+                    "applicationId": {
+                        "description": "Application id",
+                        "type": "integer"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/Status",
+                        "description": "Current status of the assessment"
+                    },
+                    "stakeholders": {
+                        "description": "List of ids of stakeholders",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "stakeholderGroups": {
+                        "description": "List of ids of stakeholder groups",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "questionnaire": {
+                        "$ref": "#/components/schemas/Get_Questionnaire",
+                        "description": "Questionnaire content",
+                        "properties": {
+                            "title": {
+                                "type": "string"
+                            },
+                            "description": {
+                                "type": "string"
+                            },
+                            "language": {
+                                "type": "string"
+                            },
+                            "sections": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "format": "int32",
+                                            "type": "integer"
+                                        },
+                                        "order": {
+                                            "format": "int32",
+                                            "type": "integer"
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "questions": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "format": "int32",
+                                                        "type": "integer"
+                                                    },
+                                                    "order": {
+                                                        "format": "int32",
+                                                        "type": "integer"
+                                                    },
+                                                    "question": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "variant": {
+                                                        "type": "string"
+                                                    },
+                                                    "options": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "format": "int32",
+                                                                    "type": "integer"
+                                                                },
+                                                                "order": {
+                                                                    "format": "int32",
+                                                                    "type": "integer"
+                                                                },
+                                                                "answer": {
+                                                                    "type": "string"
+                                                                },
+                                                                "checked": {
+                                                                    "type": "boolean"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "example": {
+                    "id": 1,
+                    "applicationId": 2,
+                    "status": "notStarted | inProgress | completed",
+                    "stakeholders": [
+                        1,
+                        2,
+                        3
+                    ],
+                    "stakeholderGroups": [
+                        1,
+                        2
+                    ],
+                    "questionnaire": {
+                        "title": "Questionnaire #1",
+                        "description": "This questionnaire is for...",
+                        "language": "en",
+                        "sections": [
+                            {
+                                "id": 1,
+                                "order": 0,
+                                "title": "General questions",
+                                "questions": [
+                                    {
+                                        "id": 1,
+                                        "order": 0,
+                                        "question": "What's you favorite movie?",
+                                        "description": "This represents a multiple option choice",
+                                        "variant": "checkbox",
+                                        "options": [
+                                            {
+                                                "id": 1,
+                                                "order": 0,
+                                                "answer": "Titanic",
+                                                "checked": true
+                                            },
+                                            {
+                                                "id": 2,
+                                                "order": 1,
+                                                "answer": "Start war",
+                                                "checked": false
+                                            },
+                                            {
+                                                "id": 3,
+                                                "order": 2,
+                                                "answer": "Dr. Strange",
+                                                "checked": true
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "id": 2,
+                                        "order": 1,
+                                        "question": "How old are you?",
+                                        "description": "This represents a single option choice",
+                                        "type": "radioButton",
+                                        "options": [
+                                            {
+                                                "id": 4,
+                                                "order": 0,
+                                                "answer": "I'm younger than 30",
+                                                "checked": true
+                                            },
+                                            {
+                                                "id": 5,
+                                                "order": 1,
+                                                "answer": "I'm older than 30",
+                                                "checked": false
+                                            },
+                                            {
+                                                "id": 6,
+                                                "order": 2,
+                                                "answer": "I'm too old to tell you",
+                                                "checked": false
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "id": 3,
+                                        "order": 0,
+                                        "question": "What is your name?",
+                                        "description": "This represents an inputText",
+                                        "type": "inputText",
+                                        "textValue": "Gabriel García Márquez"
+                                    }
+                                ]
+                            }
+                        ]
                     }
                 }
+            },
+            "Get_Category": {
+                "title": "Root Type for section",
+                "description": "Questionnaire section",
+                "required": [
+                    "id",
+                    "order",
+                    "title",
+                    "questions"
+                ],
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "description": "DB id",
+                        "type": "integer"
+                    },
+                    "order": {
+                        "description": "Used for sorting multiple sections",
+                        "type": "integer"
+                    },
+                    "title": {
+                        "description": "Title of the section. This will be represented as a Wizard's section",
+                        "type": "string"
+                    },
+                    "questions": {
+                        "description": "List of questions that belongs to this section",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Get_Question"
+                        }
+                    },
+                    "comment": {
+                        "description": "Comment from the user to the category",
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "id": 98,
+                    "order": 9,
+                    "title": "some text",
+                    "questions": [
+                        {
+                            "id": 35,
+                            "order": 78,
+                            "question": "some text",
+                            "options": [
+                                {
+                                    "id": 82,
+                                    "order": 58,
+                                    "option": "some text",
+                                    "checked": true
+                                },
+                                {
+                                    "id": 32,
+                                    "order": 99,
+                                    "option": "some text",
+                                    "checked": true
+                                }
+                            ],
+                            "description": "some text"
+                        },
+                        {
+                            "id": 77,
+                            "order": 78,
+                            "question": "some text",
+                            "options": [
+                                {
+                                    "id": 96,
+                                    "order": 53,
+                                    "option": "some text",
+                                    "checked": true
+                                },
+                                {
+                                    "id": 25,
+                                    "order": 18,
+                                    "option": "some text",
+                                    "checked": true
+                                }
+                            ],
+                            "description": "some text"
+                        }
+                    ],
+                    "comment": "some text"
+                }
+            },
+            "Get_Question": {
+                "title": "Root Type for question",
+                "description": "A question",
+                "required": [
+                    "id",
+                    "order",
+                    "question",
+                    "options"
+                ],
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "description": "DB id",
+                        "type": "integer"
+                    },
+                    "order": {
+                        "description": "Used for sorting multiple questions",
+                        "type": "integer"
+                    },
+                    "question": {
+                        "description": "Question's value typically ends with '?'",
+                        "type": "string"
+                    },
+                    "options": {
+                        "description": "List of possible answers to the question. Applicable if variant=checkbox|radioButton.",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Get_QuestionOption"
+                        }
+                    },
+                    "description": {
+                        "description": "Extra info. This will appear in the tooltip",
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "id": 1,
+                    "order": 0,
+                    "question": "What's you favorite movie?",
+                    "description": "This represents a multiple option choice",
+                    "variant": "checkbox",
+                    "options": [
+                        {
+                            "id": 1,
+                            "order": 0,
+                            "option": "Titanic",
+                            "checked": true
+                        },
+                        {
+                            "id": 2,
+                            "order": 1,
+                            "option": "Start war",
+                            "checked": false
+                        },
+                        {
+                            "id": 3,
+                            "order": 2,
+                            "option": "Dr. Strange",
+                            "checked": true
+                        }
+                    ]
+                }
+            },
+            "Get_QuestionOption": {
+                "title": "Root Type for question_option",
+                "description": "A possible question's answer typically represented in a RadioButton",
+                "required": [
+                    "checked",
+                    "id",
+                    "option",
+                    "order"
+                ],
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "description": "The DB id",
+                        "type": "integer"
+                    },
+                    "order": {
+                        "description": "For sorting multiple radioButtons/checkboxes",
+                        "type": "integer"
+                    },
+                    "option": {
+                        "description": "The radioButton/checkbox text",
+                        "type": "string"
+                    },
+                    "checked": {
+                        "description": "Whether or not this option was selected by the user",
+                        "type": "boolean"
+                    }
+                },
+                "example": {
+                    "id": 1,
+                    "order": 0,
+                    "option": "I'm a radioButton/checkbox option",
+                    "checked": true
+                }
+            },
+            "Pach_Assessment": {
+                "description": "",
+                "required": [
+                ],
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "$ref": "#/components/schemas/Status",
+                        "description": ""
+                    },
+                    "stakeholders": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "stakeholdersgroups": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "questionnaire": {
+                        "$ref": "#/components/schemas/Patch_Questionnaire",
+                        "description": ""
+                    }
+                }
+            },
+            "Get_Questionnaire": {
+                "description": "",
+                "required": [
+                    "categories",
+                    "title",
+                    "language"
+                ],
+                "type": "object",
+                "properties": {
+                    "categories": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Get_Category"
+                        }
+                    },
+                    "title": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "language": {
+                        "description": "",
+                        "type": "string"
+                    }
+                }
+            },
+            "Patch_Questionnaire": {
+                "description": "",
+                "type": "object",
+                "properties": {
+                    "categories": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Patch_Category"
+                        }
+                    }
+                }
+            },
+            "Patch_Category": {
+                "description": "",
+                "required": [
+                    "id"
+                ],
+                "type": "object",
+                "properties": {
+                    "questions": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Patch_Question"
+                        }
+                    },
+                    "id": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "comment": {
+                        "description": "",
+                        "type": "string"
+                    }
+                }
+            },
+            "Patch_Question": {
+                "description": "",
+                "required": [
+                    "id"
+                ],
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "options": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Patch_QuestionOption"
+                        }
+                    }
+                }
+            },
+            "Patch_QuestionOption": {
+                "description": "",
+                "required": [
+                    "id",
+                    "selected"
+                ],
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "selected": {
+                        "description": "",
+                        "type": "boolean"
+                    }
+                }
+            },
+            "Status": {
+                "description": "Status of an Assessment",
+                "enum": [
+                    "STARTED",
+                    "COMPLETE",
+                    "DISCARDED"
+                ],
+                "type": "string"
             }
         },
         "responses": {

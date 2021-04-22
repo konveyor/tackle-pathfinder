@@ -9,9 +9,18 @@ import io.tackle.commons.testcontainers.KeycloakTestResource;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.commons.tests.SecuredResourceTest;
 import io.tackle.pathfinder.dto.ApplicationDto;
+import io.tackle.pathfinder.dto.AssessmentCategoryDto;
+import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionnaireDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.model.assessment.Assessment;
+import io.tackle.pathfinder.model.assessment.AssessmentCategory;
+import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.services.AssessmentSvc;
 import lombok.extern.java.Log;
@@ -24,11 +33,14 @@ import javax.transaction.Transactional;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.is;
 
 @QuarkusTest
 @QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
@@ -201,5 +213,268 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		assertThat(future2).succeedsWithin(Duration.ofSeconds(10));
 	}
 
+	@Test
+	public void given_Assessment_When_GetAssessment_Then_ReturnsAssessmentQuestionnaire() throws InterruptedException {
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(400L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		addUserEnteredInfoToAssessment(header.getId());
+
+		given()
+		  .contentType(ContentType.JSON)
+		  .accept(ContentType.JSON)
+		.when()
+			.get("/assessments/" + header.getId())
+		.then()
+    		.log().all()
+			.statusCode(200)
+			.body("applicationId", is(400))
+			.body("status", is("STARTED"))
+			.body("stakeholders.size()", is(3))
+			.body("stakeholderGroups.size()", is(2))
+			.body("questionnaire.categories.size()", is(5))
+			.body("questionnaire.categories.find{it.order==2}.comment", is("This is a test comment"))
+			.body("questionnaire.categories.find{it.order==5}.title", is("Application Cross-Cutting concerns"))
+			.body("questionnaire.categories.find{it.order==5}.questions.size()", is(6))
+
+			.body("questionnaire.categories.find{it.order==1}.questions.find{it.question=='What is the Mean Time to Recover (MTTR) when a fault is found with the application in production?'}.description", is("Gauge the problem resolution time, MTTR (mean time to recover) is the average time it takes to repair/recover a system"))
+			.body("questionnaire.categories.find{it.order==1}.questions.find{it.question=='What is the Mean Time to Recover (MTTR) when a fault is found with the application in production?'}.options.size()", is(6))
+			.body("questionnaire.categories.find{it.order==5}.questions.find{it.question=='How mature is the existing containerisation process, if any?'}.options.find{it.option=='Application containerisation not attempted as yet'}.checked", is(true));
+	}
+
+	@Test
+	public void given_AssessmentCreated_When_UpdatingValues_Then_InformationIsStored_And_ResponseIsOK() {
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(500L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Retrieval of the assessment created
+		AssessmentDto assessment = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/assessments/" + header.getId())
+		.then()
+			.log().all()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+
+		AssessmentCategoryDto category = assessment.getQuestionnaire().getCategories().get(0);
+		AssessmentQuestionDto question = category.getQuestions().get(0);
+		AssessmentQuestionOptionDto option = question.getOptions().get(0);
+
+		// Modification of 1 category comment, 1 option selected, 2 stakeholders , 2 stakeholdergroups
+		given()
+		  .contentType(ContentType.JSON)
+		  .accept(ContentType.JSON)
+		  .body(AssessmentDto.builder()
+		  		.applicationId(500L)
+				.id(header.getId())
+				.questionnaire(
+					AssessmentQuestionnaireDto.builder()
+						.categories(List.of(
+							AssessmentCategoryDto.builder()
+							.id(category.getId())
+							.comment("USER COMMENT 1")
+							.questions(List.of(
+								AssessmentQuestionDto.builder()
+								.id(question.getId())
+								.options(List.of(
+									AssessmentQuestionOptionDto.builder()
+									.id(option.getId())
+									.checked(true)
+									.build()
+								))
+								.build()
+							))
+							.build()))
+						.build())
+				.stakeholderGroups(List.of(1000L, 2000L))
+				.stakeholders(List.of(444L, 555L))
+		  		.build())
+		.when()
+			.patch("/assessments/" + header.getId())
+		.then()
+    		.log().all()
+			.statusCode(200)
+			.body("id", equalTo(header.getId().intValue()),
+				  "applicationId", equalTo(500),
+				  "status", equalTo("STARTED"));
+
+		// Retrieval of the assessment again to check updated values
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/assessments/" + header.getId())
+		.then()
+			.log().all()
+			.statusCode(200)
+			.body("questionnaire.categories.find{it.id==" + category.getId() + "}.comment", is("USER COMMENT 1"))
+			.body("questionnaire.categories.find{it.id==" + category.getId() + "}.questions.find{it.id==" + question.getId() + "}.options.find{it.id==" + option.getId() + "}.checked", is(true))
+			.body("questionnaire.categories.find{it.id==" + category.getId() + "}.questions.find{it.id==" + question.getId() + "}.options.findAll{it.checked==true}.size()", is(1))
+			.body("questionnaire.categories.find{it.id==" + category.getId() + "}.questions.find{it.id==" + question.getId() + "}.options.size()", greaterThan(1));
+	}
+	
+	@Test
+	public void given_AssessmentCreated_When_UpdatingStatus_Then_StatusIsStored_And_ResponseIsOK() {
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(5500L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Modification of status to complete
+		given()
+		  .contentType(ContentType.JSON)
+		  .accept(ContentType.JSON)
+		  .body(AssessmentDto.builder()
+		  		.status(AssessmentStatus.COMPLETE)
+		  		.build())
+		.when()
+			.patch("/assessments/" + header.getId())
+		.then()
+    		.log().all()
+			.statusCode(200)
+			.body("id", equalTo(header.getId().intValue()),
+				  "applicationId", equalTo(5500),
+				  "status", equalTo("COMPLETE"));
+
+		// Retrieval of the assessment again to check updated values
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/assessments/" + header.getId())
+		.then()
+			.log().all()
+			.statusCode(200)
+			.body("status", is("COMPLETE"));
+	}	
+	@Test
+	public void given_AssessmentCreated_When_UpdatingStatusWithWrongValue_Then_ResponseIs400() {
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(6500L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Modification of status to complete
+		given()
+		  .contentType(ContentType.JSON)
+		  .accept(ContentType.JSON)
+		  .body("{ \"status\" : \"WHATEVER\"}")
+		.when()
+			.patch("/assessments/" + header.getId())
+		.then()
+    		.log().all()
+			.statusCode(400);
+
+		// Retrieval of the assessment again to check updated values
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/assessments/" + header.getId())
+		.then()
+			.log().all()
+			.statusCode(200)
+			.body("status", is("STARTED"));
+	}	
+	
+	@Test
+	public void given_AssessmentCreated_When_UpdatingWithIncorrectIds_Then_ResponseIsBadRequest() {
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(6500L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Retrieval of the assessment created
+		AssessmentDto assessment = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/assessments/" + header.getId())
+		.then()
+			.log().all()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+
+		// Changing to an incorrect ID internally
+		assessment.getQuestionnaire().getCategories().get(0).setId(assessment.getQuestionnaire().getCategories().get(0).getId() + 6000L);
+		// Modification of status to complete
+		given()
+		  .contentType(ContentType.JSON)
+		  .accept(ContentType.JSON)
+		  .body(assessment)
+		.when()
+			.patch("/assessments/" + header.getId())
+		.then()
+    		.log().all()
+			.statusCode(400);
+	}
+
+	@Transactional
+	public void addUserEnteredInfoToAssessment(Long assessmentId) {
+		Assessment assessment = Assessment.findById(assessmentId);
+		AssessmentStakeholder stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(1100L)
+				.build();
+		stakeholder.persist();
+		assessment.stakeholders.add(stakeholder);
+
+		stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(1200L).build();
+		stakeholder.persist();
+		assessment.stakeholders.add(stakeholder);
+
+		stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(1300L).build();
+		stakeholder.persist();
+		assessment.stakeholders.add(stakeholder);
+
+		AssessmentStakeholdergroup group = AssessmentStakeholdergroup.builder().assessment(assessment).stakeholdergroupId(1500L).build();
+		group.persist();
+		assessment.stakeholdergroups.add(group);
+
+		group = AssessmentStakeholdergroup.builder().assessment(assessment).stakeholdergroupId(1600L).build();
+		group.persist();
+		assessment.stakeholdergroups.add(group);
+
+		AssessmentSingleOption.update("set selected = true where option = 'Application containerisation not attempted as yet'");
+		AssessmentCategory.update("set comment = 'This is a test comment' where name='Application Dependencies'");
+    }
 
 }

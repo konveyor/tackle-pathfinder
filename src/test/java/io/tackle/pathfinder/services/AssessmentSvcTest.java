@@ -4,11 +4,20 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
+import io.tackle.pathfinder.dto.AssessmentCategoryDto;
+import io.tackle.pathfinder.dto.AssessmentDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
+import io.tackle.pathfinder.mapper.AssessmentMapper;
+import io.tackle.pathfinder.model.QuestionType;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
+import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
@@ -21,7 +30,6 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 
 import java.time.Duration;
-import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
@@ -42,10 +50,13 @@ import static org.assertj.core.api.Assertions.*;
 @Log
 public class AssessmentSvcTest {
     @Inject
-    AssessmentSvc assessmentSvc; 
+    AssessmentSvc assessmentSvc;
 
     @Inject
     ManagedExecutor managedExecutor;
+
+    @Inject
+    AssessmentMapper assessmentMapper;
 
     @Test
     @Transactional
@@ -53,10 +64,12 @@ public class AssessmentSvcTest {
         Questionnaire questionnaire = createQuestionnaire();
         List<Category> categories = questionnaire.categories;
 
-        Assessment assessment = createAssessment(questionnaire.id, 10L);
+        Assessment assessment = createAssessment(questionnaire, 10L);
         AssessmentQuestionnaire assessmentQuestionnaire = assessment.assessmentQuestionnaire;
         List<AssessmentCategory> categoriesAssessQuestionnaire = assessmentQuestionnaire.categories;
 
+        assertThat(assessment.stakeholdergroups.size()).isEqualTo(2);
+        assertThat(assessment.stakeholders.size()).isEqualTo(3);
         assertThat(categoriesAssessQuestionnaire.size()).isGreaterThan(0);
         assertThat(categories.size()).isGreaterThan(0);
         assertThat(assessmentQuestionnaire.categories.size()).isEqualTo(categories.size());
@@ -86,26 +99,148 @@ public class AssessmentSvcTest {
         List<SingleOption> qSingleOptions = firstCategory.questions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().singleOptions;
         assertThat(aSingleOptions.size()).isEqualTo(qSingleOptions.size());
         assertThat(aSingleOptions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().option).isEqualTo(qSingleOptions.stream().sorted(Comparator.comparing(a -> a.order)).findFirst().get().option);
+
+    }
+
+    @Test
+    public void given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent() throws InterruptedException {
+        Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 1410L);
+
+        assertThat(assessment.stakeholdergroups).hasSize(2);
+        assertThat(assessment.stakeholders).hasSize(3);
+
+        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment);
+        assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
+        assertThat(assessmentDto.getStakeholders()).hasSize(3); 
+
+        // Stakeholders and Stakeholdergroups always override the entire list
+        assessmentDto.getStakeholderGroups().clear();
+        assessmentDto.getStakeholderGroups().add(8100L);
+        assessmentDto.getStakeholderGroups().add(8200L);
+
+        assessmentDto.getStakeholders().clear();
+        assessmentDto.getStakeholders().add(8500L);
+        assessmentDto.getStakeholders().add(8600L);
+
+        AssessmentCategoryDto assessmentCategoryDto = assessmentDto.getQuestionnaire().getCategories().get(0);
+        assessmentCategoryDto.setComment("This is a test comment");
+        AssessmentQuestionDto assessmentQuestionDto = assessmentCategoryDto.getQuestions().get(0);
+        AssessmentQuestionOptionDto assessmentQuestionOptionDto = assessmentQuestionDto.getOptions().get(0);
+        assessmentQuestionOptionDto.setChecked(true);
+
+        assessmentSvc.updateAssessment(assessment.id, assessmentDto);
+
+        Assessment assessmentUpdated = Assessment.findById(assessment.id);
+        assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(8500L, 8600L);
+        assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(8100L, 8200L);
+
+        assertThat(assessmentUpdated.assessmentQuestionnaire.categories).extracting(e -> e.comment)
+                .containsOnlyOnce("This is a test comment");
+
+        assertThat(getCheckedForOption(assessmentUpdated, assessmentCategoryDto.getId(), assessmentQuestionDto.getId(),
+                assessmentQuestionOptionDto.getId())).isTrue();
+    }
+
+    @Test
+    public void given_CreatedAssessment_When_UpdateWithStakeholdersNull_Then_ItDoesntChangeStakeholders() throws InterruptedException {
+        Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 2410L);
+
+        assertThat(assessment.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
+        assertThat(assessment.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
+
+        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment);
+        assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
+        assertThat(assessmentDto.getStakeholders()).hasSize(3); 
+
+        // Stakeholders and Stakeholdergroups NOT send will imply leave what is there without touching it
+        assessmentDto.setStakeholderGroups(null);
+        assessmentDto.setStakeholders(null);
+
+        assessmentSvc.updateAssessment(assessment.id, assessmentDto);
+
+        Assessment assessmentUpdated = Assessment.findById(assessment.id);
+        assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
+        assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
+    }    
+    
+    @Test
+    public void given_CreatedAssessment_When_UpdateWithStakeholdersEmpty_Then_ItDeleteAllStakeholders() throws InterruptedException {
+        Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 3410L);
+
+        assertThat(assessment.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
+        assertThat(assessment.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
+
+        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment);
+        assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
+        assertThat(assessmentDto.getStakeholders()).hasSize(3); 
+
+        // Stakeholders and Stakeholdergroups sent EMPTY send will imply deleting every element in DB in stakeholders/stakeholdergroups
+        assessmentDto.getStakeholderGroups().clear();
+        assessmentDto.getStakeholders().clear();
+
+        assessmentSvc.updateAssessment(assessment.id, assessmentDto);
+
+        Assessment assessmentUpdated = Assessment.findById(assessment.id);
+        assertThat(assessmentUpdated.stakeholders).hasSize(0);
+        assertThat(assessmentUpdated.stakeholdergroups).hasSize(0);
+    }
+    
+    @Transactional
+    private boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId) throws InterruptedException {
+        log.info("categories to check " + assessment.assessmentQuestionnaire.categories.stream().count());
+        log.info("categories to check " + assessment.assessmentQuestionnaire.categories.stream().map(e -> e.id.toString()).collect(Collectors.joining(" ## ")));
+
+        log.info("ids " + categoryId + "--" + questionId + "--" + optionId);
+        AssessmentCategory category = assessment.assessmentQuestionnaire.categories.stream()
+                .filter(e -> e.id.equals(categoryId)).findFirst().orElseThrow();
+
+        AssessmentQuestion question = category.questions.stream().filter(e -> e.id.equals(questionId)).findFirst()
+                .orElseThrow();
+        AssessmentSingleOption option = question.singleOptions.stream().filter(e -> e.id.equals(optionId)).findFirst()
+                .orElseThrow();
+        return option.selected;
+    }
+
+    private void addStakeholdersToAssessment(Assessment assessment) {
+        AssessmentStakeholder stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(100L).build();
+        stakeholder.persist();
+        assessment.stakeholders.add(stakeholder);
+
+        stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(200L).build();
+        stakeholder.persist();
+        assessment.stakeholders.add(stakeholder);
+
+        stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(300L).build();
+        stakeholder.persist();
+        assessment.stakeholders.add(stakeholder);
+
+        AssessmentStakeholdergroup group = AssessmentStakeholdergroup.builder().assessment(assessment).stakeholdergroupId(500L).build();
+        group.persist();
+        assessment.stakeholdergroups.add(group);
+
+        group = AssessmentStakeholdergroup.builder().assessment(assessment).stakeholdergroupId(600L).build();
+        group.persist();
+        assessment.stakeholdergroups.add(group);
     }
 
     @Test
     public void given_SameApplication_when_SeveralAssessmentCreation_should_ThrowException() throws InterruptedException {
         Questionnaire questionnaire = createQuestionnaire();
-        CompletableFuture<Assessment> future1 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire.id, 5L));
+        CompletableFuture<Assessment> future1 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire, 5L));
         Thread.sleep(500);
-        CompletableFuture<Assessment> future4 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire.id, 5L));
+        CompletableFuture<Assessment> future4 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire, 5L));
         assertThat(future1).succeedsWithin(Duration.ofSeconds(10)).matches(e -> e.id > 0);
         assertThat(future4).failsWithin(Duration.ofSeconds(1));
-    }    
-    
+    }
+
     @Test
     public void given_SameApplicationButDeletedTrue_when_SeveralAssessmentCreation_should_NotThrowException() {
         Questionnaire questionnaire = createQuestionnaire();
-        Assessment assessment1 = createAssessment(questionnaire.id, 200L);
+        Assessment assessment1 = createAssessment(questionnaire, 200L);
         assertThat(assessment1).matches(e -> e.id > 0);
-        assertThatThrownBy(() -> createAssessment(questionnaire.id, 200L));
-        deleteAssessment(assessment1.id);  
-        Assessment assessment2 = createAssessment(questionnaire.id, 200L);
+        assertThatThrownBy(() -> createAssessment(questionnaire, 200L));
+        deleteAssessment(assessment1.id);
+        Assessment assessment2 = createAssessment(questionnaire, 200L);
         assertThat(assessment2).matches(e -> e.id > 0);
     }
 
@@ -115,12 +250,14 @@ public class AssessmentSvcTest {
     }
 
     @Transactional
-    public Assessment createAssessment(Long questionnaireId, long applicationId) {
-        log.info("Creating an assessment : " + LocalTime.now());
+    public Assessment createAssessment(Questionnaire questionnaire, long applicationId) {
+        log.info("Creating an assessment ");
         Assessment assessment = Assessment.builder().applicationId(applicationId).build();
         assessment.persistAndFlush();
 
-        return assessmentSvc.copyQuestionnaireIntoAssessment(assessment.id, questionnaireId);
+        addStakeholdersToAssessment(assessment);
+
+        return assessmentSvc.copyQuestionnaireIntoAssessment(assessment, questionnaire);
     }
 
     @Transactional
@@ -145,7 +282,7 @@ public class AssessmentSvcTest {
 
     private Question createQuestion(Category category, int i) {
         Question question = Question.builder().name("question-" + i).order(i).questionText("questionText-" + i)
-                .description("tooltip-" + i).type("SINGLE").build();
+                .description("tooltip-" + i).type(QuestionType.SINGLE).build();
         question.persistAndFlush();
 
         question.singleOptions = IntStream.range(1, new Random().nextInt(10) + 3)
