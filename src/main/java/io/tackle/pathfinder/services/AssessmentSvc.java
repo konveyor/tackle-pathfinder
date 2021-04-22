@@ -224,16 +224,22 @@ public class AssessmentSvc {
 
                 assessmentTarget.assessmentQuestionnaire = copyQuestionnaireBetweenAssessments(assessmentSource, assessmentTarget);
 
-                assessmentTarget.stakeholdergroups = assessmentSource.stakeholdergroups.stream().map(e -> AssessmentStakeholdergroup.builder()
-                                                                                                    .assessment(assessmentTarget)
-                                                                                                    .stakeholdergroupId(e.stakeholdergroupId)
-                                                                                                    .build())
-                                                                                                .collect(Collectors.toList());
-                assessmentTarget.stakeholders = assessmentSource.stakeholders.stream().map(e -> AssessmentStakeholder.builder()
-                                                                                                    .assessment(assessmentTarget)
-                                                                                                    .stakeholderId(e.stakeholderId)
-                                                                                                    .build())
-                                                                                        .collect(Collectors.toList());
+                assessmentTarget.stakeholdergroups = assessmentSource.stakeholdergroups.stream().map(e -> {
+                    AssessmentStakeholdergroup stakeholdergroup = AssessmentStakeholdergroup.builder()
+                        .assessment(assessmentTarget)
+                        .stakeholdergroupId(e.stakeholdergroupId)
+                        .build();
+                    stakeholdergroup.persist();
+                    return stakeholdergroup;
+                    }).collect(Collectors.toList());
+                assessmentTarget.stakeholders = assessmentSource.stakeholders.stream().map(e -> {
+                    AssessmentStakeholder stakeholder = AssessmentStakeholder.builder()
+                        .assessment(assessmentTarget)
+                        .stakeholderId(e.stakeholderId)
+                        .build();
+                    stakeholder.persist();
+                    return stakeholder;
+                    }).collect(Collectors.toList());
                 assessmentTarget.persist();
                 return mapper.assessmentToAssessmentHeaderDto(assessmentTarget);
             }

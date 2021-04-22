@@ -106,6 +106,54 @@ req_find_delete_assessment=$(curl -X GET "http://$api_ip/pathfinder/assessments?
             -H "Authorization: Bearer $access_token" -w "%{http_code}")
 test "$req_find_delete_assessment" = "[]200"
 
+echo
+echo
+echo '13 >>> Given an application assessed, copy the assessment to another application'
+applicationSource="325100"
+applicationTarget="329100"
+# Create assessment
+assessmentSourceHeader=$(curl "http://$api_ip/pathfinder/assessments" \
+            -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $access_token" \
+            -d "{ \"applicationId\": $applicationSource }")
+echo $assessmentSourceHeader
+assessmentSourceId=$(echo $assessmentSourceHeader | jq '.id')
 
-    
+# Get assessment
+assessmentSource_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentSourceId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -s)
+categorySourceid=$(echo $assessmentSource_json | jq '.questionnaire.categories[0].id')
+categorySourceSecondid=$(echo $assessmentSource_json | jq '.questionnaire.categories[1].id')
+questionSourceid=$(echo $assessmentSource_json | jq '.questionnaire.categories[0].questions[0].id')
+optionSourceid=$(echo $assessmentSource_json | jq '.questionnaire.categories[0].questions[0].options[0].id')
+
+# Update assessment
+curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentSourceId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}" \
+            -H 'Content-Type: application/json' \
+            -d "{ \"status\": \"STARTED\",\"stakeholders\": [77,44],\"stakeholderGroups\": [333,222,111],\"questionnaire\": {\"categories\": [{\"id\": $categorySourceid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionSourceid,\"options\": [{\"id\": $optionSourceid,\"checked\": true}]}]},{\"id\": $categorySourceSecondid,\"comment\" : \"This is a test comment\"}]}}" \
+             | grep "\"applicationId\":$applicationSource,\"status\":\"STARTED\"}200"
+
+# Get updated assessment
+assessment_source_updated_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentSourceId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -s)
+test "$(echo $assessment_source_updated_json | jq '.stakeholders | length')" = "2"
+test "$(echo $assessment_source_updated_json | jq '.stakeholderGroups | length')" = "3"
+test "$(echo $assessment_source_updated_json | jq ".questionnaire.categories[] | select(.id == $categorySourceid) | .comment // \"empty\"")" = '"This is a test comment"'
+
+# Copy assessment
+req_copied_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessments/copy?sourceApplicationId=$applicationSource&targetApplicationId=$applicationTarget" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token") 
+assessmentCopiedId=$(echo $req_copied_assessment | jq '.id')
+
+# Get copied assessment
+assessment_copied_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentCopiedId" \
+            -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $access_token")
+
+# Check values
+test "$(echo $assessment_copied_json | jq '.stakeholders | length')" = "2"
+test "$(echo $assessment_copied_json | jq '.stakeholderGroups | length')" = "3"
+
+echo "DEBUG"
+test $(echo $assessment_copied_json | jq --raw-output | grep '"comment": "This is a test comment"' | wc -l) = "2"
+
 echo " +++++ API CHECK SUCCESSFUL ++++++"
