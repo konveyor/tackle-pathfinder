@@ -1,11 +1,8 @@
 name: Tackle Pathfinder CI PR Minikube Test
 
 on:
-  push:
-    branches:
-      - tackle-89-microcks-github-action
-  #pull_request:
-  #  branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   microcks-api-validation:
