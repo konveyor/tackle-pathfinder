@@ -259,8 +259,14 @@
             },
             "delete": {
                 "responses": {
-                    "200": {
-                        "description": "If the deletion succeeds."
+                    "204": {
+                        "description": "If the assessment gets deleted successfully"
+                    },
+                    "400": {
+                        "description": "If the delete operation failed"
+                    },
+                    "404": {
+                        "description": "If the assessment to be deleted doesn't exist"
                     }
                 },
                 "summary": "Deletes an assessment",

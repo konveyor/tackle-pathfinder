@@ -208,6 +208,7 @@ public class AssessmentSvc {
         Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
         boolean deleted = Assessment.deleteById(assessment.id);
         log.log(Level.FINE, "Deleted assessment : " + assessmentId + " = " + deleted);
+        if (!deleted) throw new BadRequestException();
     }
 
 }
