@@ -716,8 +716,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
 			.log().all()
 			.statusCode(404);
-	}	
-	
+	}
+
 	public void given_ApplicationNotAssessed_When_CopyAssessmentToAnotherNotAssessedApp_Then_BadRequestIsAssessed() {
 		//Copy of the Assessment, and expect to fail
 		given()
@@ -728,5 +728,14 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
 			.log().all()
 			.statusCode(404);
+	}
+
+	public void given_ApplicationAssessed_When_BulkCopyToListOfApplications_Then_CopyIsDoneAndResultIsListOfApplications() {
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.post("/assessments/bulkcopy")
+		.then()
 	}
 }
