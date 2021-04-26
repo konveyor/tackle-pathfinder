@@ -9,6 +9,7 @@ import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
@@ -58,6 +59,14 @@ public class AssessmentsResource {
   @Consumes("application/json")
   public AssessmentHeaderDto updateAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @NotNull @Valid AssessmentDto assessment) {
     return service.updateAssessment(assessmentId, assessment);
+  }
+
+  @DELETE
+  @Path("{assessmentId}")
+  @Produces("application/json")
+  public Response deleteAssessment(@NotNull @PathParam("assessmentId") Long assessmentId) {
+    service.deleteAssessment(assessmentId);
+    return Response.ok().status(Response.Status.NO_CONTENT).build();
   }
 
 
