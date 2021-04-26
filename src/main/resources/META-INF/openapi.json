@@ -3,7 +3,7 @@
     "info": {
         "title": "tackle-pathfinder",
         "version": "0.0.3",
-        "description": "Tackle PathFinder 0.0.4"
+        "description": "Tackle PathFinder 0.0.3"
     },
     "paths": {
         "/assessments": {

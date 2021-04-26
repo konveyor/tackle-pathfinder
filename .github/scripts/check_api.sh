@@ -153,7 +153,6 @@ assessment_copied_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$ass
 test "$(echo $assessment_copied_json | jq '.stakeholders | length')" = "2"
 test "$(echo $assessment_copied_json | jq '.stakeholderGroups | length')" = "3"
 
-echo "DEBUG"
 test $(echo $assessment_copied_json | jq --raw-output | grep '"comment": "This is a test comment"' | wc -l) = "2"
 
 echo " +++++ API CHECK SUCCESSFUL ++++++"
