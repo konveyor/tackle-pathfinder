@@ -578,4 +578,160 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		AssessmentCategory.update("set comment = 'This is a test comment' where name='Application Dependencies'");
     }
 
+	@Test
+	public void given_ApplicationAssessed_When_CopyAssessmentToAnotherNonAssessedApp_Then_NewAssessmentIsCreatedForTargetApplicationWithSameValues() {
+		// Check that Application 59500 doesnt have any assessment
+		Object[] elements = given()
+			.queryParam("applicationId", "59500")
+		.when()
+			.get("/assessments")
+		.then()
+			.statusCode(200)
+			.extract()
+			.as(Object[].class);
+		assertThat(elements).isEmpty();
+
+		// Creation of the Assessment
+		AssessmentHeaderDto assessmentSourceHeader = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(59500L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201).extract().as(AssessmentHeaderDto.class);
+
+		// Get the contents of the assessment
+		AssessmentDto assessmentSource = given()
+		.when()
+			.get("/assessments/" + assessmentSourceHeader.getId())
+		.then()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+
+		// Check that Application 89500 doesnt have any assessment
+		Object[] elementsTargetApp = given()
+			.queryParam("applicationId", "89500")
+		.when()
+			.get("/assessments")
+		.then()
+			.statusCode(200)
+			.extract()
+			.as(Object[].class);
+		assertThat(elementsTargetApp).isEmpty();
+
+		// Copy of the Assessment
+		AssessmentHeaderDto assessmentHeaderTarget = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(89500L))
+		.when()
+			.post("/assessments?fromAssessmentId=" + assessmentSourceHeader.getId())
+		.then()
+			.log().all()
+			.statusCode(201)
+			.body("status", is("STARTED"),
+			      "applicationId", is(89500))
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Check that Application 89500 now has an assessment
+		AssessmentDto assessmentTarget = given()
+		.when()
+			.get("/assessments/" + assessmentHeaderTarget.getId())
+		.then()
+			.statusCode(200)
+			.body("applicationId", is(89500))
+			.extract().as(AssessmentDto.class);
+
+		// Compare Values
+		assertThat(assessmentTarget)
+			.usingRecursiveComparison()
+				.ignoringFieldsMatchingRegexes(".*\\.id",".*Id", ".*create.*", "update.*", "id")
+				.ignoringCollectionOrder()
+				.isEqualTo(assessmentSource);
+	}
+
+	public void given_ApplicationAssessed_When_CopyAssessmentToAnotherAssessedApp_Then_BadRequestIsAssessed() {
+		// Creation of the Assessment
+		AssessmentHeaderDto assessmentHeader = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(159500L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Create another assessment
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(259500L))
+		.when()
+			.post("/assessments")
+		.then()
+			.statusCode(201);
+
+		// Copy of the Assessment, and expect to fail
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(259500L))
+		.when()
+			.post("/assessments?fromAssessmentId=" + assessmentHeader.getId())
+		.then()
+			.log().all()
+			.statusCode(400);
+	}
+	
+	public void given_ApplicationAssessedButDeleted_When_CopyAssessmentToAnotherAssessedApp_Then_404NotFoundIsReturned() {
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(359500L))
+		.when()
+			.post("/assessments")
+		.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Deleting the assessment
+		given()
+		  .contentType(ContentType.JSON)
+		  .accept(ContentType.JSON)
+		.when()
+			.delete("/assessments/" + header.getId())
+		.then()
+    		.log().all()
+			.statusCode(204);
+
+		// Copy of the Assessment, and expect to fail
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(389500L))
+		.when()
+			.post("/assessments/fromAssessmentId=" + header.getId())
+		.then()
+			.log().all()
+			.statusCode(404);
+	}	
+	
+	public void given_ApplicationNotAssessed_When_CopyAssessmentToAnotherNotAssessedApp_Then_BadRequestIsAssessed() {
+		//Copy of the Assessment, and expect to fail
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(new ApplicationDto(489500L))
+		.when()
+			.post("/assessments?fromAssessmentId=5556")
+		.then()
+			.log().all()
+			.statusCode(404);
+	}
 }

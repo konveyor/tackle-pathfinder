@@ -38,10 +38,18 @@ public class AssessmentsResource {
   @POST
   @Produces("application/json")
   @Consumes("application/json")
-  public Response createAssessment(@NotNull @Valid ApplicationDto data) {
+  public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data) {
+    AssessmentHeaderDto createAssessment;
+    
+    if (fromAssessmentId != null) {
+      createAssessment = service.copyAssessment(fromAssessmentId, data.getApplicationId());
+    } else {
+      createAssessment = service.createAssessment(data.getApplicationId());
+    }
+    
     return Response
       .status(Status.CREATED)
-      .entity(service.createAssessment(data.getApplicationId()))
+      .entity(createAssessment)
       .type(MediaType.APPLICATION_JSON)
       .build();
   }
@@ -68,7 +76,5 @@ public class AssessmentsResource {
     service.deleteAssessment(assessmentId);
     return Response.ok().status(Response.Status.NO_CONTENT).build();
   }
-
-
 
 }

@@ -3,7 +3,7 @@
     "info": {
         "title": "tackle-pathfinder",
         "version": "0.0.3",
-        "description": "Tackle PathFinder 0.0.3"
+        "description": "Tackle PathFinder 0.0.3\n\nChanges : \n* added delete assessment function\n* added create assessment copying responses from another assessment"
     },
     "paths": {
         "/assessments": {
@@ -94,6 +94,21 @@
                     },
                     "required": true
                 },
+                "parameters": [
+                    {
+                        "examples": {
+                            "post_copy_assessment": {
+                                "value": "57"
+                            }
+                        },
+                        "name": "fromAssessmentId",
+                        "description": "Setting this parameter will make API to create the assessment for the applicationId specified in the body to copy all answers and comments from an already existing assessment.",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "201": {
                         "content": {
@@ -117,9 +132,13 @@
                     },
                     "400": {
                         "description": "Invalid format"
+                    },
+                    "404": {
+                        "description": "If the fromAssessmentId param is passed but that assessment can not be found."
                     }
                 },
-                "operationId": "createAssessment"
+                "operationId": "createAssessment",
+                "summary": "Creates an assessment associated to an applicationId. It can copy the responses from another assessment."
             }
         },
         "/assessments/{assessmentId}": {
