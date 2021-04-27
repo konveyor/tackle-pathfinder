@@ -141,8 +141,10 @@ test "$(echo $assessment_source_updated_json | jq '.stakeholderGroups | length')
 test "$(echo $assessment_source_updated_json | jq ".questionnaire.categories[] | select(.id == $categorySourceid) | .comment // \"empty\"")" = '"This is a test comment"'
 
 # Copy assessment
-req_copied_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessments/copy?sourceApplicationId=$applicationSource&targetApplicationId=$applicationTarget" -H 'Accept: application/json' \
-            -H "Authorization: Bearer $access_token") 
+req_copied_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessments?fromAssessmentId=$assessmentSourceId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -H 'Content-Type: application/json' \
+            -d "{ \"applicationId\": $applicationTarget }")
 assessmentCopiedId=$(echo $req_copied_assessment | jq '.id')
 
 # Get copied assessment
@@ -153,7 +155,17 @@ assessment_copied_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$ass
 test "$(echo $assessment_copied_json | jq '.stakeholders | length')" = "2"
 test "$(echo $assessment_copied_json | jq '.stakeholderGroups | length')" = "3"
 
-echo "DEBUG"
 test $(echo $assessment_copied_json | jq --raw-output | grep '"comment": "This is a test comment"' | wc -l) = "2"
+
+echo
+echo
+echo "14 >>> Copying a non existing Assessment"
+
+req_not_existing_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessments?fromAssessmentId=989898" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -H 'Content-Type: application/json' \
+            -d "{ \"applicationId\": 345678 }" \
+            -w "%{http_code}")
+test "404" = "$req_not_existing_assessment"
 
 echo " +++++ API CHECK SUCCESSFUL ++++++"

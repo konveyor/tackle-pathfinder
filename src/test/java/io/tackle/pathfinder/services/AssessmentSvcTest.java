@@ -1,5 +1,7 @@
 package io.tackle.pathfinder.services;
 
+import io.quarkus.panache.mock.PanacheMock;
+import io.quarkus.test.Mock;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
@@ -27,9 +29,11 @@ import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import javax.ws.rs.BadRequestException;
 
 import java.time.Duration;
 import java.util.Comparator;
@@ -59,6 +63,8 @@ public class AssessmentSvcTest {
 
     @Inject
     AssessmentMapper assessmentMapper;
+
+
 
     @Test
     @Transactional
@@ -266,6 +272,20 @@ public class AssessmentSvcTest {
         Assessment assessment = createAssessment(questionnaire, 897200L);
         
         assertThat(Assessment.findByIdOptional(assessment.id)).isNotEmpty();
+        
+        assessmentSvc.deleteAssessment(assessment.id);
+
+        assertThat(Assessment.findByIdOptional(assessment.id)).isEmpty();
+        assertThatThrownBy(() -> assessmentSvc.deleteAssessment(assessment.id));
+    } 
+    
+    @Test
+    @Transactional
+    public void given_Assessment_When_DeleteAssessmentAndFails_should_ThrowException() {
+        Questionnaire questionnaire = createQuestionnaire();
+        Assessment assessment = createAssessment(questionnaire, 897200L);
+        
+        assertThat(Assessment.findByIdOptional(assessment.id)).isNotEmpty();
 
         assessmentSvc.deleteAssessment(assessment.id);
 
@@ -282,7 +302,7 @@ public class AssessmentSvcTest {
         assessment.assessmentQuestionnaire.categories.get(0).questions.get(0).singleOptions.get(0).selected = true;
         assessment.status = AssessmentStatus.COMPLETE;
 
-        AssessmentHeaderDto copyHeader = assessmentSvc.copyAssessment(8897200L, 9997200L);
+        AssessmentHeaderDto copyHeader = assessmentSvc.copyAssessment(assessment.id, 9997200L);
         Assessment assessmentCopied = Assessment.findById(copyHeader.getId());
 
         AssessmentDto assessmentSourceDto = assessmentMapper.assessmentToAssessmentDto(assessment);
@@ -292,6 +312,12 @@ public class AssessmentSvcTest {
         .usingRecursiveComparison()
             .ignoringFieldsMatchingRegexes(".*\\.id",".*Id", ".*create.*", "update.*", "id")
             .ignoringCollectionOrder().isEqualTo(assessmentSourceDto);
+        // We'll mock Panache Entity Assessment to return false when doing a deleteById to force the exception
+        PanacheMock.mock(Assessment.class);
+        PanacheMock.doCallRealMethod().when(Assessment.class).findByIdOptional(Mockito.any());
+        PanacheMock.doReturn(false).when(Assessment.class).deleteById(Mockito.any());
+
+        assertThatThrownBy(() -> assessmentSvc.deleteAssessment(assessment.id)).isInstanceOf(BadRequestException.class);
     }
 
     @Transactional

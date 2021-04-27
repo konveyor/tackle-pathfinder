@@ -3,7 +3,7 @@
     "info": {
         "title": "tackle-pathfinder",
         "version": "0.0.3",
-        "description": "Tackle PathFinder 0.0.4"
+        "description": "Tackle PathFinder 0.0.3\n\nChanges : \n* added delete assessment function\n* added create assessment copying responses from another assessment"
     },
     "paths": {
         "/assessments": {
@@ -94,6 +94,21 @@
                     },
                     "required": true
                 },
+                "parameters": [
+                    {
+                        "examples": {
+                            "post_copy_assessment": {
+                                "value": "57"
+                            }
+                        },
+                        "name": "fromAssessmentId",
+                        "description": "Setting this parameter will make API to create the assessment for the applicationId specified in the body to copy all answers and comments from an already existing assessment.",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "201": {
                         "content": {
@@ -117,9 +132,13 @@
                     },
                     "400": {
                         "description": "Invalid format"
+                    },
+                    "404": {
+                        "description": "If the fromAssessmentId param is passed but that assessment can not be found."
                     }
                 },
-                "operationId": "createAssessment"
+                "operationId": "createAssessment",
+                "summary": "Creates an assessment associated to an applicationId. It can copy the responses from another assessment."
             }
         },
         "/assessments/{assessmentId}": {
@@ -259,8 +278,14 @@
             },
             "delete": {
                 "responses": {
-                    "200": {
-                        "description": "If the deletion succeeds."
+                    "204": {
+                        "description": "If the assessment gets deleted successfully"
+                    },
+                    "400": {
+                        "description": "If the delete operation failed"
+                    },
+                    "404": {
+                        "description": "If the assessment to be deleted doesn't exist"
                     }
                 },
                 "summary": "Deletes an assessment",
@@ -402,59 +427,6 @@
                         "type": "integer"
                     },
                     "in": "path",
-                    "required": true
-                }
-            ]
-        },
-        "/assessments/copy": {
-            "post": {
-                "responses": {
-                    "201": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AssessmentHeader"
-                                },
-                                "examples": {
-                                    "copy_assessment_ok": {
-                                        "value": {
-                                            "status": "COMPLETE",
-                                            "applicationId": 8,
-                                            "id": 1
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        "description": "If everything goes fine, response will be the new Assessment Header"
-                    },
-                    "404": {
-                        "description": "In case the source Application Assessment is not found"
-                    },
-                    "400": {
-                        "description": "In case target Application is already assessed"
-                    }
-                },
-                "summary": "Copy the Assessment of one application to another application",
-                "description": "Source application must be Assessed and not deleted\nTarget application must not be Assessed"
-            },
-            "parameters": [
-                {
-                    "name": "sourceApplicationId",
-                    "description": "",
-                    "schema": {
-                        "type": "integer"
-                    },
-                    "in": "query",
-                    "required": true
-                },
-                {
-                    "name": "targetApplicationId",
-                    "description": "",
-                    "schema": {
-                        "type": "integer"
-                    },
-                    "in": "query",
                     "required": true
                 }
             ]
