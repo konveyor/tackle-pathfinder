@@ -115,7 +115,7 @@ public class AssessmentSvc {
 
     private Questionnaire defaultQuestionnaire() {
         log.log(Level.FINE, "questionnaires : " + Questionnaire.count());
-        return Questionnaire.<Questionnaire>streamAll().findFirst().orElseThrow();
+        return Questionnaire.<Questionnaire>streamAll().findFirst().orElseThrow(NotFoundException::new);
     }
 
     public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
@@ -212,8 +212,8 @@ public class AssessmentSvc {
     }
 
     @Transactional
-    public AssessmentHeaderDto copyAssessment(@NotNull Long sourceApplicationId, @NotNull Long targetApplicationId) {
-        Assessment assessmentSource = (Assessment) Assessment.find("applicationId", sourceApplicationId).firstResultOptional().orElseThrow();
+    public AssessmentHeaderDto copyAssessment(@NotNull Long assessmentId, @NotNull Long targetApplicationId) {
+        Assessment assessmentSource = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
         if (assessmentSource != null) {
             if (Assessment.find("applicationId", targetApplicationId).firstResultOptional().isEmpty()) {
                 Assessment assessmentTarget = Assessment.builder()

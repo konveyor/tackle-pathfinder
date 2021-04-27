@@ -625,8 +625,9 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		AssessmentHeaderDto assessmentHeaderTarget = given()
 			.contentType(ContentType.JSON)
 			.accept(ContentType.JSON)
+			.body(new ApplicationDto(89500L))
 		.when()
-			.post("/assessments/copy?sourceApplicationId=59500&targetApplicationId=89500")
+			.post("/assessments?fromAssessmentId=" + assessmentSourceHeader.getId())
 		.then()
 			.log().all()
 			.statusCode(201)
@@ -653,7 +654,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 	public void given_ApplicationAssessed_When_CopyAssessmentToAnotherAssessedApp_Then_BadRequestIsAssessed() {
 		// Creation of the Assessment
-		given()
+		AssessmentHeaderDto assessmentHeader = given()
 			.contentType(ContentType.JSON)
 			.accept(ContentType.JSON)
 			.body(new ApplicationDto(159500L))
@@ -661,7 +662,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.post("/assessments")
 		.then()
 			.log().all()
-			.statusCode(201);
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
 
 		// Create another assessment
 		given()
@@ -677,8 +679,9 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		given()
 			.contentType(ContentType.JSON)
 			.accept(ContentType.JSON)
+			.body(new ApplicationDto(259500L))
 		.when()
-			.post("/assessments/copy?sourceApplicationId=159500&targetApplicationId=259500")
+			.post("/assessments?fromAssessmentId=" + assessmentHeader.getId())
 		.then()
 			.log().all()
 			.statusCode(400);
@@ -711,8 +714,9 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		given()
 			.contentType(ContentType.JSON)
 			.accept(ContentType.JSON)
+			.body(new ApplicationDto(389500L))
 		.when()
-			.post("/assessments/copy?sourceApplicationId=359500&targetApplicationId=389500")
+			.post("/assessments/fromAssessmentId=" + header.getId())
 		.then()
 			.log().all()
 			.statusCode(404);
@@ -723,8 +727,9 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		given()
 			.contentType(ContentType.JSON)
 			.accept(ContentType.JSON)
+			.body(new ApplicationDto(489500L))
 		.when()
-			.post("/assessments/copy?sourceApplicationId=5556&targetApplicationId=55557")
+			.post("/assessments?fromAssessmentId=5556")
 		.then()
 			.log().all()
 			.statusCode(404);

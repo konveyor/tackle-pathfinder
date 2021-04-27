@@ -282,7 +282,7 @@ public class AssessmentSvcTest {
         assessment.assessmentQuestionnaire.categories.get(0).questions.get(0).singleOptions.get(0).selected = true;
         assessment.status = AssessmentStatus.COMPLETE;
 
-        AssessmentHeaderDto copyHeader = assessmentSvc.copyAssessment(8897200L, 9997200L);
+        AssessmentHeaderDto copyHeader = assessmentSvc.copyAssessment(assessment.id, 9997200L);
         Assessment assessmentCopied = Assessment.findById(copyHeader.getId());
 
         AssessmentDto assessmentSourceDto = assessmentMapper.assessmentToAssessmentDto(assessment);
