@@ -1,7 +1,9 @@
 package io.tackle.pathfinder.controllers;
 
 import io.tackle.pathfinder.dto.ApplicationDto;
+import io.tackle.pathfinder.dto.AssessmentBulkDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
+import io.tackle.pathfinder.dto.AssessmentHeaderBulkDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
 
@@ -39,14 +41,9 @@ public class AssessmentsResource {
   @Produces("application/json")
   @Consumes("application/json")
   public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data) {
-    AssessmentHeaderDto createAssessment;
-    
-    if (fromAssessmentId != null) {
-      createAssessment = service.copyAssessment(fromAssessmentId, data.getApplicationId());
-    } else {
-      createAssessment = service.createAssessment(data.getApplicationId());
-    }
-    
+
+    AssessmentHeaderDto createAssessment = service.newAssessment(fromAssessmentId, data.getApplicationId());
+
     return Response
       .status(Status.CREATED)
       .entity(createAssessment)
@@ -77,4 +74,19 @@ public class AssessmentsResource {
     return Response.ok().status(Response.Status.NO_CONTENT).build();
   }
 
+  @POST
+  @Path("bulk")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public AssessmentBulkDto bulkCreate(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull List<Long> data) {
+    return service.bulkCreateAssessments(fromAssessmentId, data);
+  }
+
+  @GET
+  @Path("bulk/{bulkId}")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public List<AssessmentHeaderBulkDto> bulkGet(@NotNull @PathParam("bulkId") Long bulkId) {
+    return service.bulkGet(bulkId);
+  }
 }

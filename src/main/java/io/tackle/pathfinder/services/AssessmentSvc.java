@@ -1,6 +1,8 @@
 package io.tackle.pathfinder.services;
 
+import io.tackle.pathfinder.dto.AssessmentBulkDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
+import io.tackle.pathfinder.dto.AssessmentHeaderBulkDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
@@ -11,11 +13,14 @@ import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
 import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
 import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
+import io.tackle.pathfinder.model.bulk.AssessmentBulk;
+import io.tackle.pathfinder.model.bulk.AssessmentBulkApplication;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.extern.java.Log;
+import org.eclipse.microprofile.context.ManagedExecutor;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -35,6 +40,9 @@ import java.util.stream.Collectors;
 public class AssessmentSvc {
     @Inject
     AssessmentMapper mapper;
+
+    @Inject
+    ManagedExecutor managedExecutor;
 
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
@@ -291,8 +299,56 @@ public class AssessmentSvc {
             }).collect(Collectors.toList());
             return assessmentCategory;
         }).collect(Collectors.toList());
-        
+
         return questionnaire;
     }
+
+    public AssessmentHeaderDto newAssessment(Long fromAssessmentId, Long applicationId) {
+        if (fromAssessmentId != null) {
+            return copyAssessment(fromAssessmentId, applicationId);
+        } else {
+            return createAssessment(applicationId);
+        }
+    }
+
+    @Transactional
+    public AssessmentBulkDto bulkCreateAssessments(Long fromAssessmentId, @NotNull @Valid List<Long> data) {
+
+        AssessmentBulk bulk = AssessmentBulk.builder()
+                            .applications(data.toString())
+                            .fromAssessmentId(fromAssessmentId)
+                            .build();
+        bulk.persist();
+
+        managedExecutor.runAsync(() -> {
+            data.stream().forEach(e -> {
+                AssessmentBulkApplication bulkApplication = AssessmentBulkApplication.builder()
+                .applicationId(e)
+                .build();
+
+                String error = null;
+                try {
+                    AssessmentHeaderDto headerDto = newAssessment(fromAssessmentId, e);
+                    bulkApplication.assessmentId = headerDto.getId();
+                } catch (BadRequestException ex) {
+                    error = "400";
+                } catch (NotFoundException ex) {
+                    error = "404";
+                } catch (Exception ex) {
+                    error = "500";
+                }
+                bulkApplication.error = error;
+
+            });
+        });
+
+        return mapper.assessmentBulkToassessmentBulkDto(bulk);
+    }
+
+	public List<AssessmentHeaderBulkDto> bulkGet(@NotNull Long bulkId) {
+        AssessmentBulk bulk = (AssessmentBulk) AssessmentBulk.findByIdOptional(bulkId).orElseThrow(NotFoundException::new);
+
+		return mapper.assessmentBulkApplicationToAssessmentBulkApplicationDto(bulk.bulkApplications);
+	}
 
 }

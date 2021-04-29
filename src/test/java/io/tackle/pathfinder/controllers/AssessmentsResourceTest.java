@@ -11,6 +11,7 @@ import io.tackle.commons.tests.SecuredResourceTest;
 import io.tackle.pathfinder.dto.ApplicationDto;
 import io.tackle.pathfinder.dto.AssessmentCategoryDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
+import io.tackle.pathfinder.dto.AssessmentHeaderBulkDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentQuestionDto;
 import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
@@ -27,14 +28,19 @@ import lombok.extern.java.Log;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.apache.commons.lang3.StringUtils;
+import org.awaitility.Awaitility;
+
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -736,11 +742,30 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 	}
 
 	public void given_ApplicationAssessed_When_BulkCopyToListOfApplications_Then_CopyIsDoneAndResultIsListOfApplications() {
-		given()
+		AssessmentHeaderBulkDto headerBulk = given()
 			.contentType(ContentType.JSON)
 			.accept(ContentType.JSON)
+			.body(List.of(new ApplicationDto(999L), new ApplicationDto(888L), new ApplicationDto(777L)))
 		.when()
-			.post("/assessments/bulkcopy")
+			.post("/assessments/bulk?fromAssessmentId=1234")
 		.then()
+			.log().all()
+			.statusCode(202)
+			.extract().as(AssessmentHeaderBulkDto.class);
+		
+		Awaitility.await()
+		.atMost(50, TimeUnit.SECONDS)
+		.untilAsserted(() -> {
+			AssessmentHeaderBulkDto[] headers = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+			.when()
+				.get("/assessments/bulk/" + headerBulk.getId())
+			.then()
+				.log().all()
+				.statusCode(200).extract().as(AssessmentHeaderBulkDto[].class);
+			
+			assertThat(headers).allMatch(e -> StringUtils.isBlank(e.getError()));
+		});
 	}
 }
