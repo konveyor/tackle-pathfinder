@@ -22,6 +22,7 @@ import org.mapstruct.Mapping;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Mapper(componentModel = "cdi")
 public interface AssessmentMapper {
@@ -56,24 +57,16 @@ public interface AssessmentMapper {
     AssessmentDto assessmentToAssessmentDto(Assessment assessment);
 
     @Mapping(target = "bulkId", source = "id")
-    @Mapping(target = "applications", source="applications")
     default AssessmentBulkDto assessmentBulkToassessmentBulkDto(AssessmentBulk bulk) {
         return AssessmentBulkDto.builder()
-                .bulkId(bulk.id)
-                .fromAssessmentId(bulk.fromAssessmentId)
+                .applications(Stream.of(bulk.applications.split(",")).map(Long::parseLong).collect(Collectors.toList()))
                 .completed(bulk.completed)
-                .applications(bulk.bulkApplications.stream().map(e -> e.applicationId).collect(Collectors.toList()))
+                .fromAssessmentId(bulk.fromAssessmentId)
+                .assessments(bulk.bulkApplications.stream().map(e -> this.assessmentBulkApplicationToassessmentHeaderBulkDto(e)).collect(Collectors.toList()))
                 .build();
     }
 
-    default List<Long> assessmentBulkApplicationsListToLongList(List<AssessmentBulkApplication> listApps) {
-        return listApps.stream().map(e -> e.applicationId).collect(Collectors.toList());
-    }
-
-    @Mapping(target="id", source="assessment_id")
-    @Mapping(target="applicationId", source="application_id")
-    AssessmentHeaderBulkDto assessmentBulkApplicationToAssessmentBulkApplicationDto(AssessmentBulkApplication bulkApplications);
-    List<AssessmentHeaderBulkDto> assessmentBulkApplicationListToAssessmentBulkApplicationDtoList(List<AssessmentBulkApplication> bulkApplications);
-
+    @Mapping(target="id", source="assessmentId")
+    AssessmentHeaderBulkDto assessmentBulkApplicationToassessmentHeaderBulkDto(AssessmentBulkApplication application);
 
 }

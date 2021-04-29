@@ -2,10 +2,11 @@ package io.tackle.pathfinder.controllers;
 
 import io.tackle.pathfinder.dto.ApplicationDto;
 import io.tackle.pathfinder.dto.AssessmentBulkDto;
+import io.tackle.pathfinder.dto.AssessmentBulkPostDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderBulkDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
+import lombok.extern.java.Log;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Path("/assessments")
+@Log
 public class AssessmentsResource {
   @Inject
   AssessmentSvc service;
@@ -78,15 +80,20 @@ public class AssessmentsResource {
   @Path("bulk")
   @Produces("application/json")
   @Consumes("application/json")
-  public AssessmentBulkDto bulkCreate(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull List<Long> data) {
-    return service.bulkCreateAssessments(fromAssessmentId, data);
+  public AssessmentBulkDto bulkCreate(@NotNull @Valid AssessmentBulkPostDto data) {
+    log.info("gets to inside method");
+    List<Long> appsList = data.getApplications().stream()
+                          .map(e -> e.getApplicationId())
+                          .collect(Collectors.toList());
+    log.info("gets after list");
+    return service.bulkCreateAssessments(data.getFromAssessmentId(), appsList);
   }
 
   @GET
   @Path("bulk/{bulkId}")
   @Produces("application/json")
   @Consumes("application/json")
-  public List<AssessmentHeaderBulkDto> bulkGet(@NotNull @PathParam("bulkId") Long bulkId) {
+  public AssessmentBulkDto bulkGet(@NotNull @PathParam("bulkId") Long bulkId) {
     return service.bulkGet(bulkId);
   }
 }

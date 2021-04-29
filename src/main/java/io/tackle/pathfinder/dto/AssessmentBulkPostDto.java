@@ -10,24 +10,17 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "bulkId",
     "fromAssessmentId",
-    "applications",
-    "assessments"
+    "applications"
 })
 @Data
 @Builder
 @AllArgsConstructor()
 @NoArgsConstructor
 @RegisterForReflection
-public class AssessmentBulkDto {
-    Long bulkId;
+public class AssessmentBulkPostDto {
     Long fromAssessmentId;
-    Boolean completed;
-    List<Long> applications;
-
-    List<AssessmentHeaderBulkDto> assessments;
+    List<ApplicationDto> applications;
 }

@@ -14,6 +14,7 @@ import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -33,6 +34,7 @@ public class AssessmentBulk extends AbstractEntity {
     @Column(nullable=false)
     public String applications;
 
-    @OneToMany(mappedBy = "assessment_bulk", cascade = CascadeType.REMOVE)
-    public List<AssessmentBulkApplication> bulkApplications;
+    @Builder.Default
+    @OneToMany(mappedBy = "assessmentBulk", cascade = CascadeType.REMOVE)
+    public List<AssessmentBulkApplication> bulkApplications = new ArrayList<>();
 }

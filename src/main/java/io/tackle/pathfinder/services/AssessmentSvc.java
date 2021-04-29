@@ -1,5 +1,6 @@
 package io.tackle.pathfinder.services;
 
+import io.smallrye.mutiny.Uni;
 import io.tackle.pathfinder.dto.AssessmentBulkDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderBulkDto;
@@ -20,6 +21,7 @@ import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.context.ManagedExecutor;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -305,50 +307,84 @@ public class AssessmentSvc {
 
     public AssessmentHeaderDto newAssessment(Long fromAssessmentId, Long applicationId) {
         if (fromAssessmentId != null) {
+            log.info("copying assess");
             return copyAssessment(fromAssessmentId, applicationId);
         } else {
+            log.info("Creating new");
             return createAssessment(applicationId);
         }
     }
 
     @Transactional
     public AssessmentBulkDto bulkCreateAssessments(Long fromAssessmentId, @NotNull @Valid List<Long> data) {
+        AssessmentBulk bulk = newAssessmentBulk(fromAssessmentId, data);
 
-        AssessmentBulk bulk = AssessmentBulk.builder()
-                            .applications(data.toString())
-                            .fromAssessmentId(fromAssessmentId)
-                            .build();
-        bulk.persist();
+        // With Mutiny
+        Uni.createFrom().item(data)
+            .subscribe()
+            .with(e -> {
+                e.stream().forEach(app -> newAssessmentBulkApplication(fromAssessmentId, bulk, app));
+            });
 
+        // With CompletableFuture
         managedExecutor.runAsync(() -> {
-            data.stream().forEach(e -> {
-                AssessmentBulkApplication bulkApplication = AssessmentBulkApplication.builder()
-                .applicationId(e)
-                .build();
-
-                String error = null;
-                try {
-                    AssessmentHeaderDto headerDto = newAssessment(fromAssessmentId, e);
-                    bulkApplication.assessmentId = headerDto.getId();
-                } catch (BadRequestException ex) {
-                    error = "400";
-                } catch (NotFoundException ex) {
-                    error = "404";
-                } catch (Exception ex) {
-                    error = "500";
-                }
-                bulkApplication.error = error;
-
+            data.stream().forEach(app -> {
+                newAssessmentBulkApplication(fromAssessmentId, bulk, app);
             });
         });
 
         return mapper.assessmentBulkToassessmentBulkDto(bulk);
     }
 
-	public List<AssessmentHeaderBulkDto> bulkGet(@NotNull Long bulkId) {
+    @Transactional
+    private AssessmentBulkApplication newAssessmentBulkApplication(Long fromAssessmentId, AssessmentBulk bulk, Long e) {
+        log.info("newAssessment ini");
+        AssessmentBulkApplication bulkApplication = AssessmentBulkApplication.builder()
+        .applicationId(e)
+        .assessmentBulk(bulk)
+        .build();
+
+        bulkApplication.persist();
+
+        bulk.bulkApplications.add(bulkApplication);
+
+        String error = null;
+        log.info("bulkcreateassessments - newAssessment: " + e + "--" + fromAssessmentId);
+
+        try {
+            log.info("bulkcreateassessments - newAssessment: " + e + "--" + fromAssessmentId);
+
+            AssessmentHeaderDto headerDto = newAssessment(fromAssessmentId, e);
+            bulkApplication.assessmentId = headerDto.getId();
+        } catch (BadRequestException ex) {
+            error = "400";
+        } catch (NotFoundException ex) {
+            error = "404";
+        } catch (Exception ex) {
+            error = "500";
+        }
+        bulkApplication.error = error;
+        log.info("bulkcreateassessments - finished");
+        return bulkApplication;
+    }
+
+    @Transactional
+    private AssessmentBulk newAssessmentBulk(Long fromAssessmentId, @NotNull @Valid List<Long> data) {
+
+        AssessmentBulk bulk = AssessmentBulk.builder()
+                .applications(StringUtils.join(data, ","))
+                            .fromAssessmentId(fromAssessmentId)
+                            .build();
+        bulk.persist();
+
+        return bulk;
+    }
+
+    @Transactional
+    public AssessmentBulkDto bulkGet(@NotNull Long bulkId) {
         AssessmentBulk bulk = (AssessmentBulk) AssessmentBulk.findByIdOptional(bulkId).orElseThrow(NotFoundException::new);
 
-		return mapper.assessmentBulkApplicationToAssessmentBulkApplicationDto(bulk.bulkApplications);
+        return mapper.assessmentBulkToassessmentBulkDto(bulk);
 	}
 
 }

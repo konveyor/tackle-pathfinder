@@ -168,4 +168,14 @@ req_not_existing_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessment
             -w "%{http_code}")
 test "404" = "$req_not_existing_assessment"
 
+echo
+echo
+echo "15 >>> Bulk creation of assessments"
+req_bulk_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessments/bulk" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -H 'Content-Type: application/json' \
+            -d "[188,288,388,488]" \
+            -s -w "%{http_code}")
+test "202" = "$req_not_existing_assessment"
+
 echo " +++++ API CHECK SUCCESSFUL ++++++"
