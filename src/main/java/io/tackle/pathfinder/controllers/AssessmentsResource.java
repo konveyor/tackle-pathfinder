@@ -10,6 +10,11 @@ import io.vertx.core.eventbus.EventBus;
 import lombok.extern.java.Log;
 
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -84,7 +89,7 @@ public class AssessmentsResource {
   @Path("bulk")
   @Produces("application/json")
   @Consumes("application/json")
-  public AssessmentBulkDto bulkCreate(@NotNull @Valid AssessmentBulkPostDto data) {
+  public AssessmentBulkDto bulkCreate(@NotNull @Valid AssessmentBulkPostDto data) throws SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException, NotSupportedException {
     log.info("gets to inside method");
     List<Long> appsList = data.getApplications().stream()
                           .map(e -> e.getApplicationId())

@@ -24,18 +24,23 @@ import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import io.vertx.core.eventbus.EventBus;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.microprofile.context.ManagedExecutor;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.transaction.Transactional;
+import javax.transaction.UserTransaction;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -48,6 +53,15 @@ public class AssessmentSvc {
 
     @Inject
     EventBus eventBus;
+
+    @Inject 
+    ManagedExecutor executor;
+
+    @Inject
+    SecurityIdentity identityContext;
+
+    @Inject 
+    UserTransaction transaction;
 
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
@@ -157,13 +171,13 @@ public class AssessmentSvc {
                 }
             });
             // Add not existing stakeholdergroups included in the current array
-            assessmentDto.getStakeholderGroups().forEach(e -> {
-                log.log(Level.FINE, "Considering Stakeholdergroup : " + e);
-                if (assessment.stakeholdergroups.stream().noneMatch(o -> o.stakeholdergroupId == e)) {
-                    log.log(Level.FINE,"Adding Stakeholdergroup : " + e);
+            assessmentDto.getStakeholderGroups().forEach(groupDto -> {
+                log.log(Level.FINE, "Considering Stakeholdergroup : " + groupDto);
+                if (assessment.stakeholdergroups.stream().noneMatch(groupDB -> groupDto.equals(groupDB.stakeholdergroupId))) {
+                    log.log(Level.FINE,"Adding Stakeholdergroup : " + groupDto);
                     AssessmentStakeholdergroup.builder()
                             .assessment(assessment)
-                            .stakeholdergroupId(e)
+                            .stakeholdergroupId(groupDto)
                             .build().persist();
                 }
             });
@@ -179,7 +193,7 @@ public class AssessmentSvc {
             // Add not existing stakeholders included in the current array
             assessmentDto.getStakeholders().forEach(e -> {
                 log.log(Level.FINE,"Considering Stakeholder : " + e);
-                if (assessment.stakeholders.stream().noneMatch(o -> o.stakeholderId == e)) {
+                if (assessment.stakeholders.stream().noneMatch(o -> e.equals(o.stakeholderId))) {
                     log.log(Level.FINE,"Adding Stakeholder : " + e);
                     AssessmentStakeholder.builder()
                         .assessment(assessment)
@@ -320,52 +334,45 @@ public class AssessmentSvc {
         }
     }
 
-    @Transactional
-    public AssessmentBulkDto bulkCreateAssessments(Long fromAssessmentId, @NotNull @Valid List<Long> data) {
+    public AssessmentBulkDto bulkCreateAssessments(Long fromAssessmentId, @NotNull @Valid List<Long> data) throws SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException, NotSupportedException {
+        // We manage manually the transaction to be sure the consumer starts after this transaction has been commited
+        transaction.begin();
         AssessmentBulk bulk = newAssessmentBulk(fromAssessmentId, data);
-        getUsername("+++++++++++++++ REST ++++++++++++++++");
-        eventBus.send("process-bulk-assessment-creation", bulk.id);
+        transaction.commit();
+
+        eventBus.send("process-bulk-assessment-creation", BulkOperation.builder().bulkId(bulk.id).username(identityContext.getPrincipal().getName()).build());
 
         return mapper.assessmentBulkToassessmentBulkDto(bulk);
     }
 
-    @Transactional(dontRollbackOn = {BadRequestException.class, NotFoundException.class} )
+    @Transactional
     @ConsumeEvent("process-bulk-assessment-creation")
     @Blocking
-    public void processApplicationAssessmentCreationAsync(Long bulkId) {
-        AssessmentBulk bulk = AssessmentBulk.findById(bulkId);
-        getUsername(" ********** BULK *************");
+    public void processApplicationAssessmentCreationAsync(BulkOperation data) {
+        AssessmentBulk bulk = (AssessmentBulk) AssessmentBulk.findByIdOptional(data.bulkId).orElseThrow(NotFoundException::new);
+        processBulkApplications(data, bulk);
+    }
 
+    @Transactional(dontRollbackOn = {BadRequestException.class, NotFoundException.class} )
+    private void processBulkApplications(BulkOperation data, AssessmentBulk bulk) {
         bulk.bulkApplications.forEach( app -> {
-            String error = "NONE";
+            String error = "none";
             AssessmentBulkApplication bulkApp = AssessmentBulkApplication.findById(app.id);
             try {
                 AssessmentHeaderDto headerDto = newAssessment(bulk.fromAssessmentId, app.applicationId);
                 bulkApp.assessmentId = headerDto.getId();
+                bulkApp.updateUser = data.username;
             } catch (BadRequestException ex) {
                 error = "400";
             } catch (NotFoundException ex) {
                 error = "404";
             }
             bulkApp.error = error;
-            bulkApp.persistAndFlush();
+            bulkApp.persist();
 
             log.info("bulkcreateassessments - finished");
         });
     }
-    private String getUsername(String loginfo) {
-        SecurityIdentity context = CDI.current().select(SecurityIdentity.class).get();
-        log.info(loginfo + " Context : " + context);
-        if (Objects.nonNull(context)) {
-            String username = context.getPrincipal().getName();
-            log.info(loginfo + " Username : " + context.getPrincipal() + "--" + username);
-            if (Objects.nonNull(username)) {
-                return username;
-            }
-        }
-        return "";
-    }
-
 
     @Transactional
     private AssessmentBulk newAssessmentBulk(Long fromAssessmentId, @NotNull @Valid List<Long> data) {
@@ -374,19 +381,19 @@ public class AssessmentSvc {
                 .applications(StringUtils.join(data, ","))
                             .fromAssessmentId(fromAssessmentId)
                             .build();
-        bulk.persist();
+        bulk.persistAndFlush();
 
         data.stream().forEach(e -> {
             AssessmentBulkApplication bulkApplication = AssessmentBulkApplication.builder()
             .applicationId(e)
+            .createUser(identityContext.getPrincipal().getName())
             .assessmentBulk(bulk)
             .build();
 
-            bulkApplication.persist();
+            bulkApplication.persistAndFlush();
 
             bulk.bulkApplications.add(bulkApplication);
         });
-        bulk.persistAndFlush();
 
         return bulk;
     }

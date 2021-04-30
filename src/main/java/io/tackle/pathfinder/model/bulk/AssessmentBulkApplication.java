@@ -1,11 +1,13 @@
 package io.tackle.pathfinder.model.bulk;
 
-import io.tackle.commons.entities.AbstractEntity;
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.Column;
@@ -14,6 +16,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import java.time.Instant;
+
 @Entity
 @Table(name = "assessment_bulk_app")
 @SQLDelete(sql = "UPDATE assessment_bulk_app SET deleted = true WHERE id = ?", check = ResultCheckStyle.COUNT)
@@ -21,7 +25,20 @@ import javax.persistence.Table;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AssessmentBulkApplication extends AbstractEntity {
+public class AssessmentBulkApplication extends PanacheEntity {
+    @CreationTimestamp
+    @Column(updatable=false)
+    public Instant createTime;
+
+    public String createUser;
+
+    @UpdateTimestamp
+    public Instant updateTime;
+
+    public String updateUser;
+
+    public Boolean deleted = false;
+
     public Long assessmentId;
 
     @Column(nullable = false)
