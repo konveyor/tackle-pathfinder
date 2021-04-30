@@ -1,9 +1,10 @@
 package io.tackle.pathfinder.services;
 
-import io.smallrye.mutiny.Uni;
+import io.quarkus.security.identity.SecurityIdentity;
+import io.quarkus.vertx.ConsumeEvent;
+import io.smallrye.common.annotation.Blocking;
 import io.tackle.pathfinder.dto.AssessmentBulkDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderBulkDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
@@ -20,11 +21,12 @@ import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
+import io.vertx.core.eventbus.EventBus;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.microprofile.context.ManagedExecutor;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
@@ -33,6 +35,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -44,17 +47,17 @@ public class AssessmentSvc {
     AssessmentMapper mapper;
 
     @Inject
-    ManagedExecutor managedExecutor;
+    EventBus eventBus;
 
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
         return assessmentQuery.stream().findFirst().map(e -> mapper.assessmentToAssessmentHeaderDto(e));
     }
 
-    @Transactional
+    @Transactional(dontRollbackOn = {BadRequestException.class})
+
     public AssessmentHeaderDto createAssessment(@NotNull Long applicationId) {
         long count = Assessment.count("application_id", applicationId);
-        log.log(Level.FINE,"Assessments for application_id [ " + applicationId + "] : " + count);
         if (count == 0) {
             Assessment assessment = new Assessment();
             assessment.applicationId = applicationId;
@@ -70,6 +73,7 @@ public class AssessmentSvc {
     }
 
     @Transactional
+
     public Assessment copyQuestionnaireIntoAssessment(Assessment assessment, Questionnaire questionnaire) {
 
         AssessmentQuestionnaire assessQuestionnaire = AssessmentQuestionnaire.builder()
@@ -222,7 +226,7 @@ public class AssessmentSvc {
         if (!deleted) throw new BadRequestException();
     }
 
-    @Transactional
+    @Transactional(dontRollbackOn = {BadRequestException.class, NotFoundException.class})
     public AssessmentHeaderDto copyAssessment(@NotNull Long assessmentId, @NotNull Long targetApplicationId) {
         Assessment assessmentSource = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
         if (assessmentSource != null) {
@@ -305,6 +309,7 @@ public class AssessmentSvc {
         return questionnaire;
     }
 
+    @Transactional(dontRollbackOn = {BadRequestException.class, NotFoundException.class} )
     public AssessmentHeaderDto newAssessment(Long fromAssessmentId, Long applicationId) {
         if (fromAssessmentId != null) {
             log.info("copying assess");
@@ -318,55 +323,49 @@ public class AssessmentSvc {
     @Transactional
     public AssessmentBulkDto bulkCreateAssessments(Long fromAssessmentId, @NotNull @Valid List<Long> data) {
         AssessmentBulk bulk = newAssessmentBulk(fromAssessmentId, data);
-
-        // With Mutiny
-        Uni.createFrom().item(data)
-            .subscribe()
-            .with(e -> {
-                e.stream().forEach(app -> newAssessmentBulkApplication(fromAssessmentId, bulk, app));
-            });
-
-        // With CompletableFuture
-        managedExecutor.runAsync(() -> {
-            data.stream().forEach(app -> {
-                newAssessmentBulkApplication(fromAssessmentId, bulk, app);
-            });
-        });
+        getUsername("+++++++++++++++ REST ++++++++++++++++");
+        eventBus.send("process-bulk-assessment-creation", bulk.id);
 
         return mapper.assessmentBulkToassessmentBulkDto(bulk);
     }
 
-    @Transactional
-    private AssessmentBulkApplication newAssessmentBulkApplication(Long fromAssessmentId, AssessmentBulk bulk, Long e) {
-        log.info("newAssessment ini");
-        AssessmentBulkApplication bulkApplication = AssessmentBulkApplication.builder()
-        .applicationId(e)
-        .assessmentBulk(bulk)
-        .build();
+    @Transactional(dontRollbackOn = {BadRequestException.class, NotFoundException.class} )
+    @ConsumeEvent("process-bulk-assessment-creation")
+    @Blocking
+    public void processApplicationAssessmentCreationAsync(Long bulkId) {
+        AssessmentBulk bulk = AssessmentBulk.findById(bulkId);
+        getUsername(" ********** BULK *************");
 
-        bulkApplication.persist();
+        bulk.bulkApplications.forEach( app -> {
+            String error = "NONE";
+            AssessmentBulkApplication bulkApp = AssessmentBulkApplication.findById(app.id);
+            try {
+                AssessmentHeaderDto headerDto = newAssessment(bulk.fromAssessmentId, app.applicationId);
+                bulkApp.assessmentId = headerDto.getId();
+            } catch (BadRequestException ex) {
+                error = "400";
+            } catch (NotFoundException ex) {
+                error = "404";
+            }
+            bulkApp.error = error;
+            bulkApp.persistAndFlush();
 
-        bulk.bulkApplications.add(bulkApplication);
-
-        String error = null;
-        log.info("bulkcreateassessments - newAssessment: " + e + "--" + fromAssessmentId);
-
-        try {
-            log.info("bulkcreateassessments - newAssessment: " + e + "--" + fromAssessmentId);
-
-            AssessmentHeaderDto headerDto = newAssessment(fromAssessmentId, e);
-            bulkApplication.assessmentId = headerDto.getId();
-        } catch (BadRequestException ex) {
-            error = "400";
-        } catch (NotFoundException ex) {
-            error = "404";
-        } catch (Exception ex) {
-            error = "500";
-        }
-        bulkApplication.error = error;
-        log.info("bulkcreateassessments - finished");
-        return bulkApplication;
+            log.info("bulkcreateassessments - finished");
+        });
     }
+    private String getUsername(String loginfo) {
+        SecurityIdentity context = CDI.current().select(SecurityIdentity.class).get();
+        log.info(loginfo + " Context : " + context);
+        if (Objects.nonNull(context)) {
+            String username = context.getPrincipal().getName();
+            log.info(loginfo + " Username : " + context.getPrincipal() + "--" + username);
+            if (Objects.nonNull(username)) {
+                return username;
+            }
+        }
+        return "";
+    }
+
 
     @Transactional
     private AssessmentBulk newAssessmentBulk(Long fromAssessmentId, @NotNull @Valid List<Long> data) {
@@ -376,6 +375,18 @@ public class AssessmentSvc {
                             .fromAssessmentId(fromAssessmentId)
                             .build();
         bulk.persist();
+
+        data.stream().forEach(e -> {
+            AssessmentBulkApplication bulkApplication = AssessmentBulkApplication.builder()
+            .applicationId(e)
+            .assessmentBulk(bulk)
+            .build();
+
+            bulkApplication.persist();
+
+            bulk.bulkApplications.add(bulkApplication);
+        });
+        bulk.persistAndFlush();
 
         return bulk;
     }
