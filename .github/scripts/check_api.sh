@@ -88,6 +88,7 @@ curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: 
              | grep '"applicationId":100,"status":"STARTED"}200'
 assessment_reupdated_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s)
+echo '++ 8.1 Test stakeholders=2 , groups =4 '
 test "$(echo $assessment_reupdated_json | jq '.stakeholders | length ')" = "2"
 test "$(echo $assessment_reupdated_json | jq '.stakeholderGroups | length')" = "4"
 
@@ -99,6 +100,7 @@ curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: 
              | grep '"applicationId":100,"status":"STARTED"}200'
 assessment_reupdated_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s)
+echo '++ 8.2 Test stakeholders=0 , groups =2 '
 test "$(echo $assessment_reupdated_json | jq '.stakeholders | length ')" = "0"
 test "$(echo $assessment_reupdated_json | jq '.stakeholderGroups | length')" = "2"
 
@@ -110,6 +112,7 @@ curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: 
              | grep '"applicationId":100,"status":"STARTED"}200'
 assessment_reupdated_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s)
+echo '++ 8.3 Test stakeholders=1 , groups =2 '
 test "$(echo $assessment_reupdated_json | jq '.stakeholders | length ')" = "1"
 test "$(echo $assessment_reupdated_json | jq '.stakeholderGroups | length')" = "2"
 
@@ -118,8 +121,8 @@ echo
 echo '9 >>> Give an updated assessment, check values have been successfully stored'
 assessment_updated_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s)
-test "$(echo $assessment_updated_json | jq '.stakeholders | length')" = "2"
-test "$(echo $assessment_updated_json | jq '.stakeholderGroups | length')" = "3"
+test "$(echo $assessment_updated_json | jq '.stakeholders | length')" = "1"
+test "$(echo $assessment_updated_json | jq '.stakeholderGroups | length')" = "2"
 test "$(echo $assessment_updated_json | jq ".questionnaire.categories[] | select(.id == $categoryid) | .comment // \"empty\"")" = '"This is a test comment"'
 test "$(echo $assessment_updated_json | jq ".questionnaire.categories[] | select(.id == $categoryid) | .questions[] | select(.id == $questionid) | .options[] | select(.id == $optionid) | .checked")" = "true"
 
@@ -208,12 +211,39 @@ test "404" = "$req_not_existing_assessment"
 
 echo
 echo
-echo "15 >>> Bulk creation of assessments"
+echo "15 >>> Bulk creation of blank assessments"
 req_bulk_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessments/bulk" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
             -H 'Content-Type: application/json' \
-            -d "[188,288,388,488]" \
+            -d '{ "applications" : [ {"applicationId":9},{"applicationId": 10},{"applicationId": 11},{"applicationId": 12},{"applicationId": 325100}]}' \
             -s -w "%{http_code}")
 test "202" = "$req_not_existing_assessment"
+bulkId=$(echo $req_bulk_assessment | jq '.bulkId')
+
+req_bulk_applications=$(curl -X GET "http://$api_ip/pathfinder/assessments/bulk/$bulkId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -H 'Content-Type: application/json' \
+            -s -w "%{http_code}")
+test $(echo $req_bulk_applications | jq '.completed') = "false"
+test $(echo $req_bulk_applications | jq '.assessments | length') = 5
+
+sleep 15s
+
+req_bulk_applications=$(curl -X GET "http://$api_ip/pathfinder/assessments/bulk/$bulkId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -H 'Content-Type: application/json' \
+            -s -w "%{http_code}")
+test $(echo $req_bulk_applications | jq '.completed') = "true"
+test $(echo $req_bulk_applications | jq '.assessments | length') = 5
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .error ') = "400"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .id ') = "null"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .status ') = "STARTED"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .id ') != "null"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .error ') = "null"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 11) | .status ') = "STARTED"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 10) | .status ') = "STARTED"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 9) | .status ') = "STARTED"
+bulk_application12_assessmentid=$(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .id ')
+
 
 echo " +++++ API CHECK SUCCESSFUL ++++++"
