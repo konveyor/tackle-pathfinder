@@ -89,11 +89,11 @@ public class AssessmentsResource {
   @Path("bulk")
   @Produces("application/json")
   @Consumes("application/json")
-  public AssessmentBulkDto bulkCreate(@NotNull @Valid AssessmentBulkPostDto data) throws SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException, NotSupportedException {
+  public Response bulkCreate(@NotNull @Valid AssessmentBulkPostDto data) throws SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException, NotSupportedException {
     List<Long> appsList = data.getApplications().stream()
                           .map(e -> e.getApplicationId())
                           .collect(Collectors.toList());
-    return service.bulkCreateAssessments(data.getFromAssessmentId(), appsList);
+    return Response.accepted().entity(service.bulkCreateAssessments(data.getFromAssessmentId(), appsList)).build();
   }
 
   @GET
