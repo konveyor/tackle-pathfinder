@@ -313,7 +313,7 @@ public class AssessmentSvc {
                     .selected(opt.selected)
                     .build();
                     singleOption.persist();
-                    return singleOption; 
+                    return singleOption;
                 }).collect(Collectors.toList());
                 return assessmentQuestion;
             }).collect(Collectors.toList());
@@ -326,10 +326,8 @@ public class AssessmentSvc {
     @Transactional(dontRollbackOn = {BadRequestException.class, NotFoundException.class} )
     public AssessmentHeaderDto newAssessment(Long fromAssessmentId, Long applicationId) {
         if (fromAssessmentId != null) {
-            log.info("copying assess");
             return copyAssessment(fromAssessmentId, applicationId);
         } else {
-            log.info("Creating new");
             return createAssessment(applicationId);
         }
     }
@@ -356,7 +354,7 @@ public class AssessmentSvc {
     @Transactional(dontRollbackOn = {BadRequestException.class, NotFoundException.class} )
     private void processBulkApplications(BulkOperation data, AssessmentBulk bulk) {
         bulk.bulkApplications.forEach( app -> {
-            String error = "none";
+            String error = null;
             AssessmentBulkApplication bulkApp = AssessmentBulkApplication.findById(app.id);
             try {
                 AssessmentHeaderDto headerDto = newAssessment(bulk.fromAssessmentId, app.applicationId);
@@ -369,8 +367,6 @@ public class AssessmentSvc {
             }
             bulkApp.error = error;
             bulkApp.persist();
-
-            log.info("bulkcreateassessments - finished");
         });
     }
 
@@ -381,7 +377,7 @@ public class AssessmentSvc {
                 .applications(StringUtils.join(data, ","))
                             .fromAssessmentId(fromAssessmentId)
                             .build();
-        bulk.persistAndFlush();
+        bulk.persist();
 
         data.stream().forEach(e -> {
             AssessmentBulkApplication bulkApplication = AssessmentBulkApplication.builder()
@@ -390,7 +386,7 @@ public class AssessmentSvc {
             .assessmentBulk(bulk)
             .build();
 
-            bulkApplication.persistAndFlush();
+            bulkApplication.persist();
 
             bulk.bulkApplications.add(bulkApplication);
         });

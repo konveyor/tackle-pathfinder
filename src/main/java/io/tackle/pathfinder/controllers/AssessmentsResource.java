@@ -90,11 +90,9 @@ public class AssessmentsResource {
   @Produces("application/json")
   @Consumes("application/json")
   public AssessmentBulkDto bulkCreate(@NotNull @Valid AssessmentBulkPostDto data) throws SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException, NotSupportedException {
-    log.info("gets to inside method");
     List<Long> appsList = data.getApplications().stream()
                           .map(e -> e.getApplicationId())
                           .collect(Collectors.toList());
-    log.info("gets after list");
     return service.bulkCreateAssessments(data.getFromAssessmentId(), appsList);
   }
 
