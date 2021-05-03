@@ -359,22 +359,25 @@ public class AssessmentSvc {
             try {
                 AssessmentHeaderDto headerDto = newAssessment(bulk.fromAssessmentId, app.applicationId);
                 bulkApp.assessmentId = headerDto.getId();
-                bulkApp.updateUser = data.username;
             } catch (BadRequestException ex) {
                 error = "400";
             } catch (NotFoundException ex) {
                 error = "404";
             }
             bulkApp.error = error;
+            bulkApp.updateUser = data.username;
             bulkApp.persist();
         });
+        bulk.completed = true;
+        bulk.updateUser = data.username;
     }
 
     @Transactional
     private AssessmentBulk newAssessmentBulk(Long fromAssessmentId, @NotNull @Valid List<Long> data) {
 
         AssessmentBulk bulk = AssessmentBulk.builder()
-                .applications(StringUtils.join(data, ","))
+                            .applications(StringUtils.join(data, ","))
+                            .createUser(identityContext.getPrincipal().getName())
                             .fromAssessmentId(fromAssessmentId)
                             .build();
         bulk.persist();
