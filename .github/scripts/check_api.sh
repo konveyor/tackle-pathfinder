@@ -75,6 +75,47 @@ curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: 
             -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [77,44],\"stakeholderGroups\": [333,222,111],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
              | grep '"applicationId":100,"status":"STARTED"}200'
 
+# Updating several times to check no duplication
+curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}" \
+            -H 'Content-Type: application/json' \
+            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [77,44],\"stakeholderGroups\": [333,222,111],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
+             | grep '"applicationId":100,"status":"STARTED"}200'
+curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}" \
+            -H 'Content-Type: application/json' \
+            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [77,44],\"stakeholderGroups\": [333,222,111,444],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
+             | grep '"applicationId":100,"status":"STARTED"}200'
+assessment_reupdated_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -s)
+echo '++ 8.1 Test stakeholders=2 , groups =4 '
+test "$(echo $assessment_reupdated_json | jq '.stakeholders | length ')" = "2"
+test "$(echo $assessment_reupdated_json | jq '.stakeholderGroups | length')" = "4"
+
+# Updating with deleting all stakeholders and 2 stakeholdergroup
+curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}" \
+            -H 'Content-Type: application/json' \
+            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [],\"stakeholderGroups\": [333,222],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
+             | grep '"applicationId":100,"status":"STARTED"}200'
+assessment_reupdated_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -s)
+echo '++ 8.2 Test stakeholders=0 , groups =2 '
+test "$(echo $assessment_reupdated_json | jq '.stakeholders | length ')" = "0"
+test "$(echo $assessment_reupdated_json | jq '.stakeholderGroups | length')" = "2"
+
+# Updating with seting 1 stakeholders and not touching stakeholdergroups
+curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}" \
+            -H 'Content-Type: application/json' \
+            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [666],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
+             | grep '"applicationId":100,"status":"STARTED"}200'
+assessment_reupdated_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -s)
+echo '++ 8.3 Test stakeholders=1 , groups =2 '
+test "$(echo $assessment_reupdated_json | jq '.stakeholders | length ')" = "1"
+test "$(echo $assessment_reupdated_json | jq '.stakeholderGroups | length')" = "2"
+
 echo
 echo
 echo '9 >>> Give an updated assessment, check values have been successfully stored'
