@@ -66,16 +66,14 @@ public class AssessmentDto {
      */
     @JsonProperty("stakeholders")
     @JsonPropertyDescription("List of ids of stakeholders")
-    @Builder.Default
-    private List<Long> stakeholders = new ArrayList<Long>();
+    private List<Long> stakeholders; 
     /**
      * List of ids of stakeholder groups
      * 
      */
     @JsonProperty("stakeholderGroups")
     @JsonPropertyDescription("List of ids of stakeholder groups")
-    @Builder.Default
-    private List<Long> stakeholderGroups = new ArrayList<Long>();
+    private List<Long> stakeholderGroups; 
     /**
      * 
      * (Required)
