@@ -169,6 +169,38 @@ public class AssessmentSvcTest {
         Assessment assessmentUpdated = Assessment.findById(assessment.id);
         assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
         assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
+    }
+
+    @Test
+    public void given_CreatedAssessment_When_UpdateSeveralTimes_Then_StakeholdersAreNotDuplicated() throws InterruptedException {
+        Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 2415L);
+
+        assertThat(assessment.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
+        assertThat(assessment.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
+
+        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment);
+        assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
+        assertThat(assessmentDto.getStakeholders()).hasSize(3); 
+
+        // Stakeholders and Stakeholdergroups NOT send will imply leave what is there without touching it
+        assessmentDto.setStakeholderGroups(null);
+        assessmentDto.setStakeholders(null);
+
+        assessmentSvc.updateAssessment(assessment.id, assessmentDto);
+
+        Assessment assessmentUpdated = Assessment.findById(assessment.id);
+        assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
+        assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
+        
+        assessmentSvc.updateAssessment(assessment.id, assessmentDto);
+        assessmentUpdated = Assessment.findById(assessment.id);
+        assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
+        assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);        
+        
+        assessmentSvc.updateAssessment(assessment.id, assessmentDto);
+        assessmentUpdated = Assessment.findById(assessment.id);
+        assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
+        assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
     }    
     
     @Test

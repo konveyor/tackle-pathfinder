@@ -121,8 +121,8 @@ echo
 echo '9 >>> Give an updated assessment, check values have been successfully stored'
 assessment_updated_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s)
-test "$(echo $assessment_updated_json | jq '.stakeholders | length')" = "2"
-test "$(echo $assessment_updated_json | jq '.stakeholderGroups | length')" = "3"
+test "$(echo $assessment_updated_json | jq '.stakeholders | length')" = "1"
+test "$(echo $assessment_updated_json | jq '.stakeholderGroups | length')" = "2"
 test "$(echo $assessment_updated_json | jq ".questionnaire.categories[] | select(.id == $categoryid) | .comment // \"empty\"")" = '"This is a test comment"'
 test "$(echo $assessment_updated_json | jq ".questionnaire.categories[] | select(.id == $categoryid) | .questions[] | select(.id == $questionid) | .options[] | select(.id == $optionid) | .checked")" = "true"
 
