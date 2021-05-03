@@ -192,6 +192,9 @@ public class AssessmentSvcTest {
         assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
         assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
         
+        // adding again the same original list to the dtos, should not change anything as we are adding the same ones it contains
+        assessmentDto.setStakeholderGroups(List.of(500L, 600L));
+        assessmentDto.setStakeholders(List.of(100L, 200L, 300L));
         assessmentSvc.updateAssessment(assessment.id, assessmentDto);
         assessmentUpdated = Assessment.findById(assessment.id);
         assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
