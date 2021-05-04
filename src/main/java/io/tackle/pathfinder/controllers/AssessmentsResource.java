@@ -6,9 +6,7 @@ import io.tackle.pathfinder.dto.AssessmentBulkPostDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
-import io.vertx.core.eventbus.EventBus;
 import lombok.extern.java.Log;
-
 import javax.inject.Inject;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -39,9 +37,6 @@ public class AssessmentsResource {
   @Inject
   AssessmentSvc service;
 
-  @Inject
-  EventBus eventBus;
-
   @GET
   @Produces("application/json")
   public List<AssessmentHeaderDto> getApplicationAssessments(@NotNull @QueryParam("applicationId") Long applicationId) {
@@ -53,7 +48,6 @@ public class AssessmentsResource {
   @Consumes("application/json")
   public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data) {
     AssessmentHeaderDto createAssessment = service.newAssessment(fromAssessmentId, data.getApplicationId());
-
     return Response
       .status(Status.CREATED)
       .entity(createAssessment)

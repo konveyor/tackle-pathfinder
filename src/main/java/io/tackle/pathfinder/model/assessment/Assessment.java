@@ -58,14 +58,14 @@ public class Assessment extends PanacheEntity {
     @Column(length = 1000)
     public String comment;
 
-    @OneToOne(mappedBy = "assessment", cascade = CascadeType.REMOVE)
+    @OneToOne(mappedBy = "assessment", cascade = CascadeType.ALL)
     public AssessmentQuestionnaire assessmentQuestionnaire;
 
-    @OneToMany(mappedBy = "assessment", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL)
     @Builder.Default
     public List<AssessmentStakeholder> stakeholders= new ArrayList<>();
 
-    @OneToMany(mappedBy = "assessment", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL)
     @Builder.Default
     public List<AssessmentStakeholdergroup> stakeholdergroups = new ArrayList<>();
 }

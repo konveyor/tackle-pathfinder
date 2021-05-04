@@ -48,9 +48,6 @@ public class AssessmentSvc {
     @Inject
     EventBus eventBus;
 
-    @Inject 
-    ManagedExecutor executor;
-
     @Inject
     SecurityIdentity identityContext;
 
@@ -61,13 +58,15 @@ public class AssessmentSvc {
     BulkCreateSvc bulkSvc;
 
 
+    @Transactional
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         return Assessment.find("application_id", applicationId)
                         .firstResultOptional()
                         .map(e -> mapper.assessmentToAssessmentHeaderDto((Assessment) e));
     }
 
-  
+
+    @Transactional
     public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
         log.log(Level.FINE,"Requesting Assessment " + assessmentId);
         Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
@@ -90,17 +89,22 @@ public class AssessmentSvc {
                 if (!assessmentDto.getStakeholderGroups().contains(stakegroup.stakeholdergroupId)) {
                     log.log(Level.FINE,"Deleted stakegroup : " + stakegroup.stakeholdergroupId);
                     stakegroup.delete();
+                    log.log(Level.FINE, "stakegroup : " + stakegroup);
                 }
             });
+            assessment.stakeholdergroups.removeIf(e -> !assessmentDto.getStakeholderGroups().contains(e.stakeholdergroupId));
+
             // Add not existing stakeholdergroups included in the current array
             assessmentDto.getStakeholderGroups().forEach(groupDto -> {
                 log.log(Level.FINE, "Considering Stakeholdergroup : " + groupDto);
                 if (assessment.stakeholdergroups.stream().noneMatch(groupDB -> groupDto.equals(groupDB.stakeholdergroupId))) {
                     log.log(Level.FINE,"Adding Stakeholdergroup : " + groupDto);
-                    AssessmentStakeholdergroup.builder()
+                    AssessmentStakeholdergroup stakegroup = AssessmentStakeholdergroup.builder()
                             .assessment(assessment)
                             .stakeholdergroupId(groupDto)
-                            .build().persist();
+                            .build();
+                    stakegroup.persist();
+                    assessment.stakeholdergroups.add(stakegroup);
                 }
             });
         }
@@ -112,15 +116,19 @@ public class AssessmentSvc {
                     stake.delete();
                 }
             });
+            assessment.stakeholders.removeIf(e -> !assessmentDto.getStakeholders().contains(e.stakeholderId));
+
             // Add not existing stakeholders included in the current array
             assessmentDto.getStakeholders().forEach(e -> {
                 log.log(Level.FINE,"Considering Stakeholder : " + e);
                 if (assessment.stakeholders.stream().noneMatch(o -> e.equals(o.stakeholderId))) {
                     log.log(Level.FINE,"Adding Stakeholder : " + e);
-                    AssessmentStakeholder.builder()
-                        .assessment(assessment)
-                        .stakeholderId(e)
-                        .build().persist();
+                    AssessmentStakeholder stake = AssessmentStakeholder.builder()
+                            .assessment(assessment)
+                            .stakeholderId(e)
+                            .build();
+                    stake.persist();
+                    assessment.stakeholders.add(stake);
                 }
             });
         }
@@ -150,10 +158,11 @@ public class AssessmentSvc {
                 }
             });
         }
-
+        assessment.persistAndFlush();
         return mapper.assessmentToAssessmentHeaderDto(assessment);
     }
 
+    @Transactional
     public AssessmentHeaderDto newAssessment(Long fromAssessmentId, @NotNull @Valid Long applicationId) {
         Assessment assessment = AssessmentCreateCommand.builder()
             .applicationId(applicationId)
@@ -188,11 +197,12 @@ public class AssessmentSvc {
     @ConsumeEvent("process-bulk-assessment-creation")
     @Blocking
     public void processApplicationAssessmentCreationAsync(Long bulkId) {
+        log.log(Level.FINE, "Starting async process");
+
         AssessmentBulk bulk = (AssessmentBulk) AssessmentBulk.findByIdOptional(bulkId).orElseThrow(NotFoundException::new);
+        log.log(Level.FINE, "Bulk : " + bulk.id);
         bulkSvc.processBulkApplications(bulk);
     }
-
- 
 
     @Transactional
     public AssessmentBulkDto bulkGet(@NotNull Long bulkId) {

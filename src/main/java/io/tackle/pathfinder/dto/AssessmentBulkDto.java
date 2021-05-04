@@ -15,6 +15,7 @@ import java.util.List;
 @JsonPropertyOrder({
     "bulkId",
     "fromAssessmentId",
+    "completed",
     "applications",
     "assessments"
 })
@@ -24,10 +25,10 @@ import java.util.List;
 @NoArgsConstructor
 @RegisterForReflection
 public class AssessmentBulkDto {
-    Long bulkId;
-    Long fromAssessmentId;
-    Boolean completed;
-    List<Long> applications;
+    private Long bulkId;
+    private Long fromAssessmentId;
+    private Boolean completed;
+    private List<Long> applications;
 
-    List<AssessmentHeaderBulkDto> assessments;
+    private List<AssessmentHeaderBulkDto> assessments;
 }

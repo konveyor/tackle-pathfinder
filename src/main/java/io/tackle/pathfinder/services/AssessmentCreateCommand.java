@@ -33,7 +33,6 @@ public class AssessmentCreateCommand {
     private Long applicationId;
     private Long questionnaireId;
 
-    @Transactional(dontRollbackOn = {BadRequestException.class})
     private Assessment createAssessment(@NotNull Long applicationId) {
         if (Assessment.find("application_id", applicationId).firstResultOptional().isPresent()) {
             throw new BadRequestException();
@@ -46,12 +45,9 @@ public class AssessmentCreateCommand {
 
             copyQuestionnaireIntoAssessment(assessment, getQuestionnaireDefaulted(questionnaireId));
             assessment.persist();
-
             return assessment;
         }
     }
-
-    @Transactional
 
     private Assessment copyQuestionnaireIntoAssessment(Assessment assessment, Questionnaire questionnaire) {
 
@@ -62,7 +58,6 @@ public class AssessmentCreateCommand {
                 .languageCode(questionnaire.languageCode)
                 .createUser(username)
                 .build();
-        //assessQuestionnaire.persist();
 
         assessment.assessmentQuestionnaire = assessQuestionnaire;
 
@@ -73,7 +68,6 @@ public class AssessmentCreateCommand {
                     .questionnaire(assessment.assessmentQuestionnaire )
                     .createUser(username)
                     .build();
-            //assessmentCategory.persist();
 
             for (Question question : category.questions) {
                 AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder()
@@ -86,8 +80,6 @@ public class AssessmentCreateCommand {
                         .createUser(username)
                         .build();
 
-                //assessmentQuestion.persist();
-
                 for (SingleOption so : question.singleOptions) {
                     AssessmentSingleOption singleOption = AssessmentSingleOption.builder()
                         .option(so.option)
@@ -98,8 +90,6 @@ public class AssessmentCreateCommand {
                         .createUser(username)
                         .build();
 
-                   // singleOption.persist();
-
                     assessmentQuestion.singleOptions.add(singleOption);
                 }
                 assessmentCategory.questions.add(assessmentQuestion);
@@ -107,62 +97,53 @@ public class AssessmentCreateCommand {
             assessQuestionnaire.categories.add(assessmentCategory);
         }
 
-        assessQuestionnaire.persistAndFlush();
         return assessment;
     }
 
     private Questionnaire getQuestionnaireDefaulted(Long questionnaire) {
         log.log(Level.FINE, "questionnaires : " + Questionnaire.count());
-        if (questionnaire == null) {
+        if (questionnaire != null) {
             return (Questionnaire) Questionnaire.findByIdOptional(questionnaire).orElseThrow(NotFoundException::new);
         } else {
             return (Questionnaire) Questionnaire.findAll().firstResultOptional().orElseThrow(NotFoundException::new);
         }
     }
 
-    @Transactional(dontRollbackOn = {BadRequestException.class, NotFoundException.class})
     private Assessment copyAssessment(@NotNull Long assessmentId, @NotNull Long targetApplicationId) {
-        Assessment assessmentSource = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
-        if (assessmentSource != null) {
-            if (Assessment.find("applicationId", targetApplicationId).firstResultOptional().isEmpty()) {
-                Assessment assessmentTarget = Assessment.builder()
-                                                .applicationId(targetApplicationId)
-                                                .status(assessmentSource.status)
-                                                .createUser(username)
-                                                .build();
-  //              assessmentTarget.persist();
+            Assessment assessmentSource = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
+            if (assessmentSource != null) {
+                if (Assessment.find("applicationId", targetApplicationId).firstResultOptional().isEmpty()) {
+                    Assessment assessmentTarget = Assessment.builder()
+                            .applicationId(targetApplicationId)
+                            .status(assessmentSource.status)
+                            .createUser(username)
+                            .build();
+                    assessmentTarget.assessmentQuestionnaire = copyQuestionnaireBetweenAssessments(assessmentSource, assessmentTarget);
 
-                assessmentTarget.assessmentQuestionnaire = copyQuestionnaireBetweenAssessments(assessmentSource, assessmentTarget);
-
-                assessmentTarget.stakeholdergroups = assessmentSource.stakeholdergroups.stream().map(e -> {
-                    AssessmentStakeholdergroup stakeholdergroup = AssessmentStakeholdergroup.builder()
-                        .assessment(assessmentTarget)
-                        .stakeholdergroupId(e.stakeholdergroupId)
-                        .createUser(username)
-                        .build();
-//                    stakeholdergroup.persist();
-                    return stakeholdergroup;
+                    assessmentTarget.stakeholdergroups = assessmentSource.stakeholdergroups.stream().map(e -> {
+                        AssessmentStakeholdergroup stakeholdergroup = AssessmentStakeholdergroup.builder()
+                                .assessment(assessmentTarget)
+                                .stakeholdergroupId(e.stakeholdergroupId)
+                                .createUser(username)
+                                .build();
+                        return stakeholdergroup;
                     }).collect(Collectors.toList());
-                assessmentTarget.stakeholders = assessmentSource.stakeholders.stream().map(e -> {
-                    AssessmentStakeholder stakeholder = AssessmentStakeholder.builder()
-                        .assessment(assessmentTarget)
-                        .stakeholderId(e.stakeholderId)
-                        .createUser(username)
-                        .build();
-//                    stakeholder.persist();
-                    return stakeholder;
+                    assessmentTarget.stakeholders = assessmentSource.stakeholders.stream().map(e -> {
+                        AssessmentStakeholder stakeholder = AssessmentStakeholder.builder()
+                                .assessment(assessmentTarget)
+                                .stakeholderId(e.stakeholderId)
+                                .createUser(username)
+                                .build();
+                        return stakeholder;
                     }).collect(Collectors.toList());
 
-
-                assessmentTarget.persistAndFlush();;
-                return assessmentTarget;
+                    assessmentTarget.persistAndFlush();
+                    return assessmentTarget;
+                }
             }
-        }
-
-        throw new BadRequestException();
+            throw new BadRequestException();
     }
 
-    @Transactional
     private AssessmentQuestionnaire copyQuestionnaireBetweenAssessments(Assessment sourceAssessment, Assessment targetAssessment) {
         AssessmentQuestionnaire questionnaire = AssessmentQuestionnaire.builder()
                                                 .assessment(targetAssessment)
@@ -171,7 +152,6 @@ public class AssessmentCreateCommand {
                                                 .languageCode(sourceAssessment.assessmentQuestionnaire.languageCode)
                                                 .createUser(username)
                                                 .build();
-//        questionnaire.persist();
         questionnaire.categories = sourceAssessment.assessmentQuestionnaire.categories.stream().map(cat -> {
             AssessmentCategory assessmentCategory = AssessmentCategory.builder()
                 .comment(cat.comment)
@@ -180,7 +160,6 @@ public class AssessmentCreateCommand {
                 .questionnaire(questionnaire)
                 .createUser(username)
                 .build();
-//            assessmentCategory.persist();
             assessmentCategory.questions = cat.questions.stream().map(que -> {
                 AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder()
                 .category(assessmentCategory)
@@ -191,7 +170,6 @@ public class AssessmentCreateCommand {
                 .type(que.type)
                 .createUser(username)
                 .build();
-//                assessmentQuestion.persist();
                 assessmentQuestion.singleOptions = que.singleOptions.stream().map(opt -> {
                     AssessmentSingleOption singleOption = AssessmentSingleOption.builder()
                     .option(opt.option)
@@ -201,7 +179,6 @@ public class AssessmentCreateCommand {
                     .selected(opt.selected)
                     .createUser(username)
                     .build();
-//                    singleOption.persist();
                     return singleOption;
                 }).collect(Collectors.toList());
                 return assessmentQuestion;
@@ -209,11 +186,9 @@ public class AssessmentCreateCommand {
             return assessmentCategory;
         }).collect(Collectors.toList());
 
-        questionnaire.persistAndFlush();
         return questionnaire;
     }
 
-    @Transactional(dontRollbackOn = {BadRequestException.class, NotFoundException.class} )
     public Assessment execute() {
         if (fromAssessmentId != null) {
             return copyAssessment(fromAssessmentId, applicationId);

@@ -8,15 +8,7 @@ import io.restassured.response.ValidatableResponse;
 import io.tackle.commons.testcontainers.KeycloakTestResource;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.commons.tests.SecuredResourceTest;
-import io.tackle.pathfinder.dto.ApplicationDto;
-import io.tackle.pathfinder.dto.AssessmentCategoryDto;
-import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderBulkDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionnaireDto;
-import io.tackle.pathfinder.dto.AssessmentStatus;
+import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
@@ -37,7 +29,6 @@ import javax.transaction.Transactional;
 
 import java.time.Duration;
 import java.time.LocalTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -658,6 +649,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 				.isEqualTo(assessmentSource);
 	}
 
+	@Test
 	public void given_ApplicationAssessed_When_CopyAssessmentToAnotherAssessedApp_Then_BadRequestIsAssessed() {
 		// Creation of the Assessment
 		AssessmentHeaderDto assessmentHeader = given()
@@ -692,7 +684,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.log().all()
 			.statusCode(400);
 	}
-	
+	@Test
 	public void given_ApplicationAssessedButDeleted_When_CopyAssessmentToAnotherAssessedApp_Then_404NotFoundIsReturned() {
 		// Creation of the Assessment
 		AssessmentHeaderDto header = given()
@@ -722,12 +714,13 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.accept(ContentType.JSON)
 			.body(new ApplicationDto(389500L))
 		.when()
-			.post("/assessments/fromAssessmentId=" + header.getId())
+			.post("/assessments?fromAssessmentId=" + header.getId())
 		.then()
 			.log().all()
 			.statusCode(404);
 	}
 
+	@Test
 	public void given_ApplicationNotAssessed_When_CopyAssessmentToAnotherNotAssessedApp_Then_BadRequestIsAssessed() {
 		//Copy of the Assessment, and expect to fail
 		given()
@@ -741,31 +734,92 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.statusCode(404);
 	}
 
-	public void given_ApplicationAssessed_When_BulkCopyToListOfApplications_Then_CopyIsDoneAndResultIsListOfApplications() {
-		AssessmentHeaderBulkDto headerBulk = given()
+	@Test
+	public void given_ApplicationAssessed_When_BulkCreateListOfApplications_Then_CreationIsDoneAndResultIsListOfApplications() {
+		AssessmentBulkDto headerBulk = given()
 			.contentType(ContentType.JSON)
 			.accept(ContentType.JSON)
-			.body(List.of(new ApplicationDto(999L), new ApplicationDto(888L), new ApplicationDto(777L)))
+			.body(AssessmentBulkPostDto.builder()
+					.applications(List.of(ApplicationDto.builder().applicationId(999L).build(),
+							ApplicationDto.builder().applicationId(888L).build(),
+							ApplicationDto.builder().applicationId(777L).build()))
+					.build())
 		.when()
-			.post("/assessments/bulk?fromAssessmentId=1234")
+			.post("/assessments/bulk")
 		.then()
 			.log().all()
 			.statusCode(202)
-			.extract().as(AssessmentHeaderBulkDto.class);
+			.extract().as(AssessmentBulkDto.class);
 		
 		Awaitility.await()
 		.atMost(50, TimeUnit.SECONDS)
+		.pollInterval(Duration.ofSeconds(5))
 		.untilAsserted(() -> {
-			AssessmentHeaderBulkDto[] headers = given()
+			log.info("Calling");
+			AssessmentBulkDto bulkDtos = given()
 				.contentType(ContentType.JSON)
 				.accept(ContentType.JSON)
 			.when()
-				.get("/assessments/bulk/" + headerBulk.getId())
+				.get("/assessments/bulk/" + headerBulk.getBulkId())
 			.then()
 				.log().all()
-				.statusCode(200).extract().as(AssessmentHeaderBulkDto[].class);
-			
-			assertThat(headers).allMatch(e -> StringUtils.isBlank(e.getError()));
+				.statusCode(200).extract().as(AssessmentBulkDto.class);
+
+			assertThat(bulkDtos.getAssessments()).hasSize(3);
+			assertThat(bulkDtos.getAssessments()).allMatch(e -> StringUtils.isBlank(e.getError()));
+			assertThat(bulkDtos.getAssessments()).allMatch(e -> null != e.getId());
+			assertThat(bulkDtos.getCompleted()).isTrue();
+		});
+	}
+
+	@Test
+	@Transactional
+	public void given_ApplicationAssessed_When_BulkCopyListOfApplications_Then_CopyIsDoneAndResultIsListOfApplications() {
+		// Creation of the Assessment
+		AssessmentHeaderDto assessmentHeaderDto = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(new ApplicationDto(99999L))
+				.when()
+				.post("/assessments")
+				.then()
+				.log().all()
+				.statusCode(201)
+				.extract().as(AssessmentHeaderDto.class);
+
+		AssessmentBulkDto headerBulk = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(AssessmentBulkPostDto.builder()
+						.applications(List.of(ApplicationDto.builder().applicationId(1999L).build(),
+								ApplicationDto.builder().applicationId(1888L).build(),
+								ApplicationDto.builder().applicationId(1666L).build(),
+								ApplicationDto.builder().applicationId(1777L).build()
+								))
+						.build())
+		.when()
+			.post("/assessments/bulk?fromAssessmentId=" + assessmentHeaderDto.getId())
+		.then()
+			.log().all()
+			.statusCode(202)
+			.extract().as(AssessmentBulkDto.class);
+
+		Awaitility.await()
+		.atMost(50, TimeUnit.SECONDS)
+		.untilAsserted(() -> {
+			AssessmentBulkDto bulkDto = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+			.when()
+				.get("/assessments/bulk/" + headerBulk.getBulkId())
+			.then()
+				.log().all()
+				.statusCode(200).extract().as(AssessmentBulkDto.class);
+
+			assertThat(bulkDto.getAssessments()).hasSize(4);
+			assertThat(bulkDto.getAssessments()).allMatch(e -> StringUtils.isBlank(e.getError()));
+			assertThat(bulkDto.getAssessments()).allMatch(e -> null != e.getId());
+			assertThat(bulkDto.getCompleted()).isTrue();
 		});
 	}
 }

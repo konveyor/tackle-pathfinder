@@ -21,6 +21,6 @@ import java.util.List;
 @NoArgsConstructor
 @RegisterForReflection
 public class AssessmentBulkPostDto {
-    Long fromAssessmentId;
-    List<ApplicationDto> applications;
+    private Long fromAssessmentId;
+    private List<ApplicationDto> applications;
 }

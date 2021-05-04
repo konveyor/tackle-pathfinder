@@ -52,6 +52,6 @@ public class AssessmentBulk extends PanacheEntity {
     public String applications;
 
     @Builder.Default
-    @OneToMany(mappedBy = "assessmentBulk", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "assessmentBulk", cascade = CascadeType.ALL)
     public List<AssessmentBulkApplication> bulkApplications = new ArrayList<>();
 }

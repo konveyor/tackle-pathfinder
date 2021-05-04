@@ -1,9 +1,9 @@
 package io.tackle.pathfinder.services;
 
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.bulk.AssessmentBulk;
 import io.tackle.pathfinder.model.bulk.AssessmentBulkApplication;
+import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -16,15 +16,13 @@ import javax.ws.rs.NotFoundException;
 import java.util.List;
 
 @ApplicationScoped
+@Log
 public class BulkCreateSvc {
-    Long fromAssessmentId;
-    Long bulkId;
 
     @Transactional(dontRollbackOn = {BadRequestException.class, NotFoundException.class} )
     public void processBulkApplications(AssessmentBulk bulk) {
         bulk.bulkApplications.forEach( app -> {
             String error = null;
-
             try {
                 Assessment assessment = AssessmentCreateCommand.builder()
                                             .applicationId(app.applicationId)
@@ -40,8 +38,6 @@ public class BulkCreateSvc {
             }
             app.error = error;
             app.updateUser = bulk.createUser;
-            app.persist();
-
         });
         bulk.completed = true;
         bulk.updateUser = bulk.createUser;
@@ -65,7 +61,7 @@ public class BulkCreateSvc {
             bulk.bulkApplications.add(bulkApplication);
         });
         bulk.persistAndFlush();
-
+        log.info("Bulk apps :" + bulk.bulkApplications.size());
         return bulk;
     }
 }
