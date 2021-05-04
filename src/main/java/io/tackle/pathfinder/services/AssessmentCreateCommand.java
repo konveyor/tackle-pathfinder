@@ -1,0 +1,224 @@
+package io.tackle.pathfinder.services;
+
+import io.tackle.pathfinder.dto.AssessmentHeaderDto;
+import io.tackle.pathfinder.dto.AssessmentStatus;
+import io.tackle.pathfinder.mapper.AssessmentMapper;
+import io.tackle.pathfinder.model.assessment.Assessment;
+import io.tackle.pathfinder.model.assessment.AssessmentCategory;
+import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
+import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
+import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
+import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
+import io.tackle.pathfinder.model.questionnaire.Category;
+import io.tackle.pathfinder.model.questionnaire.Question;
+import io.tackle.pathfinder.model.questionnaire.Questionnaire;
+import io.tackle.pathfinder.model.questionnaire.SingleOption;
+import lombok.Builder;
+import lombok.extern.java.Log;
+
+import javax.transaction.Transactional;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+
+import java.util.logging.Level;
+import java.util.stream.Collectors;
+
+@Log
+@Builder
+public class AssessmentCreateCommand {
+    private Long fromAssessmentId;
+    private String username;
+    private Long applicationId;
+    private Long questionnaireId;
+
+    @Transactional(dontRollbackOn = {BadRequestException.class})
+    private Assessment createAssessment(@NotNull Long applicationId) {
+        if (Assessment.find("application_id", applicationId).firstResultOptional().isPresent()) {
+            throw new BadRequestException();
+        }
+        else {
+            Assessment assessment = new Assessment();
+            assessment.applicationId = applicationId;
+            assessment.status = AssessmentStatus.STARTED;
+            assessment.createUser = username;
+
+            copyQuestionnaireIntoAssessment(assessment, getQuestionnaireDefaulted(questionnaireId));
+            assessment.persist();
+
+            return assessment;
+        }
+    }
+
+    @Transactional
+
+    private Assessment copyQuestionnaireIntoAssessment(Assessment assessment, Questionnaire questionnaire) {
+
+        AssessmentQuestionnaire assessQuestionnaire = AssessmentQuestionnaire.builder()
+                .name(questionnaire.name)
+                .questionnaire(questionnaire)
+                .assessment(assessment)
+                .languageCode(questionnaire.languageCode)
+                .createUser(username)
+                .build();
+        //assessQuestionnaire.persist();
+
+        assessment.assessmentQuestionnaire = assessQuestionnaire;
+
+        for (Category category : questionnaire.categories) {
+            AssessmentCategory assessmentCategory = AssessmentCategory.builder()
+                    .name(category.name)
+                    .order(category.order)
+                    .questionnaire(assessment.assessmentQuestionnaire )
+                    .createUser(username)
+                    .build();
+            //assessmentCategory.persist();
+
+            for (Question question : category.questions) {
+                AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder()
+                        .category(assessmentCategory)
+                        .name(question.name)
+                        .order(question.order)
+                        .questionText(question.questionText)
+                        .type(question.type)
+                        .description(question.description)
+                        .createUser(username)
+                        .build();
+
+                //assessmentQuestion.persist();
+
+                for (SingleOption so : question.singleOptions) {
+                    AssessmentSingleOption singleOption = AssessmentSingleOption.builder()
+                        .option(so.option)
+                        .order(so.order)
+                        .question(assessmentQuestion)
+                        .risk(so.risk)
+                        .selected(false)
+                        .createUser(username)
+                        .build();
+
+                   // singleOption.persist();
+
+                    assessmentQuestion.singleOptions.add(singleOption);
+                }
+                assessmentCategory.questions.add(assessmentQuestion);
+            }
+            assessQuestionnaire.categories.add(assessmentCategory);
+        }
+
+        assessQuestionnaire.persistAndFlush();
+        return assessment;
+    }
+
+    private Questionnaire getQuestionnaireDefaulted(Long questionnaire) {
+        log.log(Level.FINE, "questionnaires : " + Questionnaire.count());
+        if (questionnaire == null) {
+            return (Questionnaire) Questionnaire.findByIdOptional(questionnaire).orElseThrow(NotFoundException::new);
+        } else {
+            return (Questionnaire) Questionnaire.findAll().firstResultOptional().orElseThrow(NotFoundException::new);
+        }
+    }
+
+    @Transactional(dontRollbackOn = {BadRequestException.class, NotFoundException.class})
+    private Assessment copyAssessment(@NotNull Long assessmentId, @NotNull Long targetApplicationId) {
+        Assessment assessmentSource = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
+        if (assessmentSource != null) {
+            if (Assessment.find("applicationId", targetApplicationId).firstResultOptional().isEmpty()) {
+                Assessment assessmentTarget = Assessment.builder()
+                                                .applicationId(targetApplicationId)
+                                                .status(assessmentSource.status)
+                                                .createUser(username)
+                                                .build();
+  //              assessmentTarget.persist();
+
+                assessmentTarget.assessmentQuestionnaire = copyQuestionnaireBetweenAssessments(assessmentSource, assessmentTarget);
+
+                assessmentTarget.stakeholdergroups = assessmentSource.stakeholdergroups.stream().map(e -> {
+                    AssessmentStakeholdergroup stakeholdergroup = AssessmentStakeholdergroup.builder()
+                        .assessment(assessmentTarget)
+                        .stakeholdergroupId(e.stakeholdergroupId)
+                        .createUser(username)
+                        .build();
+//                    stakeholdergroup.persist();
+                    return stakeholdergroup;
+                    }).collect(Collectors.toList());
+                assessmentTarget.stakeholders = assessmentSource.stakeholders.stream().map(e -> {
+                    AssessmentStakeholder stakeholder = AssessmentStakeholder.builder()
+                        .assessment(assessmentTarget)
+                        .stakeholderId(e.stakeholderId)
+                        .createUser(username)
+                        .build();
+//                    stakeholder.persist();
+                    return stakeholder;
+                    }).collect(Collectors.toList());
+
+
+                assessmentTarget.persistAndFlush();;
+                return assessmentTarget;
+            }
+        }
+
+        throw new BadRequestException();
+    }
+
+    @Transactional
+    private AssessmentQuestionnaire copyQuestionnaireBetweenAssessments(Assessment sourceAssessment, Assessment targetAssessment) {
+        AssessmentQuestionnaire questionnaire = AssessmentQuestionnaire.builder()
+                                                .assessment(targetAssessment)
+                                                .questionnaire(sourceAssessment.assessmentQuestionnaire.questionnaire)
+                                                .name(sourceAssessment.assessmentQuestionnaire.name)
+                                                .languageCode(sourceAssessment.assessmentQuestionnaire.languageCode)
+                                                .createUser(username)
+                                                .build();
+//        questionnaire.persist();
+        questionnaire.categories = sourceAssessment.assessmentQuestionnaire.categories.stream().map(cat -> {
+            AssessmentCategory assessmentCategory = AssessmentCategory.builder()
+                .comment(cat.comment)
+                .name(cat.name)
+                .order(cat.order)
+                .questionnaire(questionnaire)
+                .createUser(username)
+                .build();
+//            assessmentCategory.persist();
+            assessmentCategory.questions = cat.questions.stream().map(que -> {
+                AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder()
+                .category(assessmentCategory)
+                .description(que.description)
+                .name(que.name)
+                .order(que.order)
+                .questionText(que.questionText)
+                .type(que.type)
+                .createUser(username)
+                .build();
+//                assessmentQuestion.persist();
+                assessmentQuestion.singleOptions = que.singleOptions.stream().map(opt -> {
+                    AssessmentSingleOption singleOption = AssessmentSingleOption.builder()
+                    .option(opt.option)
+                    .order(opt.order)
+                    .question(assessmentQuestion)
+                    .risk(opt.risk)
+                    .selected(opt.selected)
+                    .createUser(username)
+                    .build();
+//                    singleOption.persist();
+                    return singleOption;
+                }).collect(Collectors.toList());
+                return assessmentQuestion;
+            }).collect(Collectors.toList());
+            return assessmentCategory;
+        }).collect(Collectors.toList());
+
+        questionnaire.persistAndFlush();
+        return questionnaire;
+    }
+
+    @Transactional(dontRollbackOn = {BadRequestException.class, NotFoundException.class} )
+    public Assessment execute() {
+        if (fromAssessmentId != null) {
+            return copyAssessment(fromAssessmentId, applicationId);
+        } else {
+            return createAssessment(applicationId);
+        }
+    }
+}
