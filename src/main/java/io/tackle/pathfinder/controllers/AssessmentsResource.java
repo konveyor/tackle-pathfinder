@@ -52,7 +52,6 @@ public class AssessmentsResource {
   @Produces("application/json")
   @Consumes("application/json")
   public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data) {
-
     AssessmentHeaderDto createAssessment = service.newAssessment(fromAssessmentId, data.getApplicationId());
 
     return Response

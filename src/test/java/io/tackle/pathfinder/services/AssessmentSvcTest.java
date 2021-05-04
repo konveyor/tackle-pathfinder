@@ -302,7 +302,7 @@ public class AssessmentSvcTest {
         assessment.assessmentQuestionnaire.categories.get(0).questions.get(0).singleOptions.get(0).selected = true;
         assessment.status = AssessmentStatus.COMPLETE;
 
-        AssessmentHeaderDto copyHeader = assessmentSvc.copyAssessment(assessment.id, 9997200L);
+        AssessmentHeaderDto copyHeader = assessmentSvc.newAssessment(assessment.id, 9997200L);
         Assessment assessmentCopied = Assessment.findById(copyHeader.getId());
 
         AssessmentDto assessmentSourceDto = assessmentMapper.assessmentToAssessmentDto(assessment);
@@ -323,12 +323,16 @@ public class AssessmentSvcTest {
     @Transactional
     public Assessment createAssessment(Questionnaire questionnaire, long applicationId) {
         log.info("Creating an assessment ");
-        Assessment assessment = Assessment.builder().applicationId(applicationId).build();
-        assessment.persistAndFlush();
+        Assessment assessment = AssessmentCreateCommand.builder()
+            .applicationId(applicationId)
+            .questionnaireId(questionnaire.id)
+            .username("testuser")
+            .build()
+            .execute();
 
         addStakeholdersToAssessment(assessment);
 
-        return assessmentSvc.copyQuestionnaireIntoAssessment(assessment, questionnaire);
+        return assessment;
     }
 
     @Transactional

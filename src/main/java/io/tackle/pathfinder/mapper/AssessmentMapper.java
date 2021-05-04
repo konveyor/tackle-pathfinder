@@ -59,6 +59,7 @@ public interface AssessmentMapper {
     @Mapping(target = "bulkId", source = "id")
     default AssessmentBulkDto assessmentBulkToassessmentBulkDto(AssessmentBulk bulk) {
         return AssessmentBulkDto.builder()
+                .bulkId(bulk.id)
                 .applications(Stream.of(bulk.applications.split(",")).map(Long::parseLong).collect(Collectors.toList()))
                 .completed(bulk.completed)
                 .fromAssessmentId(bulk.fromAssessmentId)

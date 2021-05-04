@@ -82,7 +82,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
     @Test
 	public void given_ApplicationWithAssessment_When_Get_Then_ReturnsHeaderDto() {
-		assessmentSvc.createAssessment(20L);
+		assessmentSvc.newAssessment(null, 20L);
 
 		AssessmentHeaderDto[] assessments = given()
 			.queryParam("applicationId", "20")
@@ -142,7 +142,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 	@Test
 	public void given_ApplicationWithAssessment_When_CreateAssessment_Then_Returns400() {
-		assessmentSvc.createAssessment(20L);
+		assessmentSvc.newAssessment(null, 20L);
 
 		given()
 		    .contentType(ContentType.JSON)
