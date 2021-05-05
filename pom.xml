@@ -21,7 +21,7 @@
     <lombok.version>1.18.18</lombok.version>
     <testcontainers.version>1.15.2</testcontainers.version>
     <keycloak.version>12.0.3</keycloak.version>
-    <jacoco.version>0.8.6</jacoco.version>
+    <jacoco.version>0.8.7</jacoco.version>
   </properties>
   <dependencyManagement>
     <dependencies>
