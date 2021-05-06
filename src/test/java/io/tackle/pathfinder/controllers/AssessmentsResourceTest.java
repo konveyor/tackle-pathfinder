@@ -26,6 +26,7 @@ import javax.transaction.Transactional;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -796,18 +797,43 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 						"applicationId", equalTo(15500),
 						"status", equalTo("STARTED"));
 
-		List<RiskLineDto> riskLineDtos = given()
+		RiskLineDto[] riskLineDtos = given()
 			.contentType(ContentType.JSON)
 			.accept(ContentType.JSON)
-			.body(List.of(15500L,589500L,689500L))
+			.queryParam("applications", List.of(15500L,589500L,689500L))
 		.when()
 			.get("/assessments/risks")
 		.then()
 			.log().all()
 			.statusCode(200)
-		.extract().as(List.class);
+		.extract().as(RiskLineDto[].class);
 
 		assertThat(riskLineDtos).hasSize(1);
-		assertThat(riskLineDtos.get(0).getApplications()).containsExactlyInAnyOrder(15500L);
+		assertThat(riskLineDtos[0].getApplications()).containsExactlyInAnyOrder(15500L);
+	}
+
+	@Test
+	public void given_EmptyListOfApplications_when_IdentifiedRisks_then_HTTP400() {
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/assessments/risks")
+		.then()
+			.log().all()
+			.statusCode(400);
+	}
+
+	@Test
+	public void given_ListOfApplicationsWithNoAssessments_when_IdentifiedRisks_then_EmptyList() {
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.queryParam("applications", List.of(91,92,93))
+		.when()
+			.get("/assessments/risks")
+		.then()
+			.statusCode(200)
+			.body(".size()", is(0));
 	}
 }
