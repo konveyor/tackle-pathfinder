@@ -834,6 +834,6 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.get("/assessments/risks")
 		.then()
 			.statusCode(200)
-			.body(".size()", is(0));
+			.body("size()", is(0));
 	}
 }
