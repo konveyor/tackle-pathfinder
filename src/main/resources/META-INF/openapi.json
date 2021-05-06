@@ -3,7 +3,7 @@
     "info": {
         "title": "tackle-pathfinder",
         "version": "0.0.3",
-        "description": "Tackle PathFinder 0.0.3\n\nChanges : \n* added delete assessment function\n* added create assessment copying responses from another assessment"
+        "description": "Tackle PathFinder 0.0.3\n\nChanges : \n* added delete assessment function\n* added create assessment copying responses from another assessment\n* added get identified risks"
     },
     "paths": {
         "/assessments": {
@@ -430,6 +430,68 @@
                     "required": true
                 }
             ]
+        },
+        "/assessments/risks": {
+            "summary": "Will retrieve the risks for filtered assessments",
+            "description": "The response will contain only those applications assessed. This can end on having 0 elements in the response.",
+            "get": {
+                "parameters": [
+                    {
+                        "name": "applications",
+                        "description": "",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        },
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/RiskLine"
+                                    }
+                                },
+                                "examples": {
+                                    "risks_ok": {
+                                        "value": [
+                                            {
+                                                "category": "some text",
+                                                "question": "some text",
+                                                "answer": "some text",
+                                                "applications": [
+                                                    89,
+                                                    32
+                                                ]
+                                            },
+                                            {
+                                                "category": "some text",
+                                                "question": "some text",
+                                                "answer": "some text",
+                                                "applications": [
+                                                    74,
+                                                    5
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        "description": "On successfull response"
+                    },
+                    "400": {
+                        "description": "Invalid format"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -1007,6 +1069,37 @@
                     "COMPLETE"
                 ],
                 "type": "string"
+            },
+            "RiskLine": {
+                "description": "",
+                "required": [
+                    "category",
+                    "question",
+                    "answer",
+                    "applications"
+                ],
+                "type": "object",
+                "properties": {
+                    "category": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "question": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "answer": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "applications": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
             }
         },
         "responses": {
