@@ -3,6 +3,7 @@ package io.tackle.pathfinder.controllers;
 import io.tackle.pathfinder.dto.ApplicationDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
+import io.tackle.pathfinder.dto.RiskLineDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
 
 import javax.inject.Inject;
@@ -77,5 +78,11 @@ public class AssessmentsResource {
     return Response.ok().status(Response.Status.NO_CONTENT).build();
   }
 
+  @GET
+  @Path("risks")
+  @Produces("application/json")
+  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<Long> applicationList) {
+    return service.identifiedRisks(applicationList);
+  }
 
 }

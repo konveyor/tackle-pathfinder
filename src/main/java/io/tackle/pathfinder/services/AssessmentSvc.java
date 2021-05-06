@@ -1,8 +1,6 @@
 package io.tackle.pathfinder.services;
 
-import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
-import io.tackle.pathfinder.dto.AssessmentStatus;
+import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
@@ -16,9 +14,12 @@ import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -35,6 +36,9 @@ import java.util.stream.Collectors;
 public class AssessmentSvc {
     @Inject
     AssessmentMapper mapper;
+
+    @Inject
+    EntityManager entityManager;
 
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
@@ -295,4 +299,22 @@ public class AssessmentSvc {
         return questionnaire;
     }
 
+    @Transactional
+    public List<RiskLineDto> identifiedRisks(List<Long> applicationList) {
+        String sqlString = "select cat.name, q.question_text, opt.option, cast(array_agg(a.application_id) as text) \n" +
+                "from assessment_category cat join assessment_question q on cat.id = q.assessment_category_id\n" +
+                "                             join assessment_singleoption opt on q.id = opt.assessment_question_id and opt.selected is true\n" +
+                "                             join assessment_questionnaire aq on cat.assessment_questionnaire_id = aq.id\n" +
+                "                             join assessment a on aq.assessment_id = a.id\n" +
+                "where cat.deleted is not true\n" +
+                "      AND q.deleted is not true\n" +
+                "      AND opt.deleted is not true\n" +
+                "      AND aq.deleted is not true\n" +
+                "      AND a.deleted is not true\n" +
+                "      AND a.application_id in (" + StringUtils.join(applicationList, ",") + ") " +
+                "group by cat.name, q.question_text, opt.option;";
+
+        Query query = entityManager.createNativeQuery(sqlString);
+        return mapper.riskListQueryToRiskLineDtoList(query.getResultList());
+    }
 }

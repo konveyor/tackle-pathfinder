@@ -1,11 +1,6 @@
 package io.tackle.pathfinder.mapper;
 
-import io.tackle.pathfinder.dto.AssessmentCategoryDto;
-import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionnaireDto;
+import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
@@ -13,10 +8,10 @@ import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
 import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
 import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
-import lombok.extern.java.Log;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,4 +47,23 @@ public interface AssessmentMapper {
     @Mapping(target = "questionnaire", source = "assessmentQuestionnaire")
     @Mapping(target = "stakeholderGroups", source = "stakeholdergroups")
     AssessmentDto assessmentToAssessmentDto(Assessment assessment);
+
+    default List<RiskLineDto> riskListQueryToRiskLineDtoList(List<Object[]> objectList) {
+        // cat.name, q.question_text, opt.option, cast(array_agg(a.application_id) as text)
+        List<RiskLineDto> riskLineDtos = objectList.stream().map(e -> getRiskLineDto(e))
+                                         .collect(Collectors.toList());
+        return riskLineDtos;
+    }
+
+    private RiskLineDto getRiskLineDto(Object[] fields) {
+        String fieldApps = (String) fields[3];
+        String[] appsList = fieldApps.replace("{", "").replace("}", "").split(",");
+        List<Long> applications = Arrays.stream(appsList).map(Long::parseLong).collect(Collectors.toList());
+        return RiskLineDto.builder()
+                .category((String) fields[0])
+                .question((String) fields[1])
+                .answer((String) fields[2])
+                .applications(applications)
+                .build();
+    }
 }
