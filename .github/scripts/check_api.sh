@@ -84,12 +84,12 @@ curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: 
 curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -w "%{http_code}" \
             -H 'Content-Type: application/json' \
-            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [9977,9944],\"stakeholderGroups\": [99333,99222,99111,99444],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
+            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [9977,9944,9933],\"stakeholderGroups\": [99333,99222,99111,99444],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
              | grep '"applicationId":100,"status":"STARTED"}200'
 assessment_reupdated_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s)
-echo '++ 8.1 Test stakeholders=2 , groups =4 '
-test "$(echo $assessment_reupdated_json | jq '.stakeholders | length ')" = "2"
+echo '++ 8.1 Test stakeholders=3 , groups =4 '
+test "$(echo $assessment_reupdated_json | jq '.stakeholders | length ')" = "3"
 test "$(echo $assessment_reupdated_json | jq '.stakeholderGroups | length')" = "4"
 
 # Updating with deleting all stakeholders and 2 stakeholdergroup

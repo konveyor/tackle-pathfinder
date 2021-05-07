@@ -41,7 +41,7 @@ public class AssessmentQuestionnaire extends AbstractEntity {
     @JoinColumn(name = "assessment_id", referencedColumnName="id", nullable = false)
     public Assessment assessment;
 
-    @OneToMany(mappedBy="questionnaire", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy="questionnaire", cascade = CascadeType.ALL)
     @Builder.Default
     public List<AssessmentCategory> categories=new ArrayList<>();
 
