@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import javax.inject.Inject;
-import javax.transaction.*;
+import javax.transaction.Transactional;
 import javax.ws.rs.BadRequestException;
 
 import java.time.Duration;

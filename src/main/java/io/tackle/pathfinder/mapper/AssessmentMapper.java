@@ -49,7 +49,6 @@ public interface AssessmentMapper {
     AssessmentDto assessmentToAssessmentDto(Assessment assessment);
 
     default List<RiskLineDto> riskListQueryToRiskLineDtoList(List<Object[]> objectList) {
-        // cat.name, q.question_text, opt.option, cast(array_agg(a.application_id) as text)
         List<RiskLineDto> riskLineDtos = objectList.stream().map(e -> getRiskLineDto(e))
                                          .collect(Collectors.toList());
         return riskLineDtos;

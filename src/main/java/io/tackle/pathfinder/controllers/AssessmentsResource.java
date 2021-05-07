@@ -74,7 +74,7 @@ public class AssessmentsResource {
   @Path("risks")
   @Produces("application/json")
   public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid @QueryParam("applications") List<Long> applicationList) {
-    if (applicationList != null && applicationList.size() > 0) {
+    if (!applicationList.isEmpty()) {
       return service.identifiedRisks(applicationList);
     } else {
       throw new BadRequestException();
