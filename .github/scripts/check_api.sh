@@ -72,19 +72,19 @@ echo '8 >>> Given an assessment, update few values and check return value is 200
 curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -w "%{http_code}" \
             -H 'Content-Type: application/json' \
-            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [77,44],\"stakeholderGroups\": [333,222,111],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
+            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [9977,9944],\"stakeholderGroups\": [99333,99222,99111],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
              | grep '"applicationId":100,"status":"STARTED"}200'
 
 # Updating several times to check no duplication
 curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -w "%{http_code}" \
             -H 'Content-Type: application/json' \
-            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [77,44],\"stakeholderGroups\": [333,222,111],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
+            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [9977,9944],\"stakeholderGroups\": [99333,99222,99111],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
              | grep '"applicationId":100,"status":"STARTED"}200'
 curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -w "%{http_code}" \
             -H 'Content-Type: application/json' \
-            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [77,44],\"stakeholderGroups\": [333,222,111,444],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
+            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [9977,9944],\"stakeholderGroups\": [99333,99222,99111,99444],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
              | grep '"applicationId":100,"status":"STARTED"}200'
 assessment_reupdated_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s)
@@ -96,7 +96,7 @@ test "$(echo $assessment_reupdated_json | jq '.stakeholderGroups | length')" = "
 curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -w "%{http_code}" \
             -H 'Content-Type: application/json' \
-            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [],\"stakeholderGroups\": [333,222],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
+            -d "{ \"id\": $assessmentId,\"status\": \"STARTED\",\"stakeholders\": [],\"stakeholderGroups\": [99333,99222],\"questionnaire\": {\"categories\": [{\"id\": $categoryid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionid,\"options\": [{\"id\": $optionid,\"checked\": true}]}]}]}}" \
              | grep '"applicationId":100,"status":"STARTED"}200'
 assessment_reupdated_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s)
@@ -171,7 +171,7 @@ optionSourceid=$(echo $assessmentSource_json | jq '.questionnaire.categories[0].
 curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentSourceId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -w "%{http_code}" \
             -H 'Content-Type: application/json' \
-            -d "{ \"status\": \"STARTED\",\"stakeholders\": [77,44],\"stakeholderGroups\": [333,222,111],\"questionnaire\": {\"categories\": [{\"id\": $categorySourceid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionSourceid,\"options\": [{\"id\": $optionSourceid,\"checked\": true}]}]},{\"id\": $categorySourceSecondid,\"comment\" : \"This is a test comment\"}]}}" \
+            -d "{ \"status\": \"STARTED\",\"stakeholders\": [9877,9844],\"stakeholderGroups\": [98333,98222,98111],\"questionnaire\": {\"categories\": [{\"id\": $categorySourceid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionSourceid,\"options\": [{\"id\": $optionSourceid,\"checked\": true}]}]},{\"id\": $categorySourceSecondid,\"comment\" : \"This is a test comment\"}]}}" \
              | grep "\"applicationId\":$applicationSource,\"status\":\"STARTED\"}200"
 
 # Get updated assessment
