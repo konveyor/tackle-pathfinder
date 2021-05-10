@@ -372,7 +372,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.log().all()
 			.statusCode(200)
 			.body("status", is("COMPLETE"));
-	}	
+	}
+
 	@Test
 	public void given_AssessmentCreated_When_UpdatingStatusWithWrongValue_Then_ResponseIs400() {
 		// Creation of the Assessment
@@ -492,7 +493,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
 			.log().all()
 			.statusCode(404);
-	}	
+	}
+
 	@Test
 	public void given_AssessmentDeleted_When_Deleting_Then_ResponseIs404() {
 		// Creation of the Assessment
@@ -547,8 +549,6 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
     		.log().all()
 			.statusCode(404);
 	}
-
-
 
 	@Transactional
 	public void addUserEnteredInfoToAssessment(Long assessmentId) {
@@ -651,6 +651,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 				.ignoringCollectionOrder()
 				.isEqualTo(assessmentSource);
 	}
+
 	@Test
 	public void given_ApplicationAssessed_When_CopyAssessmentToAnotherAssessedApp_Then_BadRequestIsAssessed() {
 		// Creation of the Assessment
@@ -686,6 +687,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.log().all()
 			.statusCode(400);
 	}
+
 	@Test
 	public void given_ApplicationAssessedButDeleted_When_CopyAssessmentToAnotherAssessedApp_Then_404NotFoundIsReturned() {
 		// Creation of the Assessment
@@ -720,7 +722,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
 			.log().all()
 			.statusCode(404);
-	}	
+	}
+
 	@Test
 	public void given_ApplicationNotAssessed_When_CopyAssessmentToAnotherNotAssessedApp_Then_BadRequestIsAssessed() {
 		//Copy of the Assessment, and expect to fail
