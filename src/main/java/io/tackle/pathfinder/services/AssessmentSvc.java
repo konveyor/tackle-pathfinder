@@ -15,12 +15,8 @@ import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
 import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
 import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.bulk.AssessmentBulk;
-import io.tackle.pathfinder.model.bulk.AssessmentBulkApplication;
 import io.vertx.core.eventbus.EventBus;
 import lombok.extern.java.Log;
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.microprofile.context.ManagedExecutor;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.HeuristicMixedException;
@@ -51,7 +47,7 @@ public class AssessmentSvc {
     @Inject
     SecurityIdentity identityContext;
 
-    @Inject 
+    @Inject
     UserTransaction transaction;
 
     @Inject
@@ -86,10 +82,9 @@ public class AssessmentSvc {
         if (null != assessmentDto.getStakeholderGroups()) {
             // Delete existing stakeholdergroups not included in current array
             assessment.stakeholdergroups.forEach(stakegroup -> {
-                if (!assessmentDto.getStakeholderGroups().contains(stakegroup.stakeholdergroupId)) {
+                if (assessmentDto.getStakeholderGroups().stream().noneMatch(f -> f.equals(stakegroup.stakeholdergroupId))) {
                     log.log(Level.FINE,"Deleted stakegroup : " + stakegroup.stakeholdergroupId);
                     stakegroup.delete();
-                    log.log(Level.FINE, "stakegroup : " + stakegroup);
                 }
             });
             assessment.stakeholdergroups.removeIf(e -> assessmentDto.getStakeholderGroups().stream().noneMatch(f -> f.equals(e.stakeholdergroupId)));
@@ -175,7 +170,7 @@ public class AssessmentSvc {
         log.log(Level.FINE, "Deleted assessment : " + assessmentId + " = " + deleted);
         if (!deleted) throw new BadRequestException();
     }
- 
+
     public AssessmentBulkDto bulkCreateAssessments(Long fromAssessmentId, @NotNull @Valid List<Long> appList) throws NotSupportedException, SystemException, SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException {
         // We manage manually the transaction to be sure the consumer starts after this transaction has been commited
         transaction.begin();
