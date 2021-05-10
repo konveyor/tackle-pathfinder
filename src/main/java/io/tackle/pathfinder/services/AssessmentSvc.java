@@ -92,43 +92,39 @@ public class AssessmentSvc {
                     log.log(Level.FINE, "stakegroup : " + stakegroup);
                 }
             });
-            assessment.stakeholdergroups.removeIf(e -> !assessmentDto.getStakeholderGroups().contains(e.stakeholdergroupId));
+            assessment.stakeholdergroups.removeIf(e -> assessmentDto.getStakeholderGroups().stream().noneMatch(f -> f.equals(e.stakeholdergroupId)));
 
             // Add not existing stakeholdergroups included in the current array
-            assessmentDto.getStakeholderGroups().forEach(groupDto -> {
-                log.log(Level.FINE, "Considering Stakeholdergroup : " + groupDto);
-                if (assessment.stakeholdergroups.stream().noneMatch(groupDB -> groupDto.equals(groupDB.stakeholdergroupId))) {
-                    log.log(Level.FINE,"Adding Stakeholdergroup : " + groupDto);
-                    AssessmentStakeholdergroup stakegroup = AssessmentStakeholdergroup.builder()
+            assessmentDto.getStakeholderGroups().forEach(e -> {
+                log.log(Level.FINE, "Considering Stakeholdergroup : " + e);
+                if (assessment.stakeholdergroups.stream().noneMatch(o -> e.equals(o.stakeholdergroupId))) {
+                    log.log(Level.FINE,"Adding Stakeholdergroup : " + e);
+                    assessment.stakeholdergroups.add(AssessmentStakeholdergroup.builder()
                             .assessment(assessment)
-                            .stakeholdergroupId(groupDto)
-                            .build();
-                    stakegroup.persist();
-                    assessment.stakeholdergroups.add(stakegroup);
+                            .stakeholdergroupId(e)
+                            .build());
                 }
             });
         }
         if (null != assessmentDto.getStakeholders()) {
             // Delete existing stakeholders not included in current array
             assessment.stakeholders.forEach(stake -> {
-                if (!assessmentDto.getStakeholders().contains(stake.stakeholderId)) {
+                if (assessmentDto.getStakeholders().stream().noneMatch(f -> f.equals(stake.stakeholderId))) {
                     log.log(Level.FINE,"Deleted stake : " + stake.stakeholderId);
                     stake.delete();
                 }
             });
-            assessment.stakeholders.removeIf(e -> !assessmentDto.getStakeholders().contains(e.stakeholderId));
+            assessment.stakeholders.removeIf(e -> assessmentDto.getStakeholders().stream().noneMatch(f -> f.equals(e.stakeholderId)));
 
             // Add not existing stakeholders included in the current array
             assessmentDto.getStakeholders().forEach(e -> {
                 log.log(Level.FINE,"Considering Stakeholder : " + e);
                 if (assessment.stakeholders.stream().noneMatch(o -> e.equals(o.stakeholderId))) {
                     log.log(Level.FINE,"Adding Stakeholder : " + e);
-                    AssessmentStakeholder stake = AssessmentStakeholder.builder()
-                            .assessment(assessment)
-                            .stakeholderId(e)
-                            .build();
-                    stake.persist();
-                    assessment.stakeholders.add(stake);
+                    assessment.stakeholders.add(AssessmentStakeholder.builder()
+                        .assessment(assessment)
+                        .stakeholderId(e)
+                        .build());
                 }
             });
         }
@@ -158,7 +154,6 @@ public class AssessmentSvc {
                 }
             });
         }
-        assessment.persistAndFlush();
         return mapper.assessmentToAssessmentHeaderDto(assessment);
     }
 

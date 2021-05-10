@@ -773,8 +773,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 	}
 
 	@Test
-	@Transactional
-	public void given_ApplicationAssessed_When_BulkCopyListOfApplications_Then_CopyIsDoneAndResultIsListOfApplications() {
+	public void given_ApplicationAssessed_When_BulkCopyListOfApplications_Then_CopyIsDoneAndResultIsListOfApplications() throws InterruptedException {
 		// Creation of the Assessment
 		AssessmentHeaderDto assessmentHeaderDto = given()
 				.contentType(ContentType.JSON)
@@ -783,14 +782,67 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 				.when()
 				.post("/assessments")
 				.then()
-				.log().all()
 				.statusCode(201)
 				.extract().as(AssessmentHeaderDto.class);
+
+		// Retrieval of the assessment created
+		AssessmentDto assessmentSource = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.when()
+			.get("/assessments/" + assessmentHeaderDto.getId())
+			.then()
+			.log().all()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+
+		AssessmentCategoryDto category = assessmentSource.getQuestionnaire().getCategories().get(0);
+		AssessmentQuestionDto question = category.getQuestions().get(0);
+		AssessmentQuestionOptionDto option = question.getOptions().get(0);
+
+		// Modification of 1 category comment, 1 option selected, 2 stakeholders , 2 stakeholdergroups
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(AssessmentDto.builder()
+				.applicationId(99999L)
+				.id(assessmentHeaderDto.getId())
+				.questionnaire(
+					AssessmentQuestionnaireDto.builder()
+						.categories(List.of(
+							AssessmentCategoryDto.builder()
+								.id(category.getId())
+								.comment("USER COMMENT 1")
+								.questions(List.of(
+									AssessmentQuestionDto.builder()
+										.id(question.getId())
+										.options(List.of(
+											AssessmentQuestionOptionDto.builder()
+												.id(option.getId())
+												.checked(true)
+												.build()
+										))
+										.build()
+								))
+								.build()))
+						.build())
+				.stakeholderGroups(List.of(1000L, 2000L))
+				.stakeholders(List.of(444L, 555L))
+				.build())
+			.when()
+			.patch("/assessments/" + assessmentHeaderDto.getId())
+			.then()
+			.log().all()
+			.statusCode(200)
+			.body("id", equalTo(assessmentHeaderDto.getId().intValue()),
+				"applicationId", equalTo(99999),
+				"status", equalTo("STARTED"));
 
 		AssessmentBulkDto headerBulk = given()
 				.contentType(ContentType.JSON)
 				.accept(ContentType.JSON)
 				.body(AssessmentBulkPostDto.builder()
+						.fromAssessmentId(assessmentHeaderDto.getId())
 						.applications(List.of(ApplicationDto.builder().applicationId(1999L).build(),
 								ApplicationDto.builder().applicationId(1888L).build(),
 								ApplicationDto.builder().applicationId(1666L).build(),
@@ -798,7 +850,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 								))
 						.build())
 		.when()
-			.post("/assessments/bulk?fromAssessmentId=" + assessmentHeaderDto.getId())
+			.post("/assessments/bulk")
 		.then()
 			.log().all()
 			.statusCode(202)
@@ -821,5 +873,35 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			assertThat(bulkDto.getAssessments()).allMatch(e -> null != e.getId());
 			assertThat(bulkDto.getCompleted()).isTrue();
 		});
+
+		AssessmentHeaderDto[] assessments = given()
+			.queryParam("applicationId", "1888")
+			.when()
+			.get("/assessments")
+			.then()
+			.statusCode(200)
+			.extract().as(AssessmentHeaderDto[].class);
+
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.when()
+			.get("/assessments/" + assessments[0].getId())
+			.then()
+			.log().all()
+			.statusCode(200)
+			.body("applicationId", is(1888))
+			.body("status", is("STARTED"))
+			.body("stakeholders.size()", is(2))
+			.body("stakeholderGroups.size()", is(2))
+			.body("questionnaire.categories.size()", is(5))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.comment", is("USER COMMENT 1"))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.title", is(category.getTitle()))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.size()", is(category.getQuestions().size()))
+
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.find{it.order==" + question.getOrder() + "}.description", is(question.getDescription()))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.find{it.order==" + question.getOrder() + "}.options.size()", is(question.getOptions().size() ))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.find{it.order==" + question.getOrder() + "}.options.find{it.order==" + option.getOrder() + "}.checked", is(true));
+
 	}
 }

@@ -17,7 +17,6 @@ import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.Builder;
 import lombok.extern.java.Log;
 
-import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
@@ -116,26 +115,22 @@ public class AssessmentCreateCommand {
                     Assessment assessmentTarget = Assessment.builder()
                             .applicationId(targetApplicationId)
                             .status(assessmentSource.status)
+                            .comment(assessmentSource.comment)
                             .createUser(username)
                             .build();
                     assessmentTarget.assessmentQuestionnaire = copyQuestionnaireBetweenAssessments(assessmentSource, assessmentTarget);
 
-                    assessmentTarget.stakeholdergroups = assessmentSource.stakeholdergroups.stream().map(e -> {
-                        AssessmentStakeholdergroup stakeholdergroup = AssessmentStakeholdergroup.builder()
-                                .assessment(assessmentTarget)
-                                .stakeholdergroupId(e.stakeholdergroupId)
-                                .createUser(username)
-                                .build();
-                        return stakeholdergroup;
-                    }).collect(Collectors.toList());
-                    assessmentTarget.stakeholders = assessmentSource.stakeholders.stream().map(e -> {
-                        AssessmentStakeholder stakeholder = AssessmentStakeholder.builder()
-                                .assessment(assessmentTarget)
-                                .stakeholderId(e.stakeholderId)
-                                .createUser(username)
-                                .build();
-                        return stakeholder;
-                    }).collect(Collectors.toList());
+                    assessmentTarget.stakeholdergroups.addAll(assessmentSource.stakeholdergroups.stream().map(e -> AssessmentStakeholdergroup.builder()
+                            .assessment(assessmentTarget)
+                            .stakeholdergroupId(e.stakeholdergroupId)
+                            .createUser(username)
+                            .build()).collect(Collectors.toList()));
+
+                    assessmentTarget.stakeholders.addAll(assessmentSource.stakeholders.stream().map(e -> AssessmentStakeholder.builder()
+                            .assessment(assessmentTarget)
+                            .stakeholderId(e.stakeholderId)
+                            .createUser(username)
+                            .build()).collect(Collectors.toList()));
 
                     assessmentTarget.persistAndFlush();
                     return assessmentTarget;
@@ -152,7 +147,7 @@ public class AssessmentCreateCommand {
                                                 .languageCode(sourceAssessment.assessmentQuestionnaire.languageCode)
                                                 .createUser(username)
                                                 .build();
-        questionnaire.categories = sourceAssessment.assessmentQuestionnaire.categories.stream().map(cat -> {
+        questionnaire.categories.addAll(sourceAssessment.assessmentQuestionnaire.categories.stream().map(cat -> {
             AssessmentCategory assessmentCategory = AssessmentCategory.builder()
                 .comment(cat.comment)
                 .name(cat.name)
@@ -160,7 +155,7 @@ public class AssessmentCreateCommand {
                 .questionnaire(questionnaire)
                 .createUser(username)
                 .build();
-            assessmentCategory.questions = cat.questions.stream().map(que -> {
+            assessmentCategory.questions.addAll(cat.questions.stream().map(que -> {
                 AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder()
                 .category(assessmentCategory)
                 .description(que.description)
@@ -170,7 +165,7 @@ public class AssessmentCreateCommand {
                 .type(que.type)
                 .createUser(username)
                 .build();
-                assessmentQuestion.singleOptions = que.singleOptions.stream().map(opt -> {
+                assessmentQuestion.singleOptions.addAll(que.singleOptions.stream().map(opt -> {
                     AssessmentSingleOption singleOption = AssessmentSingleOption.builder()
                     .option(opt.option)
                     .order(opt.order)
@@ -180,11 +175,11 @@ public class AssessmentCreateCommand {
                     .createUser(username)
                     .build();
                     return singleOption;
-                }).collect(Collectors.toList());
+                }).collect(Collectors.toList()));
                 return assessmentQuestion;
-            }).collect(Collectors.toList());
+            }).collect(Collectors.toList()));
             return assessmentCategory;
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toList()));
 
         return questionnaire;
     }
