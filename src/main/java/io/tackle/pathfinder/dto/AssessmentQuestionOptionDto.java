@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import io.tackle.pathfinder.model.Risk;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -64,5 +65,14 @@ public class AssessmentQuestionOptionDto {
     @JsonProperty("checked")
     @JsonPropertyDescription("Whether or not this option was selected by the user")
     private Boolean checked;
+
+    /**
+     * Risk associated to this option
+     * (Required)
+     *
+     */
+    @JsonProperty("risk")
+    @JsonPropertyDescription("Risk associated to this option")
+    private Risk risk;
 
 }
