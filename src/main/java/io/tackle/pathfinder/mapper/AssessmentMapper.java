@@ -1,13 +1,6 @@
 package io.tackle.pathfinder.mapper;
 
-import io.tackle.pathfinder.dto.AssessmentBulkDto;
-import io.tackle.pathfinder.dto.AssessmentCategoryDto;
-import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderBulkDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionnaireDto;
+import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
@@ -56,7 +49,6 @@ public interface AssessmentMapper {
     @Mapping(target = "stakeholderGroups", source = "stakeholdergroups")
     AssessmentDto assessmentToAssessmentDto(Assessment assessment);
 
-    @Mapping(target = "bulkId", source = "id")
     default AssessmentBulkDto assessmentBulkToassessmentBulkDto(AssessmentBulk bulk) {
         return AssessmentBulkDto.builder()
                 .bulkId(bulk.id)
@@ -67,7 +59,17 @@ public interface AssessmentMapper {
                 .build();
     }
 
-    @Mapping(target="id", source="assessmentId")
-    AssessmentHeaderBulkDto assessmentBulkApplicationToassessmentHeaderBulkDto(AssessmentBulkApplication application);
+    default AssessmentHeaderBulkDto assessmentBulkApplicationToassessmentHeaderBulkDto(AssessmentBulkApplication application) {
+        AssessmentHeaderBulkDto dto = AssessmentHeaderBulkDto.builder()
+            .applicationId(application.applicationId)
+            .id(application.assessmentId)
+            .error(application.error)
+            .build();
+        if (application.assessmentId != null) {
+            Assessment assessment = Assessment.findById(application.assessmentId);
+            dto.setStatus(assessment.status);
+        }
+        return dto;
+    }
 
 }

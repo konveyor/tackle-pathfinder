@@ -256,35 +256,38 @@ echo "15 >>> Bulk creation of blank assessments"
 req_bulk_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessments/bulk" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
             -H 'Content-Type: application/json' \
-            -d '{ "applications" : [ {"applicationId":9},{"applicationId": 10},{"applicationId": 11},{"applicationId": 12},{"applicationId": 325100}]}' \
-            -s -w "%{http_code}")
-test "202" = "$req_not_existing_assessment"
+            -d '{ "applications" : [ {"applicationId":9},{"applicationId": 10},{"applicationId": 11},{"applicationId": 12},{"applicationId": 325100}]}' )
+echo $req_bulk_assessment
+echo $req_bulk_assessment | grep '"completed":false,"applications":\[9,10,11,12,325100\],"assessments":\[{"applicationId":9},{"applicationId":10},{"applicationId":11},{"applicationId":12},{"applicationId":325100}\]}'
 bulkId=$(echo $req_bulk_assessment | jq '.bulkId')
+
+echo "15.1 Checking bulk"
 
 req_bulk_applications=$(curl -X GET "http://$api_ip/pathfinder/assessments/bulk/$bulkId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
             -H 'Content-Type: application/json' \
-            -s -w "%{http_code}")
+            -s )
 test $(echo $req_bulk_applications | jq '.completed') = "false"
 test $(echo $req_bulk_applications | jq '.assessments | length') = 5
 
 sleep 15s
 
+echo "15.2 Checking bulk hoping it's complete "
+
 req_bulk_applications=$(curl -X GET "http://$api_ip/pathfinder/assessments/bulk/$bulkId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
             -H 'Content-Type: application/json' \
-            -s -w "%{http_code}")
+            -s )
 test $(echo $req_bulk_applications | jq '.completed') = "true"
 test $(echo $req_bulk_applications | jq '.assessments | length') = 5
-test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .error ') = "400"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .error ') = '"400"'
 test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .id ') = "null"
-test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .status ') = "STARTED"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .status ') = '"STARTED"'
 test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .id ') != "null"
 test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .error ') = "null"
-test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 11) | .status ') = "STARTED"
-test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 10) | .status ') = "STARTED"
-test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 9) | .status ') = "STARTED"
-bulk_application12_assessmentid=$(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .id ')
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 11) | .status ') = '"STARTED"'
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 10) | .status ') = '"STARTED"'
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 9) | .status ') = '"STARTED"'
 
 
 echo " +++++ API CHECK SUCCESSFUL ++++++"
