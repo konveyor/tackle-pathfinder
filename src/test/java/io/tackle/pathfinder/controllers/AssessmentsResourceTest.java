@@ -169,7 +169,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 	}	
 	
 	@Test
-	public void given_SameApplication_When_SeveralCreateAssessment_Then_Returns400() throws InterruptedException {
+	public void given_SameApplication_When_SeveralCreateAssessment_Then_Returns400()  {
 		CompletableFuture<ValidatableResponse> future1 = managedExecutor.supplyAsync(() -> {
 			log.info("Async 1 request Assessment : " + LocalTime.now());
 			ValidatableResponse response = given()
@@ -179,15 +179,11 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.when()
 				.post("/assessments")
 			.then()
-				.log().all()
-				.statusCode(201);
+				.log().all();
 			log.info("End Async 1 request Assessment : " + LocalTime.now());
 
 			return response;
 		});
-		
-		// To force second call starts a bit later than first one
-		Thread.sleep(500);
 		
 		CompletableFuture<ValidatableResponse> future2 = managedExecutor.supplyAsync(() -> {
 			log.info("Async 2 request Assessment : " + LocalTime.now());
@@ -199,15 +195,23 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.when()
 				.post("/assessments")
 			.then()
-				.log().all()
-				.statusCode(400);
+				.log().all();
 
 			log.info("End Async 2 request Assessment : " + LocalTime.now());
 			return response;
 		});
 
-		assertThat(future1).succeedsWithin(Duration.ofSeconds(10));
-		assertThat(future2).succeedsWithin(Duration.ofSeconds(10));
+		Awaitility.await()
+			.atMost(Duration.ofSeconds(10))
+			.untilAsserted(() -> {
+				assertThat(future1.isDone()).isTrue();
+				assertThat(future2.isDone()).isTrue();
+				assertThat((future1.get().extract().statusCode() == 201 &&
+							future2.get().extract().statusCode() == 400) ||
+						(future1.get().extract().statusCode() == 400 &&
+							future2.get().extract().statusCode() == 201)).isTrue();
+			});
+
 	}
 
 	@Test
