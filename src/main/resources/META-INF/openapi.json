@@ -180,13 +180,15 @@
                                                                         "id": 85,
                                                                         "order": 77,
                                                                         "option": "some text",
-                                                                        "checked": true
+                                                                        "checked": true,
+                                                                        "risk": "GREEN"
                                                                     },
                                                                     {
                                                                         "id": 16,
                                                                         "order": 88,
                                                                         "option": "some text",
-                                                                        "checked": true
+                                                                        "checked": true,
+                                                                        "risk": "AMBER"
                                                                     }
                                                                 ],
                                                                 "description": "some text"
@@ -200,13 +202,15 @@
                                                                         "id": 45,
                                                                         "order": 36,
                                                                         "option": "some text",
-                                                                        "checked": true
+                                                                        "checked": true,
+                                                                        "risk": "UNKNOWN"
                                                                     },
                                                                     {
                                                                         "id": 37,
                                                                         "order": 57,
                                                                         "option": "some text",
-                                                                        "checked": true
+                                                                        "checked": true,
+                                                                        "risk": "RED"
                                                                     }
                                                                 ],
                                                                 "description": "some text"
@@ -228,13 +232,15 @@
                                                                         "id": 79,
                                                                         "order": 3,
                                                                         "option": "some text",
-                                                                        "checked": true
+                                                                        "checked": true,
+                                                                        "risk": "AMBER"
                                                                     },
                                                                     {
                                                                         "id": 7,
                                                                         "order": 65,
                                                                         "option": "some text",
-                                                                        "checked": false
+                                                                        "checked": false,
+                                                                        "risk": "AMBER"
                                                                     }
                                                                 ],
                                                                 "description": "some text"
@@ -248,13 +254,15 @@
                                                                         "id": 62,
                                                                         "order": 32,
                                                                         "option": "some text",
-                                                                        "checked": true
+                                                                        "checked": true,
+                                                                        "risk": "AMBER"
                                                                     },
                                                                     {
                                                                         "id": 66,
                                                                         "order": 98,
                                                                         "option": "some text",
-                                                                        "checked": true
+                                                                        "checked": true,
+                                                                        "risk": "AMBER"
                                                                     }
                                                                 ],
                                                                 "description": "some text"
@@ -837,7 +845,8 @@
                     "checked",
                     "id",
                     "option",
-                    "order"
+                    "order",
+                    "risk"
                 ],
                 "type": "object",
                 "properties": {
@@ -856,6 +865,15 @@
                     "checked": {
                         "description": "Whether or not this option was selected by the user",
                         "type": "boolean"
+                    },
+                    "risk": {
+                        "description": "Risk associated to this option",
+                        "enum": [
+                            "GREEN",
+                            "AMBER",
+                            "RED"
+                        ],
+                        "type": "string"
                     }
                 },
                 "example": {
