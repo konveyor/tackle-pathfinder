@@ -871,7 +871,8 @@
                         "enum": [
                             "GREEN",
                             "AMBER",
-                            "RED"
+                            "RED",
+                            "UNKNOWN"
                         ],
                         "type": "string"
                     }
