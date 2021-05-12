@@ -68,7 +68,7 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
-    public void given_Questionnaire_when_CopyQuestionnaireIntoAssessment_should_BeIdentical() throws InterruptedException {
+    public void given_Questionnaire_when_CopyQuestionnaireIntoAssessment_should_BeIdentical()  {
         Questionnaire questionnaire = createQuestionnaire();
         List<Category> categories = questionnaire.categories;
 
@@ -112,8 +112,10 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
-    public void given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent() throws InterruptedException {
+    public void given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent()  {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 1410L);
+        assertThat(assessment.updateUser).isBlank();
+        assertThat(assessment.createUser).isNotBlank();
 
         assertThat(assessment.stakeholdergroups).hasSize(2);
         assertThat(assessment.stakeholders).hasSize(3);
@@ -148,11 +150,12 @@ public class AssessmentSvcTest {
 
         assertThat(getCheckedForOption(assessmentUpdated, assessmentCategoryDto.getId(), assessmentQuestionDto.getId(),
                 assessmentQuestionOptionDto.getId())).isTrue();
+        assertThat(assessmentUpdated.updateUser).isNotBlank();
     }
 
     @Test
     @Transactional
-    public void given_CreatedAssessment_When_UpdateWithStakeholdersNull_Then_ItDoesntChangeStakeholders() throws InterruptedException {
+    public void given_CreatedAssessment_When_UpdateWithStakeholdersNull_Then_ItDoesntChangeStakeholders() {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 2410L);
 
         assertThat(assessment.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
@@ -175,7 +178,7 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
-    public void given_CreatedAssessment_When_UpdateSeveralTimes_Then_StakeholdersAreNotDuplicated() throws InterruptedException {
+    public void given_CreatedAssessment_When_UpdateSeveralTimes_Then_StakeholdersAreNotDuplicated()  {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 2415L);
 
         assertThat(assessment.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
@@ -214,7 +217,7 @@ public class AssessmentSvcTest {
     
     @Test
     @Transactional
-    public void given_CreatedAssessment_When_UpdateWithStakeholdersEmpty_Then_ItDeleteAllStakeholders() throws InterruptedException {
+    public void given_CreatedAssessment_When_UpdateWithStakeholdersEmpty_Then_ItDeleteAllStakeholders()  {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 3410L);
 
         assertThat(assessment.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
@@ -236,8 +239,8 @@ public class AssessmentSvcTest {
     }
     
     @Transactional
-    private boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId) throws InterruptedException {
-        log.info("categories to check " + assessment.assessmentQuestionnaire.categories.stream().count());
+    private boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId)  {
+        log.info("categories to check " + assessment.assessmentQuestionnaire.categories.size());
         log.info("categories to check " + assessment.assessmentQuestionnaire.categories.stream().map(e -> e.id.toString()).collect(Collectors.joining(" ## ")));
 
         log.info("ids " + categoryId + "--" + questionId + "--" + optionId);
@@ -408,8 +411,14 @@ public class AssessmentSvcTest {
 
     @Transactional
     private Question createQuestion(Category category, int i) {
-        Question question = Question.builder().name("question-" + i).order(i).questionText("questionText-" + i)
-                .description("tooltip-" + i).type(QuestionType.SINGLE).build();
+        Question question = Question.builder()
+            .name("question-" + i)
+            .order(i)
+            .category(category)
+            .questionText("questionText-" + i)
+            .description("tooltip-" + i)
+            .type(QuestionType.SINGLE)
+            .build();
         question.persistAndFlush();
 
         question.singleOptions = IntStream.range(1, new Random().nextInt(10) + 3)
@@ -420,8 +429,12 @@ public class AssessmentSvcTest {
 
     @Transactional
     private SingleOption createSingleOption(Question question, int i) {
-        SingleOption single = SingleOption.builder().option("option-" + i).order(i).question(question)
-                .risk(Risk.values()[new Random().nextInt(Risk.values().length)]).build();
+        SingleOption single = SingleOption.builder()
+            .option("option-" + i)
+            .order(i)
+            .question(question)
+            .risk(Risk.values()[new Random().nextInt(Risk.values().length)])
+            .build();
         single.persistAndFlush();
         return single;
     }

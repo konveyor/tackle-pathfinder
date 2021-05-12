@@ -128,7 +128,8 @@ public class AssessmentSvc {
             assessmentDto.getQuestionnaire().getCategories().forEach(categ -> {
                 AssessmentCategory category = AssessmentCategory.find("assessment_questionnaire_id=?1 and id=?2", assessment_questionnaire.id, categ.getId()).<AssessmentCategory>firstResultOptional().orElseThrow(BadRequestException::new);
                 if (categ.getComment() != null) {
-                category.comment = categ.getComment();
+                    category.comment = categ.getComment();
+                    category.updateUser = identityContext.getPrincipal().getName();
                     log.log(Level.FINE, "Setting category comment : " + category.comment);
                 }
 
@@ -140,7 +141,8 @@ public class AssessmentSvc {
                             que.getOptions().forEach(opt -> {
                                 AssessmentSingleOption option = AssessmentSingleOption.find("assessment_question_id=?1 and id=?2", question.id, opt.getId()).<AssessmentSingleOption>firstResultOptional().orElseThrow(BadRequestException::new);
                                 if (opt.getChecked() != null) {
-                                option.selected = opt.getChecked();
+                                    option.selected = opt.getChecked();
+                                    option.updateUser = identityContext.getPrincipal().getName();
                                     log.log(Level.FINE, "Setting option checked : " + option.selected);
                                 }
                             });
@@ -149,6 +151,7 @@ public class AssessmentSvc {
                 }
             });
         }
+        assessment.updateUser = identityContext.getPrincipal().getName();
         return mapper.assessmentToAssessmentHeaderDto(assessment);
     }
 
