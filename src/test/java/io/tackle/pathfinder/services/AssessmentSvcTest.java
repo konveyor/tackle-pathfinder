@@ -1,9 +1,11 @@
 package io.tackle.pathfinder.services;
 
 import io.quarkus.panache.mock.PanacheMock;
+import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectMock;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.pathfinder.dto.AssessmentCategoryDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
@@ -27,13 +29,16 @@ import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.context.ManagedExecutor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import javax.inject.Inject;
 import javax.transaction.*;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.SecurityContext;
 
+import java.security.Principal;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
@@ -65,6 +70,14 @@ public class AssessmentSvcTest {
 
     @Inject
     UserTransaction transaction;
+
+    @InjectMock
+    SecurityIdentity securityIdentity;
+
+    @BeforeEach
+    public void setup() {
+        Mockito.when(securityIdentity.getPrincipal()).thenReturn(() -> "testuser");
+    }
 
     @Test
     @Transactional
@@ -113,6 +126,7 @@ public class AssessmentSvcTest {
     @Test
     @Transactional
     public void given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent()  {
+
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 1410L);
         assertThat(assessment.updateUser).isBlank();
         assertThat(assessment.createUser).isNotBlank();
