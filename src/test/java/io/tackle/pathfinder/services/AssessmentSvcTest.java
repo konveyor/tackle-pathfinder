@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import javax.inject.Inject;
-import javax.transaction.Transactional;
+import javax.transaction.*;
 import javax.ws.rs.BadRequestException;
 
 import java.time.Duration;
@@ -57,6 +57,9 @@ public class AssessmentSvcTest {
 
     @Inject
     AssessmentMapper assessmentMapper;
+
+    @Inject
+    UserTransaction transaction;
 
     @Test
     @Transactional
@@ -103,6 +106,7 @@ public class AssessmentSvcTest {
     }
 
     @Test
+    @Transactional
     public void given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent() throws InterruptedException {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 1410L);
 
@@ -142,6 +146,7 @@ public class AssessmentSvcTest {
     }
 
     @Test
+    @Transactional
     public void given_CreatedAssessment_When_UpdateWithStakeholdersNull_Then_ItDoesntChangeStakeholders() throws InterruptedException {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 2410L);
 
@@ -161,9 +166,49 @@ public class AssessmentSvcTest {
         Assessment assessmentUpdated = Assessment.findById(assessment.id);
         assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
         assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
-    }    
+    }
+
+    @Test
+    @Transactional
+    public void given_CreatedAssessment_When_UpdateSeveralTimes_Then_StakeholdersAreNotDuplicated() throws InterruptedException {
+        Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 2415L);
+
+        assertThat(assessment.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
+        assertThat(assessment.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
+
+        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment);
+        assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
+        assertThat(assessmentDto.getStakeholders()).hasSize(3);
+
+        // Stakeholders and Stakeholdergroups NOT send will imply leave what is there without touching it
+        assessmentDto.setStakeholderGroups(null);
+        assessmentDto.setStakeholders(null);
+
+        assessmentSvc.updateAssessment(assessment.id, assessmentDto);
+
+        Assessment assessmentUpdated = Assessment.findById(assessment.id);
+        assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
+        assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
+
+        // adding again the same original list to the dtos, should not change anything as we are adding the same ones it contains
+        assessmentDto.setStakeholders(List.of(180L, 200L, 300L, 800L));
+        assessmentDto.setStakeholderGroups(List.of(550L, 650L, 750L));
+
+        assessmentSvc.updateAssessment(assessment.id, assessmentDto);
+
+        assessmentUpdated = Assessment.findById(assessment.id);
+        assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(180L, 200L, 300L, 800L);
+        assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(550L, 650L, 750L);
+
+        assessmentSvc.updateAssessment(assessment.id, assessmentDto);
+
+        assessmentUpdated = Assessment.findById(assessment.id);
+        assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(180L, 200L, 300L, 800L);
+        assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(550L, 650L, 750L);
+    }
     
     @Test
+    @Transactional
     public void given_CreatedAssessment_When_UpdateWithStakeholdersEmpty_Then_ItDeleteAllStakeholders() throws InterruptedException {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 3410L);
 
@@ -201,6 +246,7 @@ public class AssessmentSvcTest {
         return option.selected;
     }
 
+    @Transactional
     private void addStakeholdersToAssessment(Assessment assessment) {
         AssessmentStakeholder stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(100L).build();
         stakeholder.persist();
@@ -224,6 +270,7 @@ public class AssessmentSvcTest {
     }
 
     @Test
+    @Transactional
     public void given_SameApplication_when_SeveralAssessmentCreation_should_ThrowException() throws InterruptedException {
         Questionnaire questionnaire = createQuestionnaire();
         CompletableFuture<Assessment> future1 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire, 5L));
@@ -234,17 +281,22 @@ public class AssessmentSvcTest {
     }
 
     @Test
-    public void given_SameApplicationButDeletedTrue_when_SeveralAssessmentCreation_should_NotThrowException() {
+    public void given_SameApplicationButDeletedTrue_when_SeveralAssessmentCreation_should_NotThrowException() throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
+        transaction.begin();
         Questionnaire questionnaire = createQuestionnaire();
-        Assessment assessment1 = createAssessment(questionnaire, 200L);
+        Assessment assessment1 = createAssessment(questionnaire, 6200L);
         assertThat(assessment1).matches(e -> e.id > 0);
-        assertThatThrownBy(() -> createAssessment(questionnaire, 200L));
+        transaction.commit();
+        assertThatThrownBy(() -> createAssessment(questionnaire, 6200L));
         assessmentSvc.deleteAssessment(assessment1.id);
-        Assessment assessment2 = createAssessment(questionnaire, 200L);
+        transaction.begin();
+        Assessment assessment2 = createAssessment(questionnaire, 6200L);
         assertThat(assessment2).matches(e -> e.id > 0);
+        transaction.commit();
     }
 
     @Test
+    @Transactional
     public void given_CreatedAssessment_When_DeleteAssessment_should_DeleteIt() {
         Questionnaire questionnaire = createQuestionnaire();
         Assessment assessment = createAssessment(questionnaire, 1200L);
@@ -333,6 +385,7 @@ public class AssessmentSvcTest {
         return questionnaire;
     }
 
+    @Transactional
     private Category createCategory(Questionnaire questionnaire, int order) {
         Category category = Category.builder().name("category-" + order).order(order).questionnaire(questionnaire)
                 .build();
@@ -343,6 +396,7 @@ public class AssessmentSvcTest {
         return category;
     }
 
+    @Transactional
     private Question createQuestion(Category category, int i) {
         Question question = Question.builder().name("question-" + i).order(i).questionText("questionText-" + i)
                 .description("tooltip-" + i).type(QuestionType.SINGLE).build();
@@ -354,6 +408,7 @@ public class AssessmentSvcTest {
         return question;
     }
 
+    @Transactional
     private SingleOption createSingleOption(Question question, int i) {
         SingleOption single = SingleOption.builder().option("option-" + i).order(i).question(question)
                 .risk(Risk.values()[new Random().nextInt(Risk.values().length)]).build();

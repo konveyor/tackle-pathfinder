@@ -32,7 +32,7 @@ public class AssessmentCategory extends AbstractEntity {
 
     public String name;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     @Builder.Default
     public List<AssessmentQuestion> questions=new ArrayList<>();
 

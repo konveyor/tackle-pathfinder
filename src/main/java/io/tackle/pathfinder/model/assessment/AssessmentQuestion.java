@@ -46,7 +46,7 @@ public class AssessmentQuestion extends AbstractEntity {
     @Column(name="question_text", length = 500 )
     public String questionText;
 
-    @OneToMany(mappedBy="question", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy="question", cascade = CascadeType.ALL)
     @Builder.Default
     public List<AssessmentSingleOption> singleOptions=new ArrayList<>();
 
