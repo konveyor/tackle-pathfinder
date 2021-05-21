@@ -462,6 +462,14 @@ public class AssessmentSvcTest {
                 .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(6677L);
         assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question4.questionText) && e.getAnswer().equals(option4.option))
                 .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(6677L);
+
+        assertThat(riskLineDtos).containsExactlyElementsOf(riskLineDtos.stream()
+            .sorted(Comparator.comparing(e -> {
+                int cat_order = ((AssessmentCategory) AssessmentCategory.find("name", e.getCategory()).firstResult()).order;
+                int que_order = ((AssessmentQuestion) AssessmentQuestion.find("questionText", e.getQuestion()).firstResult()).order;
+                int opt_order = ((AssessmentSingleOption) AssessmentSingleOption.find("option", e.getAnswer()).firstResult()).order;
+                return cat_order * 100 + que_order * 10 + opt_order;
+            })).collect(Collectors.toList()));
     }
 
     private AssessmentQuestion getAssessmentQuestion(Assessment assessment1, Integer order) {
