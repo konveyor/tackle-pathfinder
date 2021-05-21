@@ -213,7 +213,7 @@ echo
 echo
 echo "15 >>> Get Identified Risks for 3 applications , only 2 existing,  and 1 answer selected"
 
-req_identified_risks=$(curl -X GET "http://$api_ip/pathfinder/assessments/risks?applications=10&applications=325100&applications=329100" -H 'Accept: application/json' \
+req_identified_risks=$(curl -X GET "http://$api_ip/pathfinder/assessments/risks?applicationId=10&applicationId=325100&applicationId=329100" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
             -H 'Content-Type: application/json' -s)
 test "$(echo $req_identified_risks | jq 'length')" = "1"
@@ -223,7 +223,7 @@ echo
 echo
 echo "16 >>> Get Identified Risks for 3 applications, none existing"
 
-req_identified_risks=$(curl -X GET "http://$api_ip/pathfinder/assessments/risks?applications=10&applications=11&applications=12" -H 'Accept: application/json' \
+req_identified_risks=$(curl -X GET "http://$api_ip/pathfinder/assessments/risks?applicationId=10&applicationId=11&applicationId=12" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
             -H 'Content-Type: application/json' -s)
 test "$(echo $req_identified_risks | jq 'length')" = "0"

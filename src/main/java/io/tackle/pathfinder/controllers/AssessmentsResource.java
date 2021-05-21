@@ -73,7 +73,7 @@ public class AssessmentsResource {
   @GET
   @Path("risks")
   @Produces("application/json")
-  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid @QueryParam("applications") List<Long> applicationList) {
+  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid @QueryParam("applicationId") List<Long> applicationList) {
     if (!applicationList.isEmpty()) {
       return service.identifiedRisks(applicationList);
     } else {
