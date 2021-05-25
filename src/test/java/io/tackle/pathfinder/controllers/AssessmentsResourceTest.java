@@ -248,7 +248,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.body("questionnaire.categories.find{it.order==1}.questions.find{it.question=='What is the application\\\'s mean time to recover (MTTR) from failure in a production environment?'}.description", is("Average time for the application to recover from failure"))
 			.body("questionnaire.categories.find{it.order==1}.questions.find{it.question=='What is the application\\\'s mean time to recover (MTTR) from failure in a production environment?'}.options.size()", is(6))
 			.body("questionnaire.categories.find{it.order==5}.questions.find{it.question=='How mature is the containerization process, if any?'}.options.find{it.option=='Application containerization has not yet been attempted'}.checked", is(true))
-  		    .body("questionnaire.categories.find{it.order==5}.questions.find{it.question=='How mature is the existing containerisation process, if any?'}.options.find{it.option=='Application containerisation not attempted as yet'}.risk", is("GREEN"));
+  		    .body("questionnaire.categories.find{it.order==5}.questions.find{it.question=='How mature is the containerization process, if any?'}.options.find{it.option=='Application containerization has not yet been attempted'}.risk", is("GREEN"));
 
 	}
 
