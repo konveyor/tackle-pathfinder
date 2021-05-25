@@ -44,7 +44,7 @@ echo '5 >>> Given an assessed app When Get Assessment ThenResult Assessment body
 assessmentId=$(echo $req_get_assessment | jq '.[0].id')
 assessment_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$assessmentId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s)
-echo $assessment_json | grep '"order":5,"option":"Application containerisation not attempted as yet"'
+echo $assessment_json | grep '"order":5,"option":"Application containerization has not yet been attempted"'
 categoryid=$(echo $assessment_json | jq '.questionnaire.categories[0].id')
 questionid=$(echo $assessment_json | jq '.questionnaire.categories[0].questions[0].id')
 optionid=$(echo $assessment_json | jq '.questionnaire.categories[0].questions[0].options[0].id')
