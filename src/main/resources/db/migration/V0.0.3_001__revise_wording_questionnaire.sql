@@ -20,7 +20,7 @@ update single_option set option='1-30 days' where option='Between one week and o
 update single_option set option='1-7 days' where option='Between one day and one week';
 update single_option set option='Less than 1 day' where option='Less than one day';
 update question set question_text ='How often is the application deployed to production?' where question_text='Deployment frequency';
-update question set description='How often is the application deployed to production?' where description='Gauge deployment frequency';
+update question set description='Deployment frequency' where description='Gauge deployment frequency';
 update single_option set option='Less than once every 6 months' where option='Greater than once every six months';
 update single_option set option='Between once a month and once every 6 months' where option='Between once per month and once every six months';
 update single_option set option='Weekly' where option='Weekly deployments';
@@ -194,7 +194,6 @@ update question set description='How does the application retrieve credentials, 
 
 -- adding new option
 update single_option set singleoption_order = 7 where option = 'Other. Specify in the comments field';
-
 insert into single_option
     (id, singleoption_order, option,risk,question_id)
 values

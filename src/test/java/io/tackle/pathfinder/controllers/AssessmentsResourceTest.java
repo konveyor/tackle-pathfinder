@@ -574,8 +574,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		group.persist();
 		assessment.stakeholdergroups.add(group);
 
-		AssessmentSingleOption.update("set selected = true where option = 'Application containerisation not attempted as yet'");
-		AssessmentCategory.update("set comment = 'This is a test comment' where name='Application Dependencies'");
+		AssessmentSingleOption.update("set selected = true where option = 'Application containerization has not yet been attempted'");
+		AssessmentCategory.update("set comment = 'This is a test comment' where name='Application dependencies'");
     }
 
 	@Test
