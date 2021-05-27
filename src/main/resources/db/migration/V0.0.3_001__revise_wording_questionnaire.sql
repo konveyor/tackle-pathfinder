@@ -15,8 +15,8 @@ update single_option set option='DevOps approach with the same team building the
 update question set question_text ='How much time passes from when code is committed until the application is deployed to production?' where question_text='How long does it take from when code is committed to it being deployed to a stage that is production ready?';
 update question set description ='What is the development latency?' where description='Gauge the development latency';
 update single_option set option='More than 6 months' where option='More than six months';
-update single_option set option='1-6 months' where option='Between one month and six months';
-update single_option set option='1-30 days' where option='Between one week and one month';
+update single_option set option='2-6 months' where option='Between one month and six months';
+update single_option set option='8-30 days' where option='Between one week and one month';
 update single_option set option='1-7 days' where option='Between one day and one week';
 update single_option set option='Less than 1 day' where option='Less than one day';
 update question set question_text ='How often is the application deployed to production?' where question_text='Deployment frequency';
