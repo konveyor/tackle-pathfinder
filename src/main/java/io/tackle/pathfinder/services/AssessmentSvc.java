@@ -1,8 +1,6 @@
 package io.tackle.pathfinder.services;
 
-import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
-import io.tackle.pathfinder.dto.AssessmentStatus;
+import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
@@ -15,26 +13,35 @@ import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
+import lombok.Value;
 import lombok.extern.java.Log;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.persistence.*;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
-import java.util.List;
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @ApplicationScoped
 @Log
 public class AssessmentSvc {
     @Inject
     AssessmentMapper mapper;
+
+    @Inject
+    EntityManager entityManager;
 
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
@@ -44,7 +51,7 @@ public class AssessmentSvc {
     @Transactional
     public AssessmentHeaderDto createAssessment(@NotNull Long applicationId) {
         long count = Assessment.count("application_id", applicationId);
-        log.log(Level.FINE,"Assessments for application_id [ " + applicationId + "] : " + count);
+        log.log(Level.FINE, "Assessments for application_id [ " + applicationId + "] : " + count);
         if (count == 0) {
             Assessment assessment = new Assessment();
             assessment.applicationId = applicationId;
@@ -63,32 +70,32 @@ public class AssessmentSvc {
     public Assessment copyQuestionnaireIntoAssessment(Assessment assessment, Questionnaire questionnaire) {
 
         AssessmentQuestionnaire assessQuestionnaire = AssessmentQuestionnaire.builder()
-                .name(questionnaire.name)
-                .questionnaire(questionnaire)
-                .assessment(assessment)
-                .languageCode(questionnaire.languageCode)
-                .build();
+            .name(questionnaire.name)
+            .questionnaire(questionnaire)
+            .assessment(assessment)
+            .languageCode(questionnaire.languageCode)
+            .build();
         assessQuestionnaire.persist();
 
         assessment.assessmentQuestionnaire = assessQuestionnaire;
 
         for (Category category : questionnaire.categories) {
             AssessmentCategory assessmentCategory = AssessmentCategory.builder()
-                    .name(category.name)
-                    .order(category.order)
-                    .questionnaire(assessment.assessmentQuestionnaire )
-                    .build();
+                .name(category.name)
+                .order(category.order)
+                .questionnaire(assessment.assessmentQuestionnaire)
+                .build();
             assessmentCategory.persist();
 
             for (Question question : category.questions) {
                 AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder()
-                        .category(assessmentCategory)
-                        .name(question.name)
-                        .order(question.order)
-                        .questionText(question.questionText)
-                        .type(question.type)
-                        .description(question.description)
-                        .build();
+                    .category(assessmentCategory)
+                    .name(question.name)
+                    .order(question.order)
+                    .questionText(question.questionText)
+                    .type(question.type)
+                    .description(question.description)
+                    .build();
 
                 assessmentQuestion.persist();
 
@@ -119,7 +126,7 @@ public class AssessmentSvc {
     }
 
     public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
-        log.log(Level.FINE,"Requesting Assessment " + assessmentId);
+        log.log(Level.FINE, "Requesting Assessment " + assessmentId);
         Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
 
         return mapper.assessmentToAssessmentDto(assessment);
@@ -138,7 +145,7 @@ public class AssessmentSvc {
             // Delete existing stakeholdergroups not included in current array
             assessment.stakeholdergroups.forEach(stakegroup -> {
                 if (assessmentDto.getStakeholderGroups().stream().noneMatch(f -> f.equals(stakegroup.stakeholdergroupId))) {
-                    log.log(Level.FINE,"Deleted stakegroup : " + stakegroup.stakeholdergroupId);
+                    log.log(Level.FINE, "Deleted stakegroup : " + stakegroup.stakeholdergroupId);
                     stakegroup.delete();
                 }
             });
@@ -148,11 +155,11 @@ public class AssessmentSvc {
             assessmentDto.getStakeholderGroups().forEach(e -> {
                 log.log(Level.FINE, "Considering Stakeholdergroup : " + e);
                 if (assessment.stakeholdergroups.stream().noneMatch(o -> e.equals(o.stakeholdergroupId))) {
-                    log.log(Level.FINE,"Adding Stakeholdergroup : " + e);
+                    log.log(Level.FINE, "Adding Stakeholdergroup : " + e);
                     assessment.stakeholdergroups.add(AssessmentStakeholdergroup.builder()
-                            .assessment(assessment)
-                            .stakeholdergroupId(e)
-                            .build());
+                        .assessment(assessment)
+                        .stakeholdergroupId(e)
+                        .build());
                 }
             });
         }
@@ -160,7 +167,7 @@ public class AssessmentSvc {
             // Delete existing stakeholders not included in current array
             assessment.stakeholders.forEach(stake -> {
                 if (assessmentDto.getStakeholders().stream().noneMatch(f -> f.equals(stake.stakeholderId))) {
-                    log.log(Level.FINE,"Deleted stake : " + stake.stakeholderId);
+                    log.log(Level.FINE, "Deleted stake : " + stake.stakeholderId);
                     stake.delete();
                 }
             });
@@ -168,9 +175,9 @@ public class AssessmentSvc {
 
             // Add not existing stakeholders included in the current array
             assessmentDto.getStakeholders().forEach(e -> {
-                log.log(Level.FINE,"Considering Stakeholder : " + e);
+                log.log(Level.FINE, "Considering Stakeholder : " + e);
                 if (assessment.stakeholders.stream().noneMatch(o -> e.equals(o.stakeholderId))) {
-                    log.log(Level.FINE,"Adding Stakeholder : " + e);
+                    log.log(Level.FINE, "Adding Stakeholder : " + e);
                     assessment.stakeholders.add(AssessmentStakeholder.builder()
                         .assessment(assessment)
                         .stakeholderId(e)
@@ -183,7 +190,7 @@ public class AssessmentSvc {
             assessmentDto.getQuestionnaire().getCategories().forEach(categ -> {
                 AssessmentCategory category = AssessmentCategory.find("assessment_questionnaire_id=?1 and id=?2", assessment_questionnaire.id, categ.getId()).<AssessmentCategory>firstResultOptional().orElseThrow(BadRequestException::new);
                 if (categ.getComment() != null) {
-                category.comment = categ.getComment();
+                    category.comment = categ.getComment();
                     log.log(Level.FINE, "Setting category comment : " + category.comment);
                 }
 
@@ -195,7 +202,7 @@ public class AssessmentSvc {
                             que.getOptions().forEach(opt -> {
                                 AssessmentSingleOption option = AssessmentSingleOption.find("assessment_question_id=?1 and id=?2", question.id, opt.getId()).<AssessmentSingleOption>firstResultOptional().orElseThrow(BadRequestException::new);
                                 if (opt.getChecked() != null) {
-                                option.selected = opt.getChecked();
+                                    option.selected = opt.getChecked();
                                     log.log(Level.FINE, "Setting option checked : " + option.selected);
                                 }
                             });
@@ -221,9 +228,9 @@ public class AssessmentSvc {
         if (assessmentSource != null) {
             if (Assessment.find("applicationId", targetApplicationId).firstResultOptional().isEmpty()) {
                 Assessment assessmentTarget = Assessment.builder()
-                                                .applicationId(targetApplicationId)
-                                                .status(assessmentSource.status)
-                                                .build();
+                    .applicationId(targetApplicationId)
+                    .status(assessmentSource.status)
+                    .build();
                 assessmentTarget.persist();
 
                 assessmentTarget.assessmentQuestionnaire = copyQuestionnaireBetweenAssessments(assessmentSource, assessmentTarget);
@@ -235,7 +242,7 @@ public class AssessmentSvc {
                         .build();
                     stakeholdergroup.persist();
                     return stakeholdergroup;
-                    }).collect(Collectors.toList());
+                }).collect(toList());
                 assessmentTarget.stakeholders = assessmentSource.stakeholders.stream().map(e -> {
                     AssessmentStakeholder stakeholder = AssessmentStakeholder.builder()
                         .assessment(assessmentTarget)
@@ -243,7 +250,7 @@ public class AssessmentSvc {
                         .build();
                     stakeholder.persist();
                     return stakeholder;
-                    }).collect(Collectors.toList());
+                }).collect(toList());
                 assessmentTarget.persist();
                 return mapper.assessmentToAssessmentHeaderDto(assessmentTarget);
             }
@@ -255,11 +262,11 @@ public class AssessmentSvc {
     @Transactional
     private AssessmentQuestionnaire copyQuestionnaireBetweenAssessments(Assessment sourceAssessment, Assessment targetAssessment) {
         AssessmentQuestionnaire questionnaire = AssessmentQuestionnaire.builder()
-                                                .assessment(targetAssessment)
-                                                .questionnaire(sourceAssessment.assessmentQuestionnaire.questionnaire)
-                                                .name(sourceAssessment.assessmentQuestionnaire.name)
-                                                .languageCode(sourceAssessment.assessmentQuestionnaire.languageCode)
-                                                .build();
+            .assessment(targetAssessment)
+            .questionnaire(sourceAssessment.assessmentQuestionnaire.questionnaire)
+            .name(sourceAssessment.assessmentQuestionnaire.name)
+            .languageCode(sourceAssessment.assessmentQuestionnaire.languageCode)
+            .build();
         questionnaire.persist();
         questionnaire.categories = sourceAssessment.assessmentQuestionnaire.categories.stream().map(cat -> {
             AssessmentCategory assessmentCategory = AssessmentCategory.builder()
@@ -271,31 +278,82 @@ public class AssessmentSvc {
             assessmentCategory.persist();
             assessmentCategory.questions = cat.questions.stream().map(que -> {
                 AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder()
-                .category(assessmentCategory)
-                .description(que.description)
-                .name(que.name)
-                .order(que.order)
-                .questionText(que.questionText)
-                .type(que.type)
-                .build();
+                    .category(assessmentCategory)
+                    .description(que.description)
+                    .name(que.name)
+                    .order(que.order)
+                    .questionText(que.questionText)
+                    .type(que.type)
+                    .build();
                 assessmentQuestion.persist();
                 assessmentQuestion.singleOptions = que.singleOptions.stream().map(opt -> {
                     AssessmentSingleOption singleOption = AssessmentSingleOption.builder()
-                    .option(opt.option)
-                    .order(opt.order)
-                    .question(assessmentQuestion)
-                    .risk(opt.risk)
-                    .selected(opt.selected)
-                    .build();
+                        .option(opt.option)
+                        .order(opt.order)
+                        .question(assessmentQuestion)
+                        .risk(opt.risk)
+                        .selected(opt.selected)
+                        .build();
                     singleOption.persist();
-                    return singleOption; 
-                }).collect(Collectors.toList());
+                    return singleOption;
+                }).collect(toList());
                 return assessmentQuestion;
-            }).collect(Collectors.toList());
+            }).collect(toList());
             return assessmentCategory;
-        }).collect(Collectors.toList());
-        
+        }).collect(toList());
+
         return questionnaire;
     }
 
+    @Transactional
+    public List<LandscapeDto> landscape(List<Long> applicationIds) {
+            String sql = "SELECT cast(ID as int), RISK, cast(trunc(max(PCT)) as int) AS PERCENTAGE " +
+                " FROM ( " +
+                "    SELECT assess.id, " +
+                "            so.risk, " +
+                "            trunc(((0.0 + Count(*) OVER w_risk_count) / (Count(*) OVER (PARTITION BY assess.id)) * 100)) AS pct " +
+                "            FROM assessment_singleoption so " +
+                "                    join assessment_question qu on (qu.id = so.assessment_question_id) " +
+                "                    join assessment_category ca on (ca.id = qu.assessment_category_id) " +
+                "                    join assessment_questionnaire ques on (ques.id = ca.assessment_questionnaire_id) " +
+                "                    join assessment assess on (assess.id = ques.assessment_id) " +
+                "            WHERE so.selected = true AND assess.application_id in (" + applicationIds.stream().map(e -> e.toString()).collect(Collectors.joining(",")) + ")" +
+                "            window w_risk_count as (partition by assess.id, so.risk) " +
+                "    ) AS risks " +
+                " GROUP BY ID, risk;";
+            Query query = entityManager.createNativeQuery(sql);
+
+            List<AssessmentRiskDto> resultMappedToAssessmentsRisk = (List<AssessmentRiskDto>) query.getResultList().stream()
+                .map(this::sqlRowToAssessmentRisk)
+                .collect(Collectors.toList());
+
+            List<LandscapeDto> collect = resultMappedToAssessmentsRisk.stream()
+                .collect(Collectors.groupingBy(e -> e.id, Collectors.mapping(Function.identity(), Collectors.maxBy(this::compareAssessmentRisk))))
+                .values().stream()
+                .map(a -> new LandscapeDto(a.get().getId().intValue(), a.get().getRisk()))
+                .collect(toList());
+            return collect;
+    }
+
+    private AssessmentRiskDto sqlRowToAssessmentRisk(Object row) {
+        return new AssessmentRiskDto((Integer) ((Object[]) row)[0], (String) ((Object[]) row)[1], (Integer) ((Object[]) row)[2]);
+    }
+
+    private int compareAssessmentRisk(AssessmentRiskDto o1, AssessmentRiskDto o2) {
+        if ("RED".equalsIgnoreCase(o1.risk) && o1.percentage > 0) return 1;
+        else if ("RED".equalsIgnoreCase(o2.risk) && o2.percentage > 0) return -1;
+        else if ("AMBER".equalsIgnoreCase(o1.risk) && o1.percentage > 30) return 1;
+        else if ("AMBER".equalsIgnoreCase(o2.risk) && o2.percentage > 30) return -1;
+        else if ("GREEN".equalsIgnoreCase(o1.risk)) return 1;
+        else if ("GREEN".equalsIgnoreCase(o2.risk)) return -1;
+        else return 0;
+    }
+
+
+    @Value
+    public class AssessmentRiskDto {
+        Integer id;
+        String risk;
+        Integer percentage;
+    }
 }
