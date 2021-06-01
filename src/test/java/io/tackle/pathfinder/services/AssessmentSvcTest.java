@@ -435,6 +435,27 @@ public class AssessmentSvcTest {
         assertThat(landscape).containsExactly(new LandscapeDto(assessment1.id, Risk.AMBER), new LandscapeDto(assessment2.id, Risk.AMBER));
     }
 
+    @Test
+    @Transactional
+    public void given_AssessmentsNotCompleted_When_landscape_Then_ThoseAssessmentsAreNotIncludedInResult() {
+        // create 2 assessments
+        AssessmentHeaderDto assessmentHeader1 = assessmentSvc.createAssessment(1894200L);
+        AssessmentHeaderDto assessmentHeader2 = assessmentSvc.createAssessment(1893200L);
+        Assessment assessment1 =  Assessment.findById(assessmentHeader1.getId());
+        Assessment assessment2 =  Assessment.findById(assessmentHeader2.getId());
+
+        // update both, selecting first GREEN option and UNKNOWN
+        assessment1.status = AssessmentStatus.COMPLETE;
+        assessment1.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.AMBER).findFirst().ifPresent(b -> b.selected = true)));
+        assessment2.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.AMBER).findFirst().ifPresent(b -> b.selected = true)));
+
+        // get landscape report of both
+        List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(1894200L, 1893200L));
+
+        // asserts
+        assertThat(landscape).containsExactly(new LandscapeDto(assessment1.id, Risk.AMBER));
+    }
+
 
     @Transactional
     public Assessment createAssessment(Questionnaire questionnaire, long applicationId) {
