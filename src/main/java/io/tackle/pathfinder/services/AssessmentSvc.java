@@ -2,6 +2,7 @@ package io.tackle.pathfinder.services;
 
 import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
+import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
@@ -317,7 +318,9 @@ public class AssessmentSvc {
                 "                    join assessment_category ca on (ca.id = qu.assessment_category_id) " +
                 "                    join assessment_questionnaire ques on (ques.id = ca.assessment_questionnaire_id) " +
                 "                    join assessment assess on (assess.id = ques.assessment_id) " +
-                "            WHERE so.selected = true AND assess.application_id in (" + applicationIds.stream().map(e -> e.toString()).collect(Collectors.joining(",")) + ")" +
+                "            WHERE so.selected = true " +
+                "                   AND assess.application_id in (" + applicationIds.stream().map(e -> e.toString()).collect(Collectors.joining(",")) + ") " +
+                "                   AND assess.status = 'COMPLETE' " +
                 "            window w_risk_count as (partition by assess.id, so.risk) " +
                 "    ) AS risks " +
                 " GROUP BY ID, risk;";
@@ -330,7 +333,7 @@ public class AssessmentSvc {
             List<LandscapeDto> collect = resultMappedToAssessmentsRisk.stream()
                 .collect(Collectors.groupingBy(e -> e.id, Collectors.mapping(Function.identity(), Collectors.maxBy(this::compareAssessmentRisk))))
                 .values().stream()
-                .map(a -> new LandscapeDto(a.get().getId().intValue(), a.get().getRisk()))
+                .map(a -> new LandscapeDto(a.get().getId().longValue(), "UNKNOWN".equalsIgnoreCase(a.get().getRisk()) ? Risk.GREEN : Risk.valueOf(a.get().getRisk())))
                 .collect(toList());
             return collect;
     }
@@ -346,7 +349,9 @@ public class AssessmentSvc {
         else if ("AMBER".equalsIgnoreCase(o2.risk) && o2.percentage > 30) return -1;
         else if ("GREEN".equalsIgnoreCase(o1.risk)) return 1;
         else if ("GREEN".equalsIgnoreCase(o2.risk)) return -1;
-        else return 0;
+        else if ("UNKNOWN".equalsIgnoreCase(o1.risk)) return 1;
+        else if ("UNKNOWN".equalsIgnoreCase(o2.risk)) return -1;
+        else return 0; // this should not happen
     }
 
 
