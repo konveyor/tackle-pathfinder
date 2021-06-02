@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import io.tackle.pathfinder.translation.Translate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,7 +37,7 @@ import java.util.List;
 @NoArgsConstructor
 @RegisterForReflection
 
-public class AssessmentDto {
+public class AssessmentDto extends BasicDto {
 
     /**
      * Assessment id
@@ -52,7 +53,8 @@ public class AssessmentDto {
      */
     @JsonProperty("applicationId")
     @JsonPropertyDescription("Application id")
-    private Long applicationId;
+    @Translate
+    public Long applicationId;
     /**
      * Current status of the assessment
      * 

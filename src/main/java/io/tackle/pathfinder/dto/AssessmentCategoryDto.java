@@ -6,10 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import io.tackle.pathfinder.translation.Translate;
+import lombok.*;
 
 import java.util.List;
 
@@ -34,7 +32,7 @@ import java.util.List;
 @NoArgsConstructor
 @RegisterForReflection
 
-public class AssessmentCategoryDto {
+public class AssessmentCategoryDto extends BasicDto {
 
     /**
      * DB id
@@ -59,7 +57,10 @@ public class AssessmentCategoryDto {
      */
     @JsonProperty("title")
     @JsonPropertyDescription("Title of the section. This will be represented as a Wizard's section")
-    private String title;
+    @Translate
+    public String title;
+
+
     /**
      * Root Type for question
      * <p>

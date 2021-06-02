@@ -52,4 +52,8 @@ public interface AssessmentMapper {
     @Mapping(target = "questionnaire", source = "assessmentQuestionnaire")
     @Mapping(target = "stakeholderGroups", source = "stakeholdergroups")
     AssessmentDto assessmentToAssessmentDto(Assessment assessment);
+
+    default String stringToTranslatedString(String value) {
+        return "XX-" + value;
+    }
 }
