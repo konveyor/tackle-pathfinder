@@ -1,5 +1,6 @@
 package io.tackle.pathfinder.controllers;
 
+import io.tackle.pathfinder.dto.AdoptionCandidateDto;
 import io.tackle.pathfinder.dto.ApplicationDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
@@ -75,6 +76,13 @@ public class AssessmentsResource {
   public Response deleteAssessment(@NotNull @PathParam("assessmentId") Long assessmentId) {
     service.deleteAssessment(assessmentId);
     return Response.ok().status(Response.Status.NO_CONTENT).build();
+  }
+
+  @GET
+  @Path("/confidence")
+  @Produces("application/json")
+  public List<AdoptionCandidateDto> adoptionCandidate(@QueryParam("applicationId") List<Long> applicationId) {
+    return service.getAdoptionCandidate(applicationId);
   }
 
 }

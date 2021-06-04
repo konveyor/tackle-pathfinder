@@ -209,4 +209,13 @@ req_not_existing_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessment
             -w "%{http_code}")
 test "404" = "$req_not_existing_assessment"
 
+
+echo
+echo
+echo "15 >>> Checking the confidence of assessments"
+confidence=$(curl -X PATCH "http://$api_ip/pathfinder/assessments/confidence?applicationId=100&applicationId=$applicationTarget" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}" \
+            -H 'Content-Type: application/json' )
+echo $confidence | grep "\"assessmentId\": $assessmentSourceId, \"confidence\""
+
 echo " +++++ API CHECK SUCCESSFUL ++++++"

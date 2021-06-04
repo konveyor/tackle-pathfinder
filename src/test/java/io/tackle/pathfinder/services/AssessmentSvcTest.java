@@ -6,12 +6,7 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
-import io.tackle.pathfinder.dto.AssessmentCategoryDto;
-import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
-import io.tackle.pathfinder.dto.AssessmentStatus;
+import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.QuestionType;
 import io.tackle.pathfinder.model.Risk;
@@ -368,6 +363,39 @@ public class AssessmentSvcTest {
         PanacheMock.doReturn(false).when(Assessment.class).deleteById(Mockito.any());
 
         assertThatThrownBy(() -> assessmentSvc.deleteAssessment(assessment.id)).isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    @Transactional
+    public void given_ApplicationsAssessed_when_AdoptionCandidate_then_ResuletIsTheExpected() {
+        // create assessment
+        AssessmentHeaderDto assessmentREDHeader = assessmentSvc.createAssessment( 10008L);
+        AssessmentHeaderDto assessmentGREENHeader = assessmentSvc.createAssessment( 10009L);
+        AssessmentHeaderDto assessmentAMBERHeader = assessmentSvc.createAssessment( 10010L);
+        AssessmentHeaderDto assessmentUNKNOWNHeader = assessmentSvc.createAssessment( 10011L);
+        Assessment assessmentRED =  Assessment.findById(assessmentREDHeader.getId());
+        Assessment assessmentGREEN =  Assessment.findById(assessmentGREENHeader.getId());
+        Assessment assessmentAMBER =  Assessment.findById(assessmentAMBERHeader.getId());
+        Assessment assessmentUNKNOWN =  Assessment.findById(assessmentUNKNOWNHeader.getId());
+
+        // answer questions
+        assessmentRED.status = AssessmentStatus.COMPLETE;
+        assessmentRED.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.RED).findFirst().ifPresent(b -> b.selected = true)));
+        assessmentGREEN.status = AssessmentStatus.COMPLETE;
+        assessmentGREEN.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.GREEN).findFirst().ifPresent(b -> b.selected = true)));
+        assessmentAMBER.status = AssessmentStatus.COMPLETE;
+        assessmentAMBER.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.AMBER).findFirst().ifPresent(b -> b.selected = true)));
+        assessmentUNKNOWN.status = AssessmentStatus.COMPLETE;
+        assessmentUNKNOWN.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.UNKNOWN).findFirst().ifPresent(b -> b.selected = true)));
+
+        // get confidence
+        List<AdoptionCandidateDto> adoptionCandidate = assessmentSvc.getAdoptionCandidate(List.of(10008L, 10009L, 10010L, 10011L, 99999955L));
+
+        // assert
+        assertThat(adoptionCandidate).containsExactlyInAnyOrder(new AdoptionCandidateDto(assessmentREDHeader.getId(), 0),
+                                                                new AdoptionCandidateDto(assessmentGREENHeader.getId(), 100),
+                                                                new AdoptionCandidateDto(assessmentAMBERHeader.getId(), 25),
+                                                                new AdoptionCandidateDto(assessmentUNKNOWNHeader.getId(), 70));
     }
 
     @Transactional

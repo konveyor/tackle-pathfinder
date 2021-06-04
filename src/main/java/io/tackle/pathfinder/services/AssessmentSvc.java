@@ -1,9 +1,13 @@
 package io.tackle.pathfinder.services;
 
+import com.google.common.util.concurrent.AtomicDouble;
+import io.quarkus.arc.config.ConfigProperties;
+import io.tackle.pathfinder.dto.AdoptionCandidateDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
+import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
@@ -16,6 +20,7 @@ import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.extern.java.Log;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -25,7 +30,11 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -35,6 +44,29 @@ import java.util.stream.Collectors;
 public class AssessmentSvc {
     @Inject
     AssessmentMapper mapper;
+
+    @ConfigProperty(name = "confidence.risk.RED.weight")
+    Integer redWeight;
+    @ConfigProperty(name = "confidence.risk.GREEN.weight")
+    Integer greenWeight;
+    @ConfigProperty(name = "confidence.risk.AMBER.weight")
+    Integer amberWeight;
+    @ConfigProperty(name = "confidence.risk.UNKNOWN.weight")
+    Integer unknownWeight;
+
+    @ConfigProperty(name = "confidence.risk.AMBER.multiplier")
+    Double amberMultiplier;
+    @ConfigProperty(name = "confidence.risk.RED.multiplier")
+    Double redMultiplier;
+
+    @ConfigProperty(name = "confidence.risk.RED.adjuster")
+    Double redAdjuster;
+    @ConfigProperty(name = "confidence.risk.AMBER.adjuster")
+    Double amberAdjuster;
+    @ConfigProperty(name = "confidence.risk.GREEN.adjuster")
+    Double greenAdjuster;
+    @ConfigProperty(name = "confidence.risk.UNKNOWN.adjuster")
+    Double unknownAdjuster;
 
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
@@ -298,4 +330,59 @@ public class AssessmentSvc {
         return questionnaire;
     }
 
+    @Transactional
+    public List<AdoptionCandidateDto> getAdoptionCandidate(List<Long> applicationId) {
+        return applicationId.stream()
+            .map(a-> Assessment.find("applicationId", a).firstResultOptional())
+            .filter(b -> b.isPresent())
+            .map(c -> new AdoptionCandidateDto(((Assessment) c.get()).id, calculateConfidence((Assessment) c.get())))
+            .collect(Collectors.toList());
+    }
+
+    private Integer calculateConfidence(Assessment assessment) {
+        Map<Risk, Integer> weightMap = Map.of(Risk.RED, redWeight,
+                                            Risk.UNKNOWN, unknownWeight,
+                                            Risk.AMBER, amberWeight,
+                                            Risk.GREEN, greenWeight);
+        Map<Risk, Double> confidenceMultiplier = Map.of(Risk.RED, redMultiplier, Risk.AMBER, amberMultiplier);
+        Map<Risk, Double> adjusterBase = Map.of(Risk.RED, redAdjuster, Risk.AMBER, amberAdjuster, Risk.GREEN, greenAdjuster, Risk.UNKNOWN, unknownAdjuster);
+
+        Map<Risk, Long> answersCountByRisk = assessment.assessmentQuestionnaire.categories.stream()
+            .flatMap(cat -> cat.questions.stream())
+            .flatMap(que -> que.singleOptions.stream())
+            .filter(opt -> opt.selected)
+            .collect(Collectors.groupingBy(a -> a.risk, Collectors.counting()));
+
+        long totalAnswered = answersCountByRisk.values().stream().mapToLong(Long::longValue).sum();
+
+        // Adjuster calculation
+        AtomicDouble adjuster = new AtomicDouble(1);
+        answersCountByRisk.entrySet().stream()
+            .filter(a -> a.getValue() > 0 )
+            .forEach(b -> updateAdjuster(adjusterBase, adjuster, b));
+
+        // Temp confidence iteration calculation
+        AtomicDouble confidence = new AtomicDouble(0.0);
+        assessment.assessmentQuestionnaire.categories.stream()
+            .flatMap(cat -> cat.questions.stream())
+            .flatMap(que -> que.singleOptions.stream())
+            .filter(opt -> opt.selected)
+            .forEach(opt -> {
+                confidence.set(confidence.get() * confidenceMultiplier.getOrDefault(opt.risk, 1.0));
+                confidence.getAndAdd(weightMap.get(opt.risk) * adjuster.get());
+            });
+
+        double maxConfidence = weightMap.get(Risk.GREEN) * totalAnswered;
+
+        BigDecimal result = new BigDecimal((confidence.get() / maxConfidence) * 100);
+        result.setScale(0, RoundingMode.DOWN);
+
+        return result.intValue();
+    }
+
+    //         if (redCount > 0) adjuster = adjuster * Math.pow(0.5, redCount);
+    //        if (amberCount > 0) adjuster = adjuster * Math.pow(0.98, amberCount);
+    private void updateAdjuster(Map<Risk, Double> adjusterBase, AtomicDouble adjuster, Map.Entry<Risk, Long> b) {
+        adjuster.set(adjuster.get() * Math.pow(adjusterBase.get(b.getKey()), b.getValue()));
+    }
 }
