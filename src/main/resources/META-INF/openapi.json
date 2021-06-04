@@ -2,8 +2,8 @@
     "openapi": "3.0.2",
     "info": {
         "title": "tackle-pathfinder",
-        "version": "0.0.3",
-        "description": "Tackle PathFinder 0.0.3\n\nChanges : \n* added delete assessment function\n* added create assessment copying responses from another assessment"
+        "version": "0.0.4",
+        "description": "Tackle PathFinder 0.0.4\n\nChanges : \n* added delete assessment function\n* added create assessment copying responses from another assessment\n* added bulk creation/copy of assessments\n* added identified risks function\n* added assessment confidence function"
     },
     "paths": {
         "/assessments": {
@@ -180,15 +180,13 @@
                                                                         "id": 85,
                                                                         "order": 77,
                                                                         "option": "some text",
-                                                                        "checked": true,
-                                                                        "risk": "GREEN"
+                                                                        "checked": true
                                                                     },
                                                                     {
                                                                         "id": 16,
                                                                         "order": 88,
                                                                         "option": "some text",
-                                                                        "checked": true,
-                                                                        "risk": "AMBER"
+                                                                        "checked": true
                                                                     }
                                                                 ],
                                                                 "description": "some text"
@@ -202,15 +200,13 @@
                                                                         "id": 45,
                                                                         "order": 36,
                                                                         "option": "some text",
-                                                                        "checked": true,
-                                                                        "risk": "UNKNOWN"
+                                                                        "checked": true
                                                                     },
                                                                     {
                                                                         "id": 37,
                                                                         "order": 57,
                                                                         "option": "some text",
-                                                                        "checked": true,
-                                                                        "risk": "RED"
+                                                                        "checked": true
                                                                     }
                                                                 ],
                                                                 "description": "some text"
@@ -232,15 +228,13 @@
                                                                         "id": 79,
                                                                         "order": 3,
                                                                         "option": "some text",
-                                                                        "checked": true,
-                                                                        "risk": "AMBER"
+                                                                        "checked": true
                                                                     },
                                                                     {
                                                                         "id": 7,
                                                                         "order": 65,
                                                                         "option": "some text",
-                                                                        "checked": false,
-                                                                        "risk": "AMBER"
+                                                                        "checked": false
                                                                     }
                                                                 ],
                                                                 "description": "some text"
@@ -254,15 +248,13 @@
                                                                         "id": 62,
                                                                         "order": 32,
                                                                         "option": "some text",
-                                                                        "checked": true,
-                                                                        "risk": "AMBER"
+                                                                        "checked": true
                                                                     },
                                                                     {
                                                                         "id": 66,
                                                                         "order": 98,
                                                                         "option": "some text",
-                                                                        "checked": true,
-                                                                        "risk": "AMBER"
+                                                                        "checked": true
                                                                     }
                                                                 ],
                                                                 "description": "some text"
@@ -435,6 +427,230 @@
                         "type": "integer"
                     },
                     "in": "path",
+                    "required": true
+                }
+            ]
+        },
+        "/assessments/bulk": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            },
+                            "examples": {
+                                "bulk_request": {
+                                    "value": [
+                                        74,
+                                        54
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "fromAssessmentId",
+                        "description": "",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "in": "query",
+                        "required": false
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssessmentBulk"
+                                },
+                                "examples": {
+                                    "assessment_bulk_post": {
+                                        "value": {
+                                            "bulkId": 58,
+                                            "applications": [
+                                                9,
+                                                45
+                                            ],
+                                            "fromAssessmentId": 74,
+                                            "createdAssessments": [
+                                                {
+                                                    "status": "COMPLETE",
+                                                    "applicationId": 57,
+                                                    "id": 50,
+                                                    "error": "some text"
+                                                },
+                                                {
+                                                    "status": "STARTED",
+                                                    "applicationId": 6,
+                                                    "id": 13,
+                                                    "error": "some text"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "description": "When the operation finishes successfully."
+                    }
+                },
+                "operationId": "bulkCreateAssessment",
+                "summary": "Async call to create a list of assessments for the given applications.",
+                "description": "It will allow to copy the assessment answers from a given assessment ( in query params )"
+            }
+        },
+        "/assessments/bulk/{bulkId}": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssessmentBulk"
+                                },
+                                "examples": {
+                                    "bulk_response_ok": {
+                                        "value": {
+                                            "bulkId": 31,
+                                            "applications": [
+                                                92,
+                                                0
+                                            ],
+                                            "fromAssessmentId": 72,
+                                            "createdAssessments": [
+                                                {
+                                                    "status": "STARTED",
+                                                    "applicationId": 90,
+                                                    "id": 52,
+                                                    "error": "some text"
+                                                },
+                                                {
+                                                    "status": "COMPLETE",
+                                                    "applicationId": 28,
+                                                    "id": 18,
+                                                    "error": "some text"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "description": "If bulk process is found"
+                    },
+                    "404": {
+                        "description": "If bulk process is not found"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "bulkId",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "in": "path",
+                    "required": true
+                }
+            ]
+        },
+        "/assessments/risks": {
+            "summary": "Will retrieve the risks for filtered assessments",
+            "description": "The response will contain only those applications assessed. This can end on having 0 elements in the response.",
+            "get": {
+                "parameters": [
+                    {
+                        "name": "applications",
+                        "description": "",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        },
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/RiskLine"
+                                    }
+                                },
+                                "examples": {
+                                    "risks_ok": {
+                                        "value": [
+                                            {
+                                                "category": "some text",
+                                                "question": "some text",
+                                                "answer": "some text",
+                                                "applications": [
+                                                    89,
+                                                    32
+                                                ]
+                                            },
+                                            {
+                                                "category": "some text",
+                                                "question": "some text",
+                                                "answer": "some text",
+                                                "applications": [
+                                                    74,
+                                                    5
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        "description": "On successfull response"
+                    }
+                }
+            }
+        },
+        "/assessments/confidence": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/AssessmentConfidence"
+                                    }
+                                }
+                            }
+                        },
+                        "description": "List of confidences for the assessments"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "applicationId",
+                    "description": "",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "in": "query",
                     "required": true
                 }
             ]
@@ -867,21 +1083,21 @@
                         "type": "boolean"
                     },
                     "risk": {
-                        "description": "Risk associated to this option",
+                        "description": "",
                         "enum": [
                             "GREEN",
                             "AMBER",
-                            "RED",
-                            "UNKNOWN"
+                            "RED"
                         ],
                         "type": "string"
                     }
                 },
                 "example": {
-                    "id": 1,
-                    "order": 0,
-                    "option": "I'm a radioButton/checkbox option",
-                    "checked": true
+                    "id": 77,
+                    "order": 80,
+                    "option": "some text",
+                    "checked": true,
+                    "risk": "AMBER"
                 }
             },
             "Pach_Assessment": {
@@ -1026,6 +1242,165 @@
                     "COMPLETE"
                 ],
                 "type": "string"
+            },
+            "Post_AssessmentBulk": {
+                "description": "",
+                "required": [
+                    "applications"
+                ],
+                "type": "object",
+                "properties": {
+                    "fromAssessmentId": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "applications": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Application"
+                        }
+                    }
+                }
+            },
+            "AssessmentBulk": {
+                "description": "",
+                "required": [
+                    "bulkId",
+                    "applications",
+                    "assessments",
+                    "completed"
+                ],
+                "type": "object",
+                "properties": {
+                    "bulkId": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "applications": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "fromAssessmentId": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "completed": {
+                        "description": "",
+                        "type": "boolean"
+                    },
+                    "assessments": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AssessmentHeaderBulk"
+                        }
+                    }
+                }
+            },
+            "AssessmentHeaderBulk": {
+                "description": "",
+                "required": [
+                    "id",
+                    "applicationId",
+                    "status"
+                ],
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "$ref": "#/components/schemas/Status",
+                        "description": ""
+                    },
+                    "applicationId": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "id": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "error": {
+                        "description": "",
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "status": "STARTED",
+                    "id": 24,
+                    "applicationId": 14
+                }
+            },
+            "AssessmentBulkPost": {
+                "description": "",
+                "required": [
+                    "applications"
+                ],
+                "type": "object",
+                "properties": {
+                    "fromAssessmentId": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "applications": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Application"
+                        }
+                    }
+                }
+            },
+            "RiskLine": {
+                "description": "",
+                "required": [
+                    "category",
+                    "question",
+                    "answer",
+                    "applications"
+                ],
+                "type": "object",
+                "properties": {
+                    "category": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "question": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "answer": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "applications": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            },
+            "AssessmentConfidence": {
+                "description": "",
+                "required": [
+                    "assessmentId",
+                    "confidence"
+                ],
+                "type": "object",
+                "properties": {
+                    "assessmentId": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "confidence": {
+                        "description": "",
+                        "type": "integer"
+                    }
+                }
             }
         },
         "responses": {
