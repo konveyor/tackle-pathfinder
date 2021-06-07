@@ -70,12 +70,13 @@ public class AssessmentsResource {
     return Response.ok().status(Response.Status.NO_CONTENT).build();
   }
 
-  @GET
+  @POST
   @Path("risks")
   @Produces("application/json")
-  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid @QueryParam("applicationId") List<Long> applicationList) {
+  @Consumes("application/json")
+  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<ApplicationDto> applicationList) {
     if (!applicationList.isEmpty()) {
-      return service.identifiedRisks(applicationList);
+      return service.identifiedRisks(applicationList.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
     } else {
       throw new BadRequestException();
     }

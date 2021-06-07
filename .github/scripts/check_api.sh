@@ -213,8 +213,9 @@ echo
 echo
 echo "15 >>> Get Identified Risks for 3 applications , only 2 existing,  and 1 answer selected"
 
-req_identified_risks=$(curl -X GET "http://$api_ip/pathfinder/assessments/risks?applicationId=10&applicationId=325100&applicationId=329100" -H 'Accept: application/json' \
+req_identified_risks=$(curl -X POST "http://$api_ip/pathfinder/assessments/risks" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
+            -d "[{\"applicationId\":10},{\"applicationId\":325100},{\"applicationId\":329100}]" \
             -H 'Content-Type: application/json' -s)
 test "$(echo $req_identified_risks | jq 'length')" = "1"
 test "$(echo $req_identified_risks | jq '.[0] | .applications | length')" = "2"
@@ -223,8 +224,9 @@ echo
 echo
 echo "16 >>> Get Identified Risks for 3 applications, none existing"
 
-req_identified_risks=$(curl -X GET "http://$api_ip/pathfinder/assessments/risks?applicationId=10&applicationId=11&applicationId=12" -H 'Accept: application/json' \
+req_identified_risks=$(curl -X POST "http://$api_ip/pathfinder/assessments/risks" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
+            -d "[{\"applicationId\":10},{\"applicationId\":11},{\"applicationId\":12}]" \
             -H 'Content-Type: application/json' -s)
 test "$(echo $req_identified_risks | jq 'length')" = "0"
 
@@ -232,7 +234,7 @@ echo
 echo
 echo "17 >>> Get Identified Risks for 0 applications"
 
-req_identified_risks=$(curl -X GET "http://$api_ip/pathfinder/assessments/risks" -H 'Accept: application/json' \
+req_identified_risks=$(curl -X POST "http://$api_ip/pathfinder/assessments/risks" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
             -H 'Content-Type: application/json' -s -w "%{http_code}")
 test "$(echo $req_identified_risks)" = "400"
