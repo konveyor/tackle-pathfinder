@@ -362,6 +362,7 @@ public class AssessmentSvc {
             .forEach(b -> updateAdjuster(adjusterBase, adjuster, b));
 
         // Temp confidence iteration calculation
+        // TODO Apparently this formula seems wrong, as the first execution in the forEach is multiplying by 0
         AtomicDouble confidence = new AtomicDouble(0.0);
         assessment.assessmentQuestionnaire.categories.stream()
             .flatMap(cat -> cat.questions.stream())
