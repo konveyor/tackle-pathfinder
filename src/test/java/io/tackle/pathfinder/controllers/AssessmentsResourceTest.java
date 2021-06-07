@@ -805,10 +805,13 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 		// request Landscape
 		LandscapeDto[] landscape = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(List.of(new ApplicationDto(659500L), new ApplicationDto(669500L)))
 			.when()
-			.get("/assessments/landscape?applicationId=" + 659500 + "&applicationId=" + 669500)
+				.post("/assessments/assessment-risk")
 			.then()
-			.statusCode(200)
+				.statusCode(200)
 			.extract().as(LandscapeDto[].class);
 
 		// assert

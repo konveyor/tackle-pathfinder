@@ -71,12 +71,12 @@ public class AssessmentsResource {
     return Response.ok().status(Response.Status.NO_CONTENT).build();
   }
 
-  @GET
-  @Path("/landscape")
+  @POST
+  @Path("/assessment-risk")
   @Produces("application/json")
-  public List<LandscapeDto> getLandscape(@NotNull @QueryParam("applicationId") List<Long> applicationIds) {
+  public List<LandscapeDto> getLandscape(@NotNull @Valid List<ApplicationDto> applicationIds) {
     if (applicationIds.isEmpty()) throw new BadRequestException();
-    return service.landscape(applicationIds);
+    return service.landscape(applicationIds.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
   }
 
 }

@@ -223,8 +223,10 @@ curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentSourceId" -H 'Ac
             -H 'Content-Type: application/json' \
             -d "{ \"status\": \"COMPLETE\",\"questionnaire\": {\"categories\": [{\"id\": $categorySourceid,\"questions\": [{\"id\": $questionSourceid,\"options\": [{\"id\": $optionRedSourceid,\"checked\": true}]}]}]}}"
 
-landscapeJson=$(curl "http://$api_ip/pathfinder/assessments/landscape?applicationId=325100&applicationId=998899" -H 'Accept: application/json' \
+landscapeJson=$(curl "http://$api_ip/pathfinder/assessments/assessment-risk" \
+            -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -w "%{http_code}" \
+            -d "[{\"applicationId\":325100},{\"applicationId\":998899}]" \
             -H 'Content-Type: application/json')
 echo $landscapeJson | grep "[{\"assessmentId\":$assessmentSourceId,\"risk\":\"RED\"}]"
 
