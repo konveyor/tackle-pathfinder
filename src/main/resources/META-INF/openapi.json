@@ -623,7 +623,32 @@
             }
         },
         "/assessments/confidence": {
-            "get": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/Application"
+                                }
+                            },
+                            "examples": {
+                                "post_confidence_request": {
+                                    "value": [
+                                        {
+                                            "applicationId": 5
+                                        },
+                                        {
+                                            "applicationId": 51
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
                 "responses": {
                     "200": {
                         "content": {
@@ -633,27 +658,27 @@
                                     "items": {
                                         "$ref": "#/components/schemas/AssessmentConfidence"
                                     }
+                                },
+                                "examples": {
+                                    "confidence_response_ok": {
+                                        "value": [
+                                            {
+                                                "assessmentId": 48,
+                                                "confidence": 83
+                                            },
+                                            {
+                                                "assessmentId": 80,
+                                                "confidence": 10
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         },
-                        "description": "List of confidences for the assessments"
+                        "description": "On success"
                     }
                 }
-            },
-            "parameters": [
-                {
-                    "name": "applicationId",
-                    "description": "",
-                    "schema": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    },
-                    "in": "query",
-                    "required": true
-                }
-            ]
+            }
         }
     },
     "components": {
