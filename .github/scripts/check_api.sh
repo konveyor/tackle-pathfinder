@@ -1,5 +1,6 @@
 #!/bin/sh
-set -e
+set -x # print commands executed
+set -e # exit immediatly if any command fails
 
 # Usage : check_api.sh api_ip keycloak_api , both arguments optional defaulted to $(minikube ip)
 # ./check_api.sh localhost:8085 localhost:8180
@@ -213,9 +214,10 @@ test "404" = "$req_not_existing_assessment"
 echo
 echo
 echo "15 >>> Checking the confidence of assessments"
-confidence=$(curl -X PATCH "http://$api_ip/pathfinder/assessments/confidence?applicationId=100&applicationId=$applicationTarget" -H 'Accept: application/json' \
-            -H "Authorization: Bearer $access_token" -w "%{http_code}" \
+confidence=$(curl -X POST "http://$api_ip/pathfinder/assessments/confidence" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -d "[{\"applicationId\":100} , {\"applicationId\": $applicationTarget}]" \
             -H 'Content-Type: application/json' )
-echo $confidence | grep "\"assessmentId\": $assessmentSourceId, \"confidence\""
+echo $confidence | grep "{\"assessmentId\":$assessmentCopiedId,\"confidence\""
 
 echo " +++++ API CHECK SUCCESSFUL ++++++"

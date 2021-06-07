@@ -78,11 +78,12 @@ public class AssessmentsResource {
     return Response.ok().status(Response.Status.NO_CONTENT).build();
   }
 
-  @GET
+  @POST
   @Path("/confidence")
   @Produces("application/json")
-  public List<AdoptionCandidateDto> adoptionCandidate(@QueryParam("applicationId") List<Long> applicationId) {
-    return service.getAdoptionCandidate(applicationId);
+  @Consumes("application/json")
+  public List<AdoptionCandidateDto> adoptionCandidate(@NotNull @Valid List<ApplicationDto> applicationId) {
+    return service.getAdoptionCandidate(applicationId.stream().map(a -> a.getApplicationId()).collect(Collectors.toList()));
   }
 
 }
