@@ -1,11 +1,6 @@
 package io.tackle.pathfinder.mapper;
 
-import io.tackle.pathfinder.dto.AssessmentCategoryDto;
-import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionnaireDto;
+import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
@@ -13,31 +8,32 @@ import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
 import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
 import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
-import lombok.extern.java.Log;
+import io.tackle.pathfinder.model.bulk.AssessmentBulk;
+import io.tackle.pathfinder.model.bulk.AssessmentBulkApplication;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Mapper(componentModel = "cdi")
 public interface AssessmentMapper {
-
     AssessmentHeaderDto assessmentToAssessmentHeaderDto(Assessment assessment);
 
     @Mapping(target="checked", source="selected")
     AssessmentQuestionOptionDto assessmentSingleOptionToAssessmentQuestionOptionDto(AssessmentSingleOption option);
     List<AssessmentQuestionOptionDto> assessmentSingleOptionListToassessmentQuestionOptionDtoList(List<AssessmentSingleOption> optionList);
-    
+
     @Mapping(target = "options", source="singleOptions")
     @Mapping(target = "question", source="questionText")
     AssessmentQuestionDto assessmentQuestionToAssessmentQuestionDto(AssessmentQuestion question);
     List<AssessmentQuestionDto> assessmentQuestionListToassessmentQuestionDtoList(List<AssessmentQuestion> questionList);
-   
+
     @Mapping(target="title", source="name")
     AssessmentCategoryDto assessmentCategoryToAssessmentCategoryDto(AssessmentCategory category);
     List<AssessmentCategoryDto> assessmentCategoryListToAssessmentCategoryDtoList(List<AssessmentCategory> categoryList);
-    
+
     @Mapping(target="title", source="name")
     @Mapping(target="language", source="languageCode")
     AssessmentQuestionnaireDto assessmentQuestionnaireToAssessmentQuestionnaireDto(AssessmentQuestionnaire questionnaire);
@@ -52,4 +48,28 @@ public interface AssessmentMapper {
     @Mapping(target = "questionnaire", source = "assessmentQuestionnaire")
     @Mapping(target = "stakeholderGroups", source = "stakeholdergroups")
     AssessmentDto assessmentToAssessmentDto(Assessment assessment);
+
+    default AssessmentBulkDto assessmentBulkToassessmentBulkDto(AssessmentBulk bulk) {
+        return AssessmentBulkDto.builder()
+                .bulkId(bulk.id)
+                .applications(Stream.of(bulk.applications.split(",")).map(Long::parseLong).collect(Collectors.toList()))
+                .completed(bulk.completed)
+                .fromAssessmentId(bulk.fromAssessmentId)
+                .assessments(bulk.bulkApplications.stream().map(e -> this.assessmentBulkApplicationToassessmentHeaderBulkDto(e)).collect(Collectors.toList()))
+                .build();
+    }
+
+    default AssessmentHeaderBulkDto assessmentBulkApplicationToassessmentHeaderBulkDto(AssessmentBulkApplication application) {
+        AssessmentHeaderBulkDto dto = AssessmentHeaderBulkDto.builder()
+            .applicationId(application.applicationId)
+            .id(application.assessmentId)
+            .error(application.error)
+            .build();
+        if (application.assessmentId != null) {
+            Assessment assessment = Assessment.findById(application.assessmentId);
+            dto.setStatus(assessment.status);
+        }
+        return dto;
+    }
+
 }

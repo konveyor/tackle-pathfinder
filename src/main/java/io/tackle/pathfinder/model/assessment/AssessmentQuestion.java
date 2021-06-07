@@ -1,12 +1,14 @@
 package io.tackle.pathfinder.model.assessment;
 
-import io.tackle.commons.entities.AbstractEntity;
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.tackle.pathfinder.model.QuestionType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.ResultCheckStyle;
 import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.CascadeType;
@@ -19,6 +21,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +32,21 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AssessmentQuestion extends AbstractEntity {
+public class AssessmentQuestion extends PanacheEntity {
+    @CreationTimestamp
+    @Column(updatable=false)
+    public Instant createTime;
+
+    public String createUser;
+
+    @UpdateTimestamp
+    public Instant updateTime;
+
+    public String updateUser;
+
+    @Builder.Default
+    public Boolean deleted = false;
+    
     @Column(name="question_order", nullable = false)
     public int order;
 

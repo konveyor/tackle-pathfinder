@@ -1,4 +1,4 @@
-package io.tackle.pathfinder.model.assessment;
+package io.tackle.pathfinder.model.bulk;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import lombok.AllArgsConstructor;
@@ -19,13 +19,13 @@ import javax.persistence.Table;
 import java.time.Instant;
 
 @Entity
-@Table(name = "assessment_stakeholder")
-@SQLDelete(sql = "UPDATE assessment_stakeholder SET deleted = true WHERE id = ?", check = ResultCheckStyle.COUNT)
+@Table(name = "assessment_bulk_app")
+@SQLDelete(sql = "UPDATE assessment_bulk_app SET deleted = true WHERE id = ?", check = ResultCheckStyle.COUNT)
 @Where(clause = "deleted is not true")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AssessmentStakeholder extends PanacheEntity {
+public class AssessmentBulkApplication extends PanacheEntity {
     @CreationTimestamp
     @Column(updatable=false)
     public Instant createTime;
@@ -37,13 +37,16 @@ public class AssessmentStakeholder extends PanacheEntity {
 
     public String updateUser;
 
-    @Builder.Default
     public Boolean deleted = false;
-    
-    @Column(name="stakeholder_id", nullable=false)
-    public Long stakeholderId;
+
+    public Long assessmentId;
+
+    @Column(nullable = false)
+    public Long applicationId;
+
+    public String error;
 
     @ManyToOne
-    @JoinColumn(name="assessment_id", referencedColumnName="id")
-    public Assessment assessment;
+    @JoinColumn(name="assessment_bulk_id", referencedColumnName="id")
+    public AssessmentBulk assessmentBulk;
 }

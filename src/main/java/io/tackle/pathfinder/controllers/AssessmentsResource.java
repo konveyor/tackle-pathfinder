@@ -1,22 +1,21 @@
 package io.tackle.pathfinder.controllers;
 
 import io.tackle.pathfinder.dto.ApplicationDto;
+import io.tackle.pathfinder.dto.AssessmentBulkDto;
+import io.tackle.pathfinder.dto.AssessmentBulkPostDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
-
+import lombok.extern.java.Log;
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PATCH;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -25,6 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Path("/assessments")
+@Log
 public class AssessmentsResource {
   @Inject
   AssessmentSvc service;
@@ -39,14 +39,7 @@ public class AssessmentsResource {
   @Produces("application/json")
   @Consumes("application/json")
   public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data) {
-    AssessmentHeaderDto createAssessment;
-    
-    if (fromAssessmentId != null) {
-      createAssessment = service.copyAssessment(fromAssessmentId, data.getApplicationId());
-    } else {
-      createAssessment = service.createAssessment(data.getApplicationId());
-    }
-    
+    AssessmentHeaderDto createAssessment = service.newAssessment(fromAssessmentId, data.getApplicationId());
     return Response
       .status(Status.CREATED)
       .entity(createAssessment)
@@ -77,4 +70,22 @@ public class AssessmentsResource {
     return Response.ok().status(Response.Status.NO_CONTENT).build();
   }
 
+  @POST
+  @Path("bulk")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public Response bulkCreate(@NotNull @Valid AssessmentBulkPostDto data) throws SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException, NotSupportedException {
+    List<Long> appsList = data.getApplications().stream()
+                          .map(e -> e.getApplicationId())
+                          .collect(Collectors.toList());
+    return Response.accepted().entity(service.bulkCreateAssessments(data.getFromAssessmentId(), appsList)).build();
+  }
+
+  @GET
+  @Path("bulk/{bulkId}")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public AssessmentBulkDto bulkGet(@NotNull @PathParam("bulkId") Long bulkId) {
+    return service.bulkGet(bulkId);
+  }
 }

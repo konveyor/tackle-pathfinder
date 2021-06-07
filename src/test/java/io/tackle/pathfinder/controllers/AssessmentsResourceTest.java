@@ -8,14 +8,7 @@ import io.restassured.response.ValidatableResponse;
 import io.tackle.commons.testcontainers.KeycloakTestResource;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.commons.tests.SecuredResourceTest;
-import io.tackle.pathfinder.dto.ApplicationDto;
-import io.tackle.pathfinder.dto.AssessmentCategoryDto;
-import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionnaireDto;
-import io.tackle.pathfinder.dto.AssessmentStatus;
+import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
@@ -27,6 +20,9 @@ import lombok.extern.java.Log;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.apache.commons.lang3.StringUtils;
+import org.awaitility.Awaitility;
+
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
@@ -35,6 +31,7 @@ import java.time.Duration;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,7 +73,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
     @Test
 	public void given_ApplicationWithAssessment_When_Get_Then_ReturnsHeaderDto() {
-		assessmentSvc.createAssessment(20L);
+		assessmentSvc.newAssessment(null, 20L);
 
 		AssessmentHeaderDto[] assessments = given()
 			.queryParam("applicationId", "20")
@@ -136,7 +133,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 	@Test
 	public void given_ApplicationWithAssessment_When_CreateAssessment_Then_Returns400() {
-		assessmentSvc.createAssessment(20L);
+		assessmentSvc.newAssessment(null, 20L);
 
 		given()
 		    .contentType(ContentType.JSON)
@@ -172,7 +169,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 	}	
 	
 	@Test
-	public void given_SameApplication_When_SeveralCreateAssessment_Then_Returns400() throws InterruptedException {
+	public void given_SameApplication_When_SeveralCreateAssessment_Then_Returns400()  {
 		CompletableFuture<ValidatableResponse> future1 = managedExecutor.supplyAsync(() -> {
 			log.info("Async 1 request Assessment : " + LocalTime.now());
 			ValidatableResponse response = given()
@@ -182,15 +179,11 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.when()
 				.post("/assessments")
 			.then()
-				.log().all()
-				.statusCode(201);
+				.log().all();
 			log.info("End Async 1 request Assessment : " + LocalTime.now());
 
 			return response;
 		});
-		
-		// To force second call starts a bit later than first one
-		Thread.sleep(500);
 		
 		CompletableFuture<ValidatableResponse> future2 = managedExecutor.supplyAsync(() -> {
 			log.info("Async 2 request Assessment : " + LocalTime.now());
@@ -202,15 +195,23 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.when()
 				.post("/assessments")
 			.then()
-				.log().all()
-				.statusCode(400);
+				.log().all();
 
 			log.info("End Async 2 request Assessment : " + LocalTime.now());
 			return response;
 		});
 
-		assertThat(future1).succeedsWithin(Duration.ofSeconds(10));
-		assertThat(future2).succeedsWithin(Duration.ofSeconds(10));
+		Awaitility.await()
+			.atMost(Duration.ofSeconds(10))
+			.untilAsserted(() -> {
+				assertThat(future1.isDone()).isTrue();
+				assertThat(future2.isDone()).isTrue();
+				assertThat((future1.get().extract().statusCode() == 201 &&
+							future2.get().extract().statusCode() == 400) ||
+						(future1.get().extract().statusCode() == 400 &&
+							future2.get().extract().statusCode() == 201)).isTrue();
+			});
+
 	}
 
 	@Test
@@ -738,5 +739,176 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
 			.log().all()
 			.statusCode(404);
+	}
+
+	@Test
+	public void given_ApplicationAssessed_When_BulkCreateListOfApplications_Then_CreationIsDoneAndResultIsListOfApplications() {
+		AssessmentBulkDto headerBulk = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(AssessmentBulkPostDto.builder()
+					.applications(List.of(ApplicationDto.builder().applicationId(999L).build(),
+							ApplicationDto.builder().applicationId(888L).build(),
+							ApplicationDto.builder().applicationId(777L).build()))
+					.build())
+		.when()
+			.post("/assessments/bulk")
+		.then()
+			.log().all()
+			.statusCode(202)
+			.extract().as(AssessmentBulkDto.class);
+
+		Awaitility.await()
+		.atMost(50, TimeUnit.SECONDS)
+		.pollInterval(Duration.ofSeconds(5))
+		.untilAsserted(() -> {
+			log.info("Calling");
+			AssessmentBulkDto bulkDtos = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+			.when()
+				.get("/assessments/bulk/" + headerBulk.getBulkId())
+			.then()
+				.log().all()
+				.statusCode(200).extract().as(AssessmentBulkDto.class);
+
+			assertThat(bulkDtos.getAssessments()).hasSize(3);
+			assertThat(bulkDtos.getAssessments()).allMatch(e -> StringUtils.isBlank(e.getError()));
+			assertThat(bulkDtos.getAssessments()).allMatch(e -> null != e.getId());
+			assertThat(bulkDtos.getCompleted()).isTrue();
+		});
+	}
+
+	@Test
+	public void given_ApplicationAssessed_When_BulkCopyListOfApplications_Then_CopyIsDoneAndResultIsListOfApplications() throws InterruptedException {
+		// Creation of the Assessment
+		AssessmentHeaderDto assessmentHeaderDto = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(new ApplicationDto(99999L))
+				.when()
+				.post("/assessments")
+				.then()
+				.statusCode(201)
+				.extract().as(AssessmentHeaderDto.class);
+
+		// Retrieval of the assessment created
+		AssessmentDto assessmentSource = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.when()
+			.get("/assessments/" + assessmentHeaderDto.getId())
+			.then()
+			.log().all()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+
+		AssessmentCategoryDto category = assessmentSource.getQuestionnaire().getCategories().get(0);
+		AssessmentQuestionDto question = category.getQuestions().get(0);
+		AssessmentQuestionOptionDto option = question.getOptions().get(0);
+
+		// Modification of 1 category comment, 1 option selected, 2 stakeholders , 2 stakeholdergroups
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(AssessmentDto.builder()
+				.applicationId(99999L)
+				.id(assessmentHeaderDto.getId())
+				.questionnaire(
+					AssessmentQuestionnaireDto.builder()
+						.categories(List.of(
+							AssessmentCategoryDto.builder()
+								.id(category.getId())
+								.comment("USER COMMENT 1")
+								.questions(List.of(
+									AssessmentQuestionDto.builder()
+										.id(question.getId())
+										.options(List.of(
+											AssessmentQuestionOptionDto.builder()
+												.id(option.getId())
+												.checked(true)
+												.build()
+										))
+										.build()
+								))
+								.build()))
+						.build())
+				.stakeholderGroups(List.of(1000L, 2000L))
+				.stakeholders(List.of(444L, 555L))
+				.build())
+			.when()
+			.patch("/assessments/" + assessmentHeaderDto.getId())
+			.then()
+			.log().all()
+			.statusCode(200)
+			.body("id", equalTo(assessmentHeaderDto.getId().intValue()),
+				"applicationId", equalTo(99999),
+				"status", equalTo("STARTED"));
+
+		AssessmentBulkDto headerBulk = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(AssessmentBulkPostDto.builder()
+						.fromAssessmentId(assessmentHeaderDto.getId())
+						.applications(List.of(ApplicationDto.builder().applicationId(1999L).build(),
+								ApplicationDto.builder().applicationId(1888L).build(),
+								ApplicationDto.builder().applicationId(1666L).build(),
+								ApplicationDto.builder().applicationId(1777L).build()
+								))
+						.build())
+		.when()
+			.post("/assessments/bulk")
+		.then()
+			.log().all()
+			.statusCode(202)
+			.extract().as(AssessmentBulkDto.class);
+
+		Awaitility.await()
+		.atMost(50, TimeUnit.SECONDS)
+		.untilAsserted(() -> {
+			AssessmentBulkDto bulkDto = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+			.when()
+				.get("/assessments/bulk/" + headerBulk.getBulkId())
+			.then()
+				.log().all()
+				.statusCode(200).extract().as(AssessmentBulkDto.class);
+
+			assertThat(bulkDto.getAssessments()).hasSize(4);
+			assertThat(bulkDto.getAssessments()).allMatch(e -> StringUtils.isBlank(e.getError()));
+			assertThat(bulkDto.getAssessments()).allMatch(e -> null != e.getId());
+			assertThat(bulkDto.getCompleted()).isTrue();
+		});
+
+		AssessmentHeaderDto[] assessments = given()
+			.queryParam("applicationId", "1888")
+			.when()
+			.get("/assessments")
+			.then()
+			.statusCode(200)
+			.extract().as(AssessmentHeaderDto[].class);
+
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.when()
+			.get("/assessments/" + assessments[0].getId())
+			.then()
+			.log().all()
+			.statusCode(200)
+			.body("applicationId", is(1888))
+			.body("status", is("STARTED"))
+			.body("stakeholders.size()", is(2))
+			.body("stakeholderGroups.size()", is(2))
+			.body("questionnaire.categories.size()", is(5))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.comment", is("USER COMMENT 1"))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.title", is(category.getTitle()))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.size()", is(category.getQuestions().size()))
+
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.find{it.order==" + question.getOrder() + "}.description", is(question.getDescription()))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.find{it.order==" + question.getOrder() + "}.options.size()", is(question.getOptions().size() ))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.find{it.order==" + question.getOrder() + "}.options.find{it.order==" + option.getOrder() + "}.checked", is(true));
+
 	}
 }
