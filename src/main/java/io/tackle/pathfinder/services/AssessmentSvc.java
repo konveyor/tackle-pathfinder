@@ -16,10 +16,13 @@ import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.Value;
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.persistence.*;
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -336,6 +339,25 @@ public class AssessmentSvc {
                 .map(a -> new LandscapeDto(a.get().getId().longValue(), "UNKNOWN".equalsIgnoreCase(a.get().getRisk()) ? Risk.GREEN : Risk.valueOf(a.get().getRisk())))
                 .collect(toList());
             return collect;
+    }
+    @Transactional
+    public List<RiskLineDto> identifiedRisks(List<Long> applicationList) {
+        String sqlString = "select cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option, cast(array_agg(a.application_id) as text) \n" +
+                "from assessment_category cat join assessment_question q on cat.id = q.assessment_category_id\n" +
+                "                             join assessment_singleoption opt on q.id = opt.assessment_question_id and opt.selected is true\n" +
+                "                             join assessment_questionnaire aq on cat.assessment_questionnaire_id = aq.id\n" +
+                "                             join assessment a on aq.assessment_id = a.id\n" +
+                "where cat.deleted is not true\n" +
+                "      AND q.deleted is not true\n" +
+                "      AND opt.deleted is not true\n" +
+                "      AND aq.deleted is not true\n" +
+                "      AND a.deleted is not true\n" +
+                "      AND a.application_id in (" + StringUtils.join(applicationList, ",") + ") " +
+                "group by cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option " +
+                "order by cat.category_order, q.question_order, opt.singleoption_order;";
+
+        Query query = entityManager.createNativeQuery(sqlString);
+        return mapper.riskListQueryToRiskLineDtoList(query.getResultList());
     }
 
     private AssessmentRiskDto sqlRowToAssessmentRisk(Object row) {

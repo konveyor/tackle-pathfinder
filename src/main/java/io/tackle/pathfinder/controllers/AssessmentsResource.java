@@ -4,6 +4,7 @@ import io.tackle.pathfinder.dto.ApplicationDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.LandscapeDto;
+import io.tackle.pathfinder.dto.RiskLineDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
 
 import javax.inject.Inject;
@@ -69,6 +70,18 @@ public class AssessmentsResource {
   public Response deleteAssessment(@NotNull @PathParam("assessmentId") Long assessmentId) {
     service.deleteAssessment(assessmentId);
     return Response.ok().status(Response.Status.NO_CONTENT).build();
+  }
+
+  @POST
+  @Path("risks")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<ApplicationDto> applicationList) {
+    if (!applicationList.isEmpty()) {
+      return service.identifiedRisks(applicationList.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
+    } else {
+      throw new BadRequestException();
+    }
   }
 
   @POST

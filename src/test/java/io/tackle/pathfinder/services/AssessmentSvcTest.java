@@ -1,7 +1,6 @@
 package io.tackle.pathfinder.services;
 
 import io.quarkus.panache.mock.PanacheMock;
-import io.quarkus.test.Mock;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
@@ -180,7 +179,7 @@ public class AssessmentSvcTest {
 
         AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment);
         assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
-        assertThat(assessmentDto.getStakeholders()).hasSize(3); 
+        assertThat(assessmentDto.getStakeholders()).hasSize(3);
 
         // Stakeholders and Stakeholdergroups NOT send will imply leave what is there without touching it
         assessmentDto.setStakeholderGroups(null);
@@ -191,7 +190,7 @@ public class AssessmentSvcTest {
         Assessment assessmentUpdated = Assessment.findById(assessment.id);
         assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
         assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
-        
+
         // adding again the same original list to the dtos, should not change anything as we are adding the same ones it contains
         assessmentDto.setStakeholders(List.of(180L, 200L, 300L, 800L));
         assessmentDto.setStakeholderGroups(List.of(550L, 650L, 750L));
@@ -201,13 +200,13 @@ public class AssessmentSvcTest {
         assessmentUpdated = Assessment.findById(assessment.id);
         assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(180L, 200L, 300L, 800L);
         assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(550L, 650L, 750L);
-        
+
         assessmentSvc.updateAssessment(assessment.id, assessmentDto);
 
         assessmentUpdated = Assessment.findById(assessment.id);
         assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(180L, 200L, 300L, 800L);
         assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(550L, 650L, 750L);
-    }    
+    }
     
     @Test
     @Transactional
@@ -520,5 +519,72 @@ public class AssessmentSvcTest {
             .build();
         single.persistAndFlush();
         return single;
+    }
+
+    /**
+     * Here we create 2 Assessments, and select 2 answers in the first and 4 in the second
+     * 2 answers on the second assessment are the same answers as in the first one
+     *
+     * So, the result should be 4 different question-answer
+     * 2 of those answers should have 2 applications, the other 2 only the second application
+     *
+     */
+    @Transactional
+    @Test
+    public void given_TwoAssessmentsWith6AnswersButSharing2Questions_When_IdentifiedRisks_Then_ResultIs4LinesBut2Has2Applications() {
+        Assessment assessment1 = createAssessment(Questionnaire.findAll().firstResult(), 5566L);
+
+        AssessmentQuestion question1 = getAssessmentQuestion(assessment1, 1);
+        AssessmentSingleOption option1 = getAssessmentOption(assessment1, 1);
+        option1.selected = true;
+
+        AssessmentQuestion question2 = getAssessmentQuestion(assessment1, 2);
+        AssessmentSingleOption option2 = getAssessmentOption(assessment1, 2);
+        option2.selected = true;
+
+        Assessment assessment2 = createAssessment(Questionnaire.findAll().firstResult(), 6677L);
+        getAssessmentOption(assessment2, 1).selected = true;
+        getAssessmentOption(assessment2, 2).selected = true;
+
+        AssessmentQuestion question3 = getAssessmentQuestion(assessment2, 3);
+        AssessmentSingleOption option3 = getAssessmentOption(assessment2, 3);
+        option3.selected = true;
+
+        AssessmentQuestion question4 = getAssessmentQuestion(assessment2, 4);
+        AssessmentSingleOption option4 = getAssessmentOption(assessment2, 4);
+        option4.selected = true;
+
+        List<RiskLineDto> riskLineDtos = assessmentSvc.identifiedRisks(List.of(5566L, 6677L));
+
+        assertThat(riskLineDtos).hasSize(4);
+        assertThat(riskLineDtos.stream()
+                .filter(e -> e.getQuestion().equals(question1.questionText) && e.getAnswer().equals(option1.option)).count()).isEqualTo(1L);
+        assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question1.questionText) && e.getAnswer().equals(option1.option))
+                .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(5566L, 6677L);
+        assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question2.questionText) && e.getAnswer().equals(option2.option))
+                .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(5566L, 6677L);
+        assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question3.questionText) && e.getAnswer().equals(option3.option))
+                .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(6677L);
+        assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question4.questionText) && e.getAnswer().equals(option4.option))
+                .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(6677L);
+
+        assertThat(riskLineDtos).containsExactlyElementsOf(riskLineDtos.stream()
+            .sorted(Comparator.comparing(e -> {
+                int cat_order = ((AssessmentCategory) AssessmentCategory.find("name", e.getCategory()).firstResult()).order;
+                int que_order = ((AssessmentQuestion) AssessmentQuestion.find("questionText", e.getQuestion()).firstResult()).order;
+                int opt_order = ((AssessmentSingleOption) AssessmentSingleOption.find("option", e.getAnswer()).firstResult()).order;
+                return cat_order * 100 + que_order * 10 + opt_order;
+            })).collect(Collectors.toList()));
+    }
+
+    private AssessmentQuestion getAssessmentQuestion(Assessment assessment1, Integer order) {
+        return assessment1.assessmentQuestionnaire.categories.stream()
+                .filter(e -> e.order == order).findFirst().get()
+                .questions.stream().filter(e -> e.order == order).findFirst().get();
+    }
+
+    private AssessmentSingleOption getAssessmentOption(Assessment assessment1, Integer order) {
+        return getAssessmentQuestion(assessment1, order)
+                .singleOptions.stream().filter(e -> e.order == order).findFirst().get();
     }
 }

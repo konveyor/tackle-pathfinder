@@ -9,6 +9,7 @@ import io.tackle.commons.testcontainers.KeycloakTestResource;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.commons.tests.SecuredResourceTest;
 import io.tackle.pathfinder.dto.*;
+import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
@@ -27,6 +28,7 @@ import javax.transaction.Transactional;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -817,5 +819,108 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 		// assert
 		assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(header1.getId(), Risk.GREEN), new LandscapeDto(header2.getId(), Risk.RED));
+	}
+
+	@Test
+	public void given_ApplicationList_WhenIdentifiedRisks_Then_ResultListOfAnswers() {
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(new ApplicationDto(15500L))
+				.when()
+				.post("/assessments")
+				.then()
+				.log().all()
+				.statusCode(201)
+				.extract().as(AssessmentHeaderDto.class);
+
+		// Retrieval of the assessment created
+		AssessmentDto assessment = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.when()
+				.get("/assessments/" + header.getId())
+				.then()
+				.statusCode(200)
+				.extract().as(AssessmentDto.class);
+
+		AssessmentCategoryDto category = assessment.getQuestionnaire().getCategories().get(0);
+		AssessmentQuestionDto question = category.getQuestions().get(0);
+		AssessmentQuestionOptionDto option = question.getOptions().get(0);
+
+		// Modification of 1 category comment, 1 option selected, 2 stakeholders , 2 stakeholdergroups
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(AssessmentDto.builder()
+				.applicationId(15500L)
+				.id(header.getId())
+				.questionnaire(AssessmentQuestionnaireDto.builder()
+					.categories(List.of(AssessmentCategoryDto.builder()
+						.id(category.getId())
+						.comment("USER COMMENT 1")
+						.questions(List.of(
+							AssessmentQuestionDto.builder()
+								.id(question.getId())
+								.options(List.of(
+									AssessmentQuestionOptionDto.builder()
+										.id(option.getId())
+										.checked(true)
+										.build()
+								))
+								.build()
+						))
+						.build()))
+					.build())
+				.stakeholderGroups(List.of(1000L, 2000L))
+				.stakeholders(List.of(444L, 555L))
+				.build())
+				.when()
+				.patch("/assessments/" + header.getId())
+				.then()
+				.statusCode(200)
+				.body("id", equalTo(header.getId().intValue()),
+						"applicationId", equalTo(15500),
+						"status", equalTo("STARTED"));
+
+		RiskLineDto[] riskLineDtos = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(List.of(new ApplicationDto(15500L),new ApplicationDto(589500L),new ApplicationDto(689500L)))
+		.when()
+			.post("/assessments/risks")
+		.then()
+			.log().all()
+			.statusCode(200)
+		.extract().as(RiskLineDto[].class);
+
+		assertThat(riskLineDtos).hasSize(1);
+		assertThat(riskLineDtos[0].getApplications()).containsExactlyInAnyOrder(15500L);
+	}
+
+	@Test
+	public void given_EmptyListOfApplications_when_IdentifiedRisks_then_HTTP400() {
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.post("/assessments/risks")
+		.then()
+			.log().all()
+			.statusCode(400);
+	}
+
+	@Test
+	public void given_ListOfApplicationsWithNoAssessments_when_IdentifiedRisks_then_EmptyList() {
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(List.of(new ApplicationDto(91L), new ApplicationDto(92L), new ApplicationDto(93L)))
+		.when()
+			.post("/assessments/risks")
+		.then()
+			.statusCode(200)
+			.body("size()", is(0));
 	}
 }
