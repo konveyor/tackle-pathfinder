@@ -3,6 +3,7 @@ package io.tackle.pathfinder.controllers;
 import io.tackle.pathfinder.dto.ApplicationDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
+import io.tackle.pathfinder.dto.LandscapeDto;
 import io.tackle.pathfinder.dto.RiskLineDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
 
@@ -15,6 +16,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Path("/assessments")
@@ -80,6 +82,14 @@ public class AssessmentsResource {
     } else {
       throw new BadRequestException();
     }
+  }
+
+  @POST
+  @Path("/assessment-risk")
+  @Produces("application/json")
+  public List<LandscapeDto> getLandscape(@NotNull @Valid List<ApplicationDto> applicationIds) {
+    if (applicationIds.isEmpty()) throw new BadRequestException();
+    return service.landscape(applicationIds.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
   }
 
 }

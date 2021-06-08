@@ -9,6 +9,8 @@ import io.tackle.commons.testcontainers.KeycloakTestResource;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.commons.tests.SecuredResourceTest;
 import io.tackle.pathfinder.dto.*;
+import io.tackle.pathfinder.dto.*;
+import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
@@ -236,13 +238,14 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.body("stakeholderGroups.size()", is(2))
 			.body("questionnaire.categories.size()", is(5))
 			.body("questionnaire.categories.find{it.order==2}.comment", is("This is a test comment"))
-			.body("questionnaire.categories.find{it.order==5}.title", is("Application Cross-Cutting concerns"))
+			.body("questionnaire.categories.find{it.order==5}.title", is("Application cross-cutting concerns"))
 			.body("questionnaire.categories.find{it.order==5}.questions.size()", is(6))
 
-			.body("questionnaire.categories.find{it.order==1}.questions.find{it.question=='What is the Mean Time to Recover (MTTR) when a fault is found with the application in production?'}.description", is("Gauge the problem resolution time, MTTR (mean time to recover) is the average time it takes to repair/recover a system"))
-			.body("questionnaire.categories.find{it.order==1}.questions.find{it.question=='What is the Mean Time to Recover (MTTR) when a fault is found with the application in production?'}.options.size()", is(6))
-			.body("questionnaire.categories.find{it.order==5}.questions.find{it.question=='How mature is the existing containerisation process, if any?'}.options.find{it.option=='Application containerisation not attempted as yet'}.checked", is(true))
-			.body("questionnaire.categories.find{it.order==5}.questions.find{it.question=='How mature is the existing containerisation process, if any?'}.options.find{it.option=='Application containerisation not attempted as yet'}.risk", is("GREEN"));
+			.body("questionnaire.categories.find{it.order==1}.questions.find{it.question=='What is the application\\\'s mean time to recover (MTTR) from failure in a production environment?'}.description", is("Average time for the application to recover from failure"))
+			.body("questionnaire.categories.find{it.order==1}.questions.find{it.question=='What is the application\\\'s mean time to recover (MTTR) from failure in a production environment?'}.options.size()", is(6))
+			.body("questionnaire.categories.find{it.order==5}.questions.find{it.question=='How mature is the containerization process, if any?'}.options.find{it.option=='Application containerization has not yet been attempted'}.checked", is(true))
+  		    .body("questionnaire.categories.find{it.order==5}.questions.find{it.question=='How mature is the containerization process, if any?'}.options.find{it.option=='Application containerization has not yet been attempted'}.risk", is("GREEN"));
+
 	}
 
 	@Test
@@ -569,8 +572,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		group.persist();
 		assessment.stakeholdergroups.add(group);
 
-		AssessmentSingleOption.update("set selected = true where option = 'Application containerisation not attempted as yet'");
-		AssessmentCategory.update("set comment = 'This is a test comment' where name='Application Dependencies'");
+		AssessmentSingleOption.update("set selected = true where option = 'Application containerization has not yet been attempted'");
+		AssessmentCategory.update("set comment = 'This is a test comment' where name='Application dependencies'");
     }
 
 	@Test
@@ -717,7 +720,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
 			.log().all()
 			.statusCode(404);
-	}	
+	}
 
 	@Test
 	public void given_ApplicationNotAssessed_When_CopyAssessmentToAnotherNotAssessedApp_Then_BadRequestIsAssessed() {
@@ -731,6 +734,91 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
 			.log().all()
 			.statusCode(404);
+	}
+
+	@Test
+	public void given_ApplicationsAssessed_When_LandscapeRequested_Then_ExpectedJSONIsReturned() {
+		// create 2 assessments
+		// Creation of the Assessment
+		AssessmentHeaderDto header1 = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(new ApplicationDto(659500L))
+			.when()
+				.post("/assessments")
+			.then()
+				.statusCode(201)
+				.extract().as(AssessmentHeaderDto.class);
+		// Creation of the Assessment
+		AssessmentHeaderDto header2 = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(new ApplicationDto(669500L))
+			.when()
+				.post("/assessments")
+			.then()
+				.statusCode(201)
+				.extract().as(AssessmentHeaderDto.class);
+
+		// get both assessments
+		// Get the contents of the assessment
+		AssessmentDto assessmentSource1 = given()
+			.when()
+			.get("/assessments/" + header1.getId())
+			.then()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+		// Get the contents of the assessment
+		AssessmentDto assessmentSource2 = given()
+			.when()
+			.get("/assessments/" + header2.getId())
+			.then()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+
+		// answer questions and complete the assessment
+		assessmentSource1.getQuestionnaire().getCategories().forEach(a -> a.getQuestions().forEach(b -> b.getOptions().stream().filter(c -> c.getRisk() == Risk.GREEN).findFirst().ifPresent(d -> d.setChecked(true))));
+		assessmentSource2.getQuestionnaire().getCategories().forEach(a -> a.getQuestions().forEach(b -> b.getOptions().stream().filter(c -> c.getRisk() == Risk.RED).findFirst().ifPresent(d -> d.setChecked(true))));
+		assessmentSource1.setStatus(AssessmentStatus.COMPLETE);
+		assessmentSource2.setStatus(AssessmentStatus.COMPLETE);
+
+		// Update assessments
+		// Modification of status to complete
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(assessmentSource1)
+			.when()
+			.patch("/assessments/" + header1.getId())
+			.then()
+			.statusCode(200)
+			.body("id", equalTo(header1.getId().intValue()),
+				"status", equalTo("COMPLETE"));
+
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(assessmentSource2)
+			.when()
+			.patch("/assessments/" + header2.getId())
+			.then()
+			.statusCode(200)
+			.body("id", equalTo(header2.getId().intValue()),
+				"status", equalTo("COMPLETE"));
+
+		// request Landscape
+		LandscapeDto[] landscape = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(List.of(new ApplicationDto(659500L), new ApplicationDto(669500L)))
+			.when()
+				.post("/assessments/assessment-risk")
+			.then()
+				.statusCode(200)
+			.extract().as(LandscapeDto[].class);
+
+		// assert
+		assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(header1.getId(), Risk.GREEN), new LandscapeDto(header2.getId(), Risk.RED));
 	}
 
 	@Test
