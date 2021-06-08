@@ -359,7 +359,6 @@ public class AssessmentSvc {
         Query query = entityManager.createNativeQuery(sqlString);
         return mapper.riskListQueryToRiskLineDtoList(query.getResultList());
     }
-}
 
     private AssessmentRiskDto sqlRowToAssessmentRisk(Object row) {
         return new AssessmentRiskDto((Integer) ((Object[]) row)[0], (String) ((Object[]) row)[1], (Integer) ((Object[]) row)[2]);
