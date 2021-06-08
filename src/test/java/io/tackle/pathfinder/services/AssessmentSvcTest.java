@@ -6,12 +6,7 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
-import io.tackle.pathfinder.dto.AssessmentCategoryDto;
-import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionDto;
-import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
-import io.tackle.pathfinder.dto.AssessmentStatus;
+import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.QuestionType;
 import io.tackle.pathfinder.model.Risk;
@@ -38,6 +33,7 @@ import javax.ws.rs.BadRequestException;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -176,7 +172,7 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
-    public void given_CreatedAssessment_When_UpdateSeveralTimes_Then_StakeholdersAreNotDuplicated() throws InterruptedException {
+    public void given_CreatedAssessment_When_UpdateSeveralTimes_Then_StakeholdersAreNotDuplicated()  {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 2415L);
 
         assertThat(assessment.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
@@ -370,6 +366,97 @@ public class AssessmentSvcTest {
         assertThatThrownBy(() -> assessmentSvc.deleteAssessment(assessment.id)).isInstanceOf(BadRequestException.class);
     }
 
+    @Test
+    @Transactional
+    public void given_AssessmentWithRedAnswers_When_landscape_Then_ResultIsRED() {
+        // create 2 assessments
+        AssessmentHeaderDto assessmentHeader1 = assessmentSvc.createAssessment( 899200L);
+        AssessmentHeaderDto assessmentHeader2 = assessmentSvc.createAssessment( 898200L);
+        Assessment assessment1 =  Assessment.findById(assessmentHeader1.getId());
+        Assessment assessment2 =  Assessment.findById(assessmentHeader2.getId());
+
+        // update both, selecting first RED option
+        assessment1.status = AssessmentStatus.COMPLETE;
+        assessment1.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.RED).findFirst().ifPresent(b -> b.selected = true)));
+        assessment2.status = AssessmentStatus.COMPLETE;
+        assessment2.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.RED).findFirst().ifPresent(b -> b.selected = true)));
+
+        // get landscape report of both
+        List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(899200L, 898200L));
+
+        // asserts
+        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.RED), new LandscapeDto(assessment2.id, Risk.RED));
+    }
+
+    @Test
+    @Transactional
+    public void given_AssessmentWithNoRedAnswersFewAmber_When_landscape_Then_ResultIsGREEN() {
+        // create 2 assessments
+        AssessmentHeaderDto assessmentHeader1 = assessmentSvc.createAssessment( 896200L);
+        AssessmentHeaderDto assessmentHeader2 = assessmentSvc.createAssessment( 895200L);
+        Assessment assessment1 =  Assessment.findById(assessmentHeader1.getId());
+        Assessment assessment2 =  Assessment.findById(assessmentHeader2.getId());
+
+        // update both, selecting first GREEN/UNKNOWN option and 1 AMBER and it will remain GREEN
+        assessment1.status = AssessmentStatus.COMPLETE;
+        assessment1.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.GREEN).findFirst().ifPresent(b -> b.selected = true)));
+        assessment2.status = AssessmentStatus.COMPLETE;
+        assessment2.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.UNKNOWN).findFirst().ifPresent(b -> b.selected = true)));
+
+        assessment1.assessmentQuestionnaire.categories.get(1).questions.get(1).singleOptions.stream().filter(a -> a.risk == Risk.AMBER).findFirst().ifPresent(b -> b.selected = true);
+        assessment2.assessmentQuestionnaire.categories.get(1).questions.get(1).singleOptions.stream().filter(a -> a.risk == Risk.AMBER).findFirst().ifPresent(b -> b.selected = true);
+
+        // get landscape report of both
+        List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(896200L, 895200L));
+
+        // asserts
+        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.GREEN), new LandscapeDto(assessment2.id, Risk.GREEN));
+    }
+
+    @Test
+    @Transactional
+    public void given_AssessmentWithNoRedAnswersSeveralAmber_When_landscape_Then_ResultIsAMBER() {
+        // create 2 assessments
+        AssessmentHeaderDto assessmentHeader1 = assessmentSvc.createAssessment(894200L);
+        AssessmentHeaderDto assessmentHeader2 = assessmentSvc.createAssessment(893200L);
+        Assessment assessment1 =  Assessment.findById(assessmentHeader1.getId());
+        Assessment assessment2 =  Assessment.findById(assessmentHeader2.getId());
+
+        // update both, selecting first GREEN option and UNKNOWN
+        assessment1.status = AssessmentStatus.COMPLETE;
+        assessment1.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.AMBER).findFirst().ifPresent(b -> b.selected = true)));
+        assessment2.status = AssessmentStatus.COMPLETE;
+        assessment2.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.AMBER).findFirst().ifPresent(b -> b.selected = true)));
+
+        // get landscape report of both
+        List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(894200L, 893200L));
+
+        // asserts
+        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.AMBER), new LandscapeDto(assessment2.id, Risk.AMBER));
+    }
+
+    @Test
+    @Transactional
+    public void given_AssessmentsNotCompleted_When_landscape_Then_ThoseAssessmentsAreNotIncludedInResult() {
+        // create 2 assessments
+        AssessmentHeaderDto assessmentHeader1 = assessmentSvc.createAssessment(1894200L);
+        AssessmentHeaderDto assessmentHeader2 = assessmentSvc.createAssessment(1893200L);
+        Assessment assessment1 =  Assessment.findById(assessmentHeader1.getId());
+        Assessment assessment2 =  Assessment.findById(assessmentHeader2.getId());
+
+        // update both, selecting first GREEN option and UNKNOWN
+        assessment1.status = AssessmentStatus.COMPLETE;
+        assessment1.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.AMBER).findFirst().ifPresent(b -> b.selected = true)));
+        assessment2.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.AMBER).findFirst().ifPresent(b -> b.selected = true)));
+
+        // get landscape report of both
+        List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(1894200L, 1893200L));
+
+        // asserts
+        assertThat(landscape).containsExactly(new LandscapeDto(assessment1.id, Risk.AMBER));
+    }
+
+
     @Transactional
     public Assessment createAssessment(Questionnaire questionnaire, long applicationId) {
         log.info("Creating an assessment ");
@@ -393,8 +480,11 @@ public class AssessmentSvcTest {
 
     @Transactional
     private Category createCategory(Questionnaire questionnaire, int order) {
-        Category category = Category.builder().name("category-" + order).order(order).questionnaire(questionnaire)
-                .build();
+        Category category = Category.builder()
+            .name("category-" + order)
+            .order(order)
+            .questionnaire(questionnaire)
+            .build();
         category.persistAndFlush();
 
         category.questions = IntStream.range(1, 20).mapToObj(e -> createQuestion(category, e))
@@ -404,8 +494,14 @@ public class AssessmentSvcTest {
 
     @Transactional
     private Question createQuestion(Category category, int i) {
-        Question question = Question.builder().name("question-" + i).order(i).questionText("questionText-" + i)
-                .description("tooltip-" + i).type(QuestionType.SINGLE).build();
+        Question question = Question.builder()
+            .name("question-" + i)
+            .order(i)
+            .questionText("questionText-" + i)
+            .description("tooltip-" + i)
+            .type(QuestionType.SINGLE)
+            .category(category)
+            .build();
         question.persistAndFlush();
 
         question.singleOptions = IntStream.range(1, new Random().nextInt(10) + 3)
@@ -416,8 +512,12 @@ public class AssessmentSvcTest {
 
     @Transactional
     private SingleOption createSingleOption(Question question, int i) {
-        SingleOption single = SingleOption.builder().option("option-" + i).order(i).question(question)
-                .risk(Risk.values()[new Random().nextInt(Risk.values().length)]).build();
+        SingleOption single = SingleOption.builder()
+            .option("option-" + i)
+            .order(i)
+            .question(question)
+            .risk(Risk.values()[new Random().nextInt(Risk.values().length)])
+            .build();
         single.persistAndFlush();
         return single;
     }

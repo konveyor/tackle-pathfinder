@@ -209,4 +209,25 @@ req_not_existing_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessment
             -w "%{http_code}")
 test "404" = "$req_not_existing_assessment"
 
+echo
+echo
+echo "15 >>> Requesting Landscape report"
+# using assessment from step 13
+categorySourceid=$(echo $assessmentSource_json | jq '.questionnaire.categories[] | select (.order == 1) | .id')
+questionSourceid=$(echo $assessmentSource_json | jq '.questionnaire.categories[] | select (.order == 1) | .questions[] | select (.order == 1) | .id')
+optionRedSourceid=$(echo $assessmentSource_json | \
+       jq "first(.questionnaire.categories[] | select (.order == 1) | .questions[] | select (.order == 1) | .options[] | select (.risk == \"RED\")) | .id")
+
+curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentSourceId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}" \
+            -H 'Content-Type: application/json' \
+            -d "{ \"status\": \"COMPLETE\",\"questionnaire\": {\"categories\": [{\"id\": $categorySourceid,\"questions\": [{\"id\": $questionSourceid,\"options\": [{\"id\": $optionRedSourceid,\"checked\": true}]}]}]}}"
+
+landscapeJson=$(curl "http://$api_ip/pathfinder/assessments/assessment-risk" \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}" \
+            -d "[{\"applicationId\":325100},{\"applicationId\":998899}]" \
+            -H 'Content-Type: application/json')
+echo $landscapeJson | grep "[{\"assessmentId\":$assessmentSourceId,\"risk\":\"RED\"}]"
+
 echo " +++++ API CHECK SUCCESSFUL ++++++"
