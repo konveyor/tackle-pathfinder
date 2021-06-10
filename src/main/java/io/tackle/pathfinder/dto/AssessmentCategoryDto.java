@@ -5,11 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import io.tackle.pathfinder.translation.Translate;
-import io.tackle.pathfinder.translation.TranslateProcessor;
-import io.tackle.pathfinder.translation.TranslateSerializer;
 import lombok.*;
 
 import java.util.List;
