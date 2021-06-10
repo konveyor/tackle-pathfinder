@@ -6,6 +6,9 @@ import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.LandscapeDto;
 import io.tackle.pathfinder.dto.RiskLineDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
+import io.tackle.pathfinder.services.TranslatorSvc;
+import org.bouncycastle.util.encoders.Translator;
+import org.jboss.resteasy.annotations.Query;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -16,18 +19,21 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Path("/assessments")
 public class AssessmentsResource {
   @Inject
-  AssessmentSvc service;
+  AssessmentSvc assessmentSvc;
+
+  @Inject
+  TranslatorSvc translatorSvc;
+
 
   @GET
   @Produces("application/json")
   public List<AssessmentHeaderDto> getApplicationAssessments(@NotNull @QueryParam("applicationId") Long applicationId) {
-    return service.getAssessmentHeaderDtoByApplicationId(applicationId).stream().collect(Collectors.toList());
+    return assessmentSvc.getAssessmentHeaderDtoByApplicationId(applicationId).stream().collect(Collectors.toList());
   }
 
   @POST
@@ -37,9 +43,9 @@ public class AssessmentsResource {
     AssessmentHeaderDto createAssessment;
     
     if (fromAssessmentId != null) {
-      createAssessment = service.copyAssessment(fromAssessmentId, data.getApplicationId());
+      createAssessment = assessmentSvc.copyAssessment(fromAssessmentId, data.getApplicationId());
     } else {
-      createAssessment = service.createAssessment(data.getApplicationId());
+      createAssessment = assessmentSvc.createAssessment(data.getApplicationId());
     }
     
     return Response
@@ -52,8 +58,8 @@ public class AssessmentsResource {
   @GET
   @Path("{assessmentId}")
   @Produces("application/json")
-  public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId) {
-    return service.getAssessmentDtoByAssessmentId(assessmentId);
+  public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @QueryParam("language") String language) {
+    return translatorSvc.translate(assessmentSvc.getAssessmentDtoByAssessmentId(assessmentId), language);
   }  
   
   @PATCH
@@ -61,14 +67,14 @@ public class AssessmentsResource {
   @Produces("application/json")
   @Consumes("application/json")
   public AssessmentHeaderDto updateAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @NotNull @Valid AssessmentDto assessment) {
-    return service.updateAssessment(assessmentId, assessment);
+    return assessmentSvc.updateAssessment(assessmentId, assessment);
   }
 
   @DELETE
   @Path("{assessmentId}")
   @Produces("application/json")
   public Response deleteAssessment(@NotNull @PathParam("assessmentId") Long assessmentId) {
-    service.deleteAssessment(assessmentId);
+    assessmentSvc.deleteAssessment(assessmentId);
     return Response.ok().status(Response.Status.NO_CONTENT).build();
   }
 
@@ -76,9 +82,9 @@ public class AssessmentsResource {
   @Path("risks")
   @Produces("application/json")
   @Consumes("application/json")
-  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<ApplicationDto> applicationList) {
+  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<ApplicationDto> applicationList, @QueryParam("language") String language) {
     if (!applicationList.isEmpty()) {
-      return service.identifiedRisks(applicationList.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
+      return assessmentSvc.identifiedRisks(applicationList.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
     } else {
       throw new BadRequestException();
     }
@@ -89,7 +95,7 @@ public class AssessmentsResource {
   @Produces("application/json")
   public List<LandscapeDto> getLandscape(@NotNull @Valid List<ApplicationDto> applicationIds) {
     if (applicationIds.isEmpty()) throw new BadRequestException();
-    return service.landscape(applicationIds.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
+    return assessmentSvc.landscape(applicationIds.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
   }
 
 }
