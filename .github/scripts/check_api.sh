@@ -209,4 +209,61 @@ req_not_existing_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessment
             -w "%{http_code}")
 test "404" = "$req_not_existing_assessment"
 
+echo
+echo
+echo "15 >>> Requesting Landscape report"
+# using assessment from step 13
+categorySourceid=$(echo $assessmentSource_json | jq '.questionnaire.categories[] | select (.order == 1) | .id')
+questionSourceid=$(echo $assessmentSource_json | jq '.questionnaire.categories[] | select (.order == 1) | .questions[] | select (.order == 1) | .id')
+optionRedSourceid=$(echo $assessmentSource_json | \
+       jq "first(.questionnaire.categories[] | select (.order == 1) | .questions[] | select (.order == 1) | .options[] | select (.risk == \"RED\")) | .id")
+
+curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentSourceId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}" \
+            -H 'Content-Type: application/json' \
+            -d "{ \"status\": \"COMPLETE\",\"questionnaire\": {\"categories\": [{\"id\": $categorySourceid,\"questions\": [{\"id\": $questionSourceid,\"options\": [{\"id\": $optionRedSourceid,\"checked\": true}]}]}]}}"
+
+landscapeJson=$(curl "http://$api_ip/pathfinder/assessments/assessment-risk" \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}" \
+            -d "[{\"applicationId\":325100},{\"applicationId\":998899}]" \
+            -H 'Content-Type: application/json')
+echo $landscapeJson | grep "[{\"assessmentId\":$assessmentSourceId,\"risk\":\"RED\"}]"
+
+echo
+echo
+echo "16 >>> Get Identified Risks for 3 applications , only 2 existing,  and 1 answer selected"
+
+req_identified_risks=$(curl -X POST "http://$api_ip/pathfinder/assessments/risks" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -d "[{\"applicationId\":10},{\"applicationId\":325100},{\"applicationId\":329100}]" \
+            -H 'Content-Type: application/json' -s)
+test "$(echo $req_identified_risks | jq 'length')" = "2"
+test "$(echo $req_identified_risks | jq '.[] | select(.answer == "Unknown") | .applications | length')" = "2"
+
+echo
+echo
+echo "17 >>> Get Identified Risks for 3 applications, none existing"
+
+req_identified_risks=$(curl -X POST "http://$api_ip/pathfinder/assessments/risks" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -d "[{\"applicationId\":10},{\"applicationId\":11},{\"applicationId\":12}]" \
+            -H 'Content-Type: application/json' -s)
+test "$(echo $req_identified_risks | jq 'length')" = "0"
+
+echo
+echo
+echo "18 >>> Get Identified Risks for 0 applications"
+
+req_identified_risks=$(curl -X POST "http://$api_ip/pathfinder/assessments/risks" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -H 'Content-Type: application/json' -s -w "%{http_code}" -o /dev/null)
+test "$(echo $req_identified_risks)" = "400"
+
+req_identified_risks=$(curl -X POST "http://$api_ip/pathfinder/assessments/risks" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -d "[]" \
+            -H 'Content-Type: application/json' -s -w "%{http_code}" -o /dev/null)
+test "$(echo $req_identified_risks)" = "400"
+
 echo " +++++ API CHECK SUCCESSFUL ++++++"
