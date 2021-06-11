@@ -87,6 +87,7 @@ public class AssessmentsResource {
   @POST
   @Path("/assessment-risk")
   @Produces("application/json")
+  @Consumes("application/json")
   public List<LandscapeDto> getLandscape(@NotNull @Valid List<ApplicationDto> applicationIds) {
     if (applicationIds.isEmpty()) throw new BadRequestException();
     return service.landscape(applicationIds.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));

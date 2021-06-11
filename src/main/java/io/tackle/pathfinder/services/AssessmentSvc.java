@@ -316,8 +316,8 @@ public class AssessmentSvc {
                 "            trunc(((0.0 + Count(*) OVER w_risk_count) / (Count(*) OVER (PARTITION BY assess.id)) * 100)) AS pct " +
                 "            FROM assessment_singleoption so " +
                 "                    join assessment_question qu on (qu.id = so.assessment_question_id and qu.deleted is not true) " +
-                "                    join assessment_category ca on (ca.id = qu.assessment_category_id and ca..deleted is not true) " +
-                "                    join assessment_questionnaire ques on (ques.id = ca.assessment_questionnaire_id and ques..deleted is not true) " +
+                "                    join assessment_category ca on (ca.id = qu.assessment_category_id and ca.deleted is not true) " +
+                "                    join assessment_questionnaire ques on (ques.id = ca.assessment_questionnaire_id and ques.deleted is not true) " +
                 "                    join assessment assess on (assess.id = ques.assessment_id and assess.deleted is not true) " +
                 "            WHERE so.selected = true " +
                 "                   AND assess.application_id in (" + applicationIds.stream().map(e -> e.toString()).collect(Collectors.joining(",")) + ") " +
