@@ -32,12 +32,10 @@ import javax.ws.rs.NotFoundException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @ApplicationScoped
 @Log
@@ -344,16 +342,26 @@ public class AssessmentSvc {
                                             Risk.UNKNOWN, unknownWeight,
                                             Risk.AMBER, amberWeight,
                                             Risk.GREEN, greenWeight);
-        Map<Risk, Double> confidenceMultiplier = Map.of(Risk.RED, redMultiplier, Risk.AMBER, amberMultiplier);
-        Map<Risk, Double> adjusterBase = Map.of(Risk.RED, redAdjuster, Risk.AMBER, amberAdjuster, Risk.GREEN, greenAdjuster, Risk.UNKNOWN, unknownAdjuster);
 
-        Map<Risk, Long> answersCountByRisk = assessment.assessmentQuestionnaire.categories.stream()
+        Stream<AssessmentSingleOption> answeredOptions = assessment.assessmentQuestionnaire.categories.stream()
             .flatMap(cat -> cat.questions.stream())
             .flatMap(que -> que.singleOptions.stream())
-            .filter(opt -> opt.selected)
+            .filter(opt -> opt.selected);
+        long totalAnswered = answeredOptions.count();
+
+        // Grouping to know how many answers per Risk
+        Map<Risk, Long> answersCountByRisk = answeredOptions
             .collect(Collectors.groupingBy(a -> a.risk, Collectors.counting()));
 
-        long totalAnswered = answersCountByRisk.values().stream().mapToLong(Long::longValue).sum();
+
+        BigDecimal result = getConfidenceOldPathfinder(weightMap, answeredOptions, totalAnswered, answersCountByRisk);
+
+        return result.intValue();
+    }
+
+    private BigDecimal getConfidenceOldPathfinder(Map<Risk, Integer> weightMap, Stream<AssessmentSingleOption> answeredOptions, long totalAnswered, Map<Risk, Long> answersCountByRisk) {
+        Map<Risk, Double> confidenceMultiplier = Map.of(Risk.RED, redMultiplier, Risk.AMBER, amberMultiplier);
+        Map<Risk, Double> adjusterBase = Map.of(Risk.RED, redAdjuster, Risk.AMBER, amberAdjuster, Risk.GREEN, greenAdjuster, Risk.UNKNOWN, unknownAdjuster);
 
         // Adjuster calculation
         AtomicDouble adjuster = new AtomicDouble(1);
@@ -364,10 +372,9 @@ public class AssessmentSvc {
         // Temp confidence iteration calculation
         // TODO Apparently this formula seems wrong, as the first execution in the forEach is multiplying by 0
         AtomicDouble confidence = new AtomicDouble(0.0);
-        assessment.assessmentQuestionnaire.categories.stream()
-            .flatMap(cat -> cat.questions.stream())
-            .flatMap(que -> que.singleOptions.stream())
-            .filter(opt -> opt.selected)
+
+        answeredOptions
+            .sorted(Comparator.comparing(a -> weightMap.get(a.risk))) // sorting by weight to put REDs first
             .forEach(opt -> {
                 confidence.set(confidence.get() * confidenceMultiplier.getOrDefault(opt.risk, 1.0));
                 confidence.getAndAdd(weightMap.get(opt.risk) * adjuster.get());
@@ -377,8 +384,19 @@ public class AssessmentSvc {
 
         BigDecimal result = new BigDecimal((confidence.get() / maxConfidence) * 100);
         result.setScale(0, RoundingMode.DOWN);
+        return result;
+    }
 
-        return result.intValue();
+    private BigDecimal getConfidenceTacklePathfinder(Map<Risk, Integer> weightMap, Stream<AssessmentSingleOption> answeredOptions, long totalAnswered, Map<Risk, Long> answersCountByRisk) {
+        Map<Risk, Double> adjusterBase = Map.of(Risk.RED, redAdjuster, Risk.AMBER, amberAdjuster, Risk.GREEN, greenAdjuster, Risk.UNKNOWN, unknownAdjuster);
+
+        double answeredWeight = answeredOptions.mapToDouble(a -> weightMap.get(a.risk) * adjusterBase.getOrDefault(a.risk, 1d)).sum();
+
+        long maxWeight = weightMap.get(Risk.GREEN) * totalAnswered;
+
+        BigDecimal result = new BigDecimal(answeredWeight / maxWeight * 100);
+        result.setScale(0, RoundingMode.DOWN);
+        return result;
     }
 
     //         if (redCount > 0) adjuster = adjuster * Math.pow(0.5, redCount);
