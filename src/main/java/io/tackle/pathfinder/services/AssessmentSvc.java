@@ -1,5 +1,6 @@
 package io.tackle.pathfinder.services;
 
+import com.google.common.util.concurrent.AtomicDouble;
 import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.Risk;
@@ -16,6 +17,7 @@ import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.Value;
 import lombok.extern.java.Log;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -31,8 +33,11 @@ import javax.ws.rs.NotFoundException;
 
 import java.util.*;
 import java.util.function.Function;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -44,6 +49,29 @@ public class AssessmentSvc {
 
     @Inject
     EntityManager entityManager;
+
+    @ConfigProperty(name = "confidence.risk.RED.weight")
+    Integer redWeight;
+    @ConfigProperty(name = "confidence.risk.GREEN.weight")
+    Integer greenWeight;
+    @ConfigProperty(name = "confidence.risk.AMBER.weight")
+    Integer amberWeight;
+    @ConfigProperty(name = "confidence.risk.UNKNOWN.weight")
+    Integer unknownWeight;
+
+    @ConfigProperty(name = "confidence.risk.AMBER.multiplier")
+    Double amberMultiplier;
+    @ConfigProperty(name = "confidence.risk.RED.multiplier")
+    Double redMultiplier;
+
+    @ConfigProperty(name = "confidence.risk.RED.adjuster")
+    Double redAdjuster;
+    @ConfigProperty(name = "confidence.risk.AMBER.adjuster")
+    Double amberAdjuster;
+    @ConfigProperty(name = "confidence.risk.GREEN.adjuster")
+    Double greenAdjuster;
+    @ConfigProperty(name = "confidence.risk.UNKNOWN.adjuster")
+    Double unknownAdjuster;
 
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
@@ -356,6 +384,49 @@ public class AssessmentSvc {
 
         Query query = entityManager.createNativeQuery(sqlString);
         return mapper.riskListQueryToRiskLineDtoList(query.getResultList());
+    }
+    @Transactional
+    public List<AdoptionCandidateDto> getAdoptionCandidate(List<Long> applicationId) {
+        return applicationId.stream()
+            .map(a-> Assessment.find("applicationId", a).firstResultOptional())
+            .filter(b -> b.isPresent())
+            .map(c -> new AdoptionCandidateDto(((Assessment) c.get()).applicationId, ((Assessment) c.get()).id, calculateConfidence((Assessment) c.get())))
+            .collect(Collectors.toList());
+    }
+
+    private Integer calculateConfidence(Assessment assessment) {
+        Map<Risk, Integer> weightMap = Map.of(Risk.RED, redWeight,
+                                            Risk.UNKNOWN, unknownWeight,
+                                            Risk.AMBER, amberWeight,
+                                            Risk.GREEN, greenWeight);
+
+        List<AssessmentSingleOption> answeredOptions = assessment.assessmentQuestionnaire.categories.stream()
+            .flatMap(cat -> cat.questions.stream())
+            .flatMap(que -> que.singleOptions.stream())
+            .filter(opt -> opt.selected)
+            .collect(Collectors.toList());
+        long totalAnswered = answeredOptions.stream().count();
+
+        // Grouping to know how many answers per Risk
+        Map<Risk, Long> answersCountByRisk = answeredOptions.stream()
+            .collect(Collectors.groupingBy(a -> a.risk, Collectors.counting()));
+
+
+        BigDecimal result = getConfidenceTacklePathfinder(weightMap, answeredOptions, totalAnswered, answersCountByRisk);
+
+        return result.intValue();
+    }
+
+    private BigDecimal getConfidenceTacklePathfinder(Map<Risk, Integer> weightMap, List<AssessmentSingleOption> answeredOptions, long totalAnswered, Map<Risk, Long> answersCountByRisk) {
+        Map<Risk, Double> adjusterBase = Map.of(Risk.RED, redAdjuster, Risk.AMBER, amberAdjuster, Risk.GREEN, greenAdjuster, Risk.UNKNOWN, unknownAdjuster);
+
+        double answeredWeight = answeredOptions.stream().mapToDouble(a -> weightMap.get(a.risk) * adjusterBase.getOrDefault(a.risk, 1d)).sum();
+
+        long maxWeight = weightMap.get(Risk.GREEN) * totalAnswered;
+
+        BigDecimal result = new BigDecimal(answeredWeight / maxWeight * 100);
+        result.setScale(0, RoundingMode.DOWN);
+        return result;
     }
 
     private AssessmentRiskDto sqlRowToAssessmentRisk(Object row) {
