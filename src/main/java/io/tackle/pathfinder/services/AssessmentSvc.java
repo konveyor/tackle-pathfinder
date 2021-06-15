@@ -333,7 +333,7 @@ public class AssessmentSvc {
         return applicationId.stream()
             .map(a-> Assessment.find("applicationId", a).firstResultOptional())
             .filter(b -> b.isPresent())
-            .map(c -> new AdoptionCandidateDto(((Assessment) c.get()).id, calculateConfidence((Assessment) c.get())))
+            .map(c -> new AdoptionCandidateDto(((Assessment) c.get()).applicationId, ((Assessment) c.get()).id, calculateConfidence((Assessment) c.get())))
             .collect(Collectors.toList());
     }
 

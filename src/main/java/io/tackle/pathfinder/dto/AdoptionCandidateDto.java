@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @RegisterForReflection
 public class AdoptionCandidateDto {
+  public Long applicationId;
   public  Long assessmentId;
   public  Integer confidence;
 }
