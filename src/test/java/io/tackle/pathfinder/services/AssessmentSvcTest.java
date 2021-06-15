@@ -485,7 +485,7 @@ public class AssessmentSvcTest {
         // assert
         assertThat(adoptionCandidate).containsExactlyInAnyOrder(new AdoptionCandidateDto(assessmentREDHeader.getApplicationId(), assessmentREDHeader.getId(), 0),
                                                                 new AdoptionCandidateDto(assessmentGREENHeader.getApplicationId(), assessmentGREENHeader.getId(), 100),
-                                                                new AdoptionCandidateDto(assessmentAMBERHeader.getApplicationId(), assessmentAMBERHeader.getId(), 25),
+                                                                new AdoptionCandidateDto(assessmentAMBERHeader.getApplicationId(), assessmentAMBERHeader.getId(), 78), // vs 25 in old pathfinder
                                                                 new AdoptionCandidateDto(assessmentUNKNOWNHeader.getApplicationId(), assessmentUNKNOWNHeader.getId(), 70));
     }
 

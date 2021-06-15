@@ -962,7 +962,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.statusCode(200)
 			.body("find{it.assessmentId=="+ assessmentRED.id + "}.confidence", is(0))
 			.body("find{it.assessmentId=="+ assessmentGREEN.id + "}.confidence", is(100))
-			.body("find{it.assessmentId=="+ assessmentAMBER.id + "}.confidence", is(25))
+			.body("find{it.assessmentId=="+ assessmentAMBER.id + "}.confidence", is(78)) // vs old pathfinder formula : 25
 			.body("find{it.assessmentId=="+ assessmentUNKNOWN.id + "}.confidence", is(70));
 
 	}

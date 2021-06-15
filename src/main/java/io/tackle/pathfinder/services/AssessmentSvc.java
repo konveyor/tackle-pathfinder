@@ -412,44 +412,21 @@ public class AssessmentSvc {
             .collect(Collectors.groupingBy(a -> a.risk, Collectors.counting()));
 
 
-        BigDecimal result = getConfidenceOldPathfinder(weightMap, answeredOptions, totalAnswered, answersCountByRisk);
+        BigDecimal result = getConfidenceTacklePathfinder(weightMap, answeredOptions, totalAnswered, answersCountByRisk);
 
         return result.intValue();
     }
 
-    private BigDecimal getConfidenceOldPathfinder(Map<Risk, Integer> weightMap, List<AssessmentSingleOption> answeredOptions, long totalAnswered, Map<Risk, Long> answersCountByRisk) {
-        Map<Risk, Double> confidenceMultiplier = Map.of(Risk.RED, redMultiplier, Risk.AMBER, amberMultiplier);
+    private BigDecimal getConfidenceTacklePathfinder(Map<Risk, Integer> weightMap, List<AssessmentSingleOption> answeredOptions, long totalAnswered, Map<Risk, Long> answersCountByRisk) {
         Map<Risk, Double> adjusterBase = Map.of(Risk.RED, redAdjuster, Risk.AMBER, amberAdjuster, Risk.GREEN, greenAdjuster, Risk.UNKNOWN, unknownAdjuster);
 
-        // Adjuster calculation
-        AtomicDouble adjuster = new AtomicDouble(1);
-        answersCountByRisk.entrySet().stream()
-            .filter(a -> a.getValue() > 0 )
-            .forEach(b -> updateAdjuster(adjusterBase, adjuster, b));
+        double answeredWeight = answeredOptions.stream().mapToDouble(a -> weightMap.get(a.risk) * adjusterBase.getOrDefault(a.risk, 1d)).sum();
 
-        // Temp confidence iteration calculation
-        // TODO Apparently this formula seems wrong, as the first execution in the forEach is multiplying by 0
-        AtomicDouble confidence = new AtomicDouble(0.0);
+        long maxWeight = weightMap.get(Risk.GREEN) * totalAnswered;
 
-        answeredOptions.stream()
-            .sorted(Comparator.comparing(a -> weightMap.get(a.risk))) // sorting by weight to put REDs first
-            .forEach(opt -> {
-                confidence.set(confidence.get() * confidenceMultiplier.getOrDefault(opt.risk, 1.0));
-                confidence.getAndAdd(weightMap.get(opt.risk) * adjuster.get());
-            });
-
-        double maxConfidence = weightMap.get(Risk.GREEN) * totalAnswered;
-
-        BigDecimal result = new BigDecimal((confidence.get() / maxConfidence) * 100);
+        BigDecimal result = new BigDecimal(answeredWeight / maxWeight * 100);
         result.setScale(0, RoundingMode.DOWN);
         return result;
-    }
-
-
-    //         if (redCount > 0) adjuster = adjuster * Math.pow(0.5, redCount);
-    //        if (amberCount > 0) adjuster = adjuster * Math.pow(0.98, amberCount);
-    private void updateAdjuster(Map<Risk, Double> adjusterBase, AtomicDouble adjuster, Map.Entry<Risk, Long> b) {
-        adjuster.set(adjuster.get() * Math.pow(adjusterBase.get(b.getKey()), b.getValue()));
     }
 
     private AssessmentRiskDto sqlRowToAssessmentRisk(Object row) {
