@@ -4,25 +4,20 @@ import io.tackle.pathfinder.dto.AdoptionCandidateDto;
 import io.tackle.pathfinder.dto.ApplicationDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
+import io.tackle.pathfinder.dto.LandscapeDto;
+import io.tackle.pathfinder.dto.RiskLineDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PATCH;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Path("/assessments")
@@ -76,6 +71,27 @@ public class AssessmentsResource {
   public Response deleteAssessment(@NotNull @PathParam("assessmentId") Long assessmentId) {
     service.deleteAssessment(assessmentId);
     return Response.ok().status(Response.Status.NO_CONTENT).build();
+  }
+
+  @POST
+  @Path("risks")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<ApplicationDto> applicationList) {
+    if (!applicationList.isEmpty()) {
+      return service.identifiedRisks(applicationList.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
+    } else {
+      throw new BadRequestException();
+    }
+  }
+
+  @POST
+  @Path("/assessment-risk")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public List<LandscapeDto> getLandscape(@NotNull @Valid List<ApplicationDto> applicationIds) {
+    if (applicationIds.isEmpty()) throw new BadRequestException();
+    return service.landscape(applicationIds.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
   }
 
   @POST
