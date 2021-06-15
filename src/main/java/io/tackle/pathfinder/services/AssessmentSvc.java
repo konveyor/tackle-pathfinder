@@ -445,17 +445,6 @@ public class AssessmentSvc {
         return result;
     }
 
-    private BigDecimal getConfidenceTacklePathfinder(Map<Risk, Integer> weightMap, Stream<AssessmentSingleOption> answeredOptions, long totalAnswered, Map<Risk, Long> answersCountByRisk) {
-        Map<Risk, Double> adjusterBase = Map.of(Risk.RED, redAdjuster, Risk.AMBER, amberAdjuster, Risk.GREEN, greenAdjuster, Risk.UNKNOWN, unknownAdjuster);
-
-        double answeredWeight = answeredOptions.mapToDouble(a -> weightMap.get(a.risk) * adjusterBase.getOrDefault(a.risk, 1d)).sum();
-
-        long maxWeight = weightMap.get(Risk.GREEN) * totalAnswered;
-
-        BigDecimal result = new BigDecimal(answeredWeight / maxWeight * 100);
-        result.setScale(0, RoundingMode.DOWN);
-        return result;
-    }
 
     //         if (redCount > 0) adjuster = adjuster * Math.pow(0.5, redCount);
     //        if (amberCount > 0) adjuster = adjuster * Math.pow(0.98, amberCount);
