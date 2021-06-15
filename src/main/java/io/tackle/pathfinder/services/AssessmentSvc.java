@@ -1,11 +1,7 @@
 package io.tackle.pathfinder.services;
 
 import com.google.common.util.concurrent.AtomicDouble;
-import io.quarkus.arc.config.ConfigProperties;
-import io.tackle.pathfinder.dto.AdoptionCandidateDto;
-import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
-import io.tackle.pathfinder.dto.AssessmentStatus;
+import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
@@ -39,7 +35,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
