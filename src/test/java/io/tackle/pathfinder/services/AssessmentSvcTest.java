@@ -392,10 +392,10 @@ public class AssessmentSvcTest {
         List<AdoptionCandidateDto> adoptionCandidate = assessmentSvc.getAdoptionCandidate(List.of(10008L, 10009L, 10010L, 10011L, 99999955L));
 
         // assert
-        assertThat(adoptionCandidate).containsExactlyInAnyOrder(new AdoptionCandidateDto(assessmentREDHeader.getId(), 0),
-                                                                new AdoptionCandidateDto(assessmentGREENHeader.getId(), 100),
-                                                                new AdoptionCandidateDto(assessmentAMBERHeader.getId(), 25),
-                                                                new AdoptionCandidateDto(assessmentUNKNOWNHeader.getId(), 70));
+        assertThat(adoptionCandidate).containsExactlyInAnyOrder(new AdoptionCandidateDto(assessmentREDHeader.getApplicationId(), assessmentREDHeader.getId(), 0),
+                                                                new AdoptionCandidateDto(assessmentGREENHeader.getApplicationId(), assessmentGREENHeader.getId(), 100),
+                                                                new AdoptionCandidateDto(assessmentAMBERHeader.getApplicationId(), assessmentAMBERHeader.getId(), 25),
+                                                                new AdoptionCandidateDto(assessmentUNKNOWNHeader.getApplicationId(), assessmentUNKNOWNHeader.getId(), 70));
     }
 
     @Transactional

@@ -343,14 +343,15 @@ public class AssessmentSvc {
                                             Risk.AMBER, amberWeight,
                                             Risk.GREEN, greenWeight);
 
-        Stream<AssessmentSingleOption> answeredOptions = assessment.assessmentQuestionnaire.categories.stream()
+        List<AssessmentSingleOption> answeredOptions = assessment.assessmentQuestionnaire.categories.stream()
             .flatMap(cat -> cat.questions.stream())
             .flatMap(que -> que.singleOptions.stream())
-            .filter(opt -> opt.selected);
-        long totalAnswered = answeredOptions.count();
+            .filter(opt -> opt.selected)
+            .collect(Collectors.toList());
+        long totalAnswered = answeredOptions.stream().count();
 
         // Grouping to know how many answers per Risk
-        Map<Risk, Long> answersCountByRisk = answeredOptions
+        Map<Risk, Long> answersCountByRisk = answeredOptions.stream()
             .collect(Collectors.groupingBy(a -> a.risk, Collectors.counting()));
 
 
@@ -359,7 +360,7 @@ public class AssessmentSvc {
         return result.intValue();
     }
 
-    private BigDecimal getConfidenceOldPathfinder(Map<Risk, Integer> weightMap, Stream<AssessmentSingleOption> answeredOptions, long totalAnswered, Map<Risk, Long> answersCountByRisk) {
+    private BigDecimal getConfidenceOldPathfinder(Map<Risk, Integer> weightMap, List<AssessmentSingleOption> answeredOptions, long totalAnswered, Map<Risk, Long> answersCountByRisk) {
         Map<Risk, Double> confidenceMultiplier = Map.of(Risk.RED, redMultiplier, Risk.AMBER, amberMultiplier);
         Map<Risk, Double> adjusterBase = Map.of(Risk.RED, redAdjuster, Risk.AMBER, amberAdjuster, Risk.GREEN, greenAdjuster, Risk.UNKNOWN, unknownAdjuster);
 
@@ -373,7 +374,7 @@ public class AssessmentSvc {
         // TODO Apparently this formula seems wrong, as the first execution in the forEach is multiplying by 0
         AtomicDouble confidence = new AtomicDouble(0.0);
 
-        answeredOptions
+        answeredOptions.stream()
             .sorted(Comparator.comparing(a -> weightMap.get(a.risk))) // sorting by weight to put REDs first
             .forEach(opt -> {
                 confidence.set(confidence.get() * confidenceMultiplier.getOrDefault(opt.risk, 1.0));
