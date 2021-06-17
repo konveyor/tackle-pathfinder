@@ -445,9 +445,6 @@ public class AssessmentSvc {
         return result;
     }
 
-
-    //         if (redCount > 0) adjuster = adjuster * Math.pow(0.5, redCount);
-    //        if (amberCount > 0) adjuster = adjuster * Math.pow(0.98, amberCount);
     private void updateAdjuster(Map<Risk, Double> adjusterBase, AtomicDouble adjuster, Map.Entry<Risk, Long> b) {
         adjuster.set(adjuster.get() * Math.pow(adjusterBase.get(b.getKey()), b.getValue()));
     }
