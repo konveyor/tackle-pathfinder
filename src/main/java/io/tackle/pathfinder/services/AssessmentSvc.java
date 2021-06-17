@@ -379,6 +379,7 @@ public class AssessmentSvc {
                 "      AND aq.deleted is not true\n" +
                 "      AND a.deleted is not true\n" +
                 "      AND a.application_id in (" + StringUtils.join(applicationList, ",") + ") " +
+                "      AND opt.risk = 'RED' " +
                 "group by cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option " +
                 "order by cat.category_order, q.question_order, opt.singleoption_order;";
 
@@ -390,6 +391,7 @@ public class AssessmentSvc {
         return applicationId.stream()
             .map(a-> Assessment.find("applicationId", a).firstResultOptional())
             .filter(b -> b.isPresent())
+            .filter(b -> ((Assessment) b.get()).status == AssessmentStatus.COMPLETE)
             .map(c -> new AdoptionCandidateDto(((Assessment) c.get()).applicationId, ((Assessment) c.get()).id, calculateConfidence((Assessment) c.get())))
             .collect(Collectors.toList());
     }
@@ -405,19 +407,20 @@ public class AssessmentSvc {
             .flatMap(que -> que.singleOptions.stream())
             .filter(opt -> opt.selected)
             .collect(Collectors.toList());
-        long totalAnswered = answeredOptions.stream().count();
+
+        long totalQuestions = assessment.assessmentQuestionnaire.categories.stream().flatMap(cat -> cat.questions.stream()).count();
 
         // Grouping to know how many answers per Risk
         Map<Risk, Long> answersCountByRisk = answeredOptions.stream()
             .collect(Collectors.groupingBy(a -> a.risk, Collectors.counting()));
 
 
-        BigDecimal result = getConfidenceOldPathfinder(weightMap, answeredOptions, totalAnswered, answersCountByRisk);
+        BigDecimal result = getConfidenceOldPathfinder(weightMap, answeredOptions, totalQuestions, answersCountByRisk);
 
         return result.intValue();
     }
 
-    private BigDecimal getConfidenceOldPathfinder(Map<Risk, Integer> weightMap, List<AssessmentSingleOption> answeredOptions, long totalAnswered, Map<Risk, Long> answersCountByRisk) {
+    private BigDecimal getConfidenceOldPathfinder(Map<Risk, Integer> weightMap, List<AssessmentSingleOption> answeredOptions, long totalQuestions, Map<Risk, Long> answersCountByRisk) {
         Map<Risk, Double> confidenceMultiplier = Map.of(Risk.RED, redMultiplier, Risk.AMBER, amberMultiplier);
         Map<Risk, Double> adjusterBase = Map.of(Risk.RED, redAdjuster, Risk.AMBER, amberAdjuster, Risk.GREEN, greenAdjuster, Risk.UNKNOWN, unknownAdjuster);
 
@@ -438,9 +441,9 @@ public class AssessmentSvc {
                 confidence.getAndAdd(weightMap.get(opt.risk) * adjuster.get());
             });
 
-        double maxConfidence = weightMap.get(Risk.GREEN) * totalAnswered;
+        double maxConfidence = weightMap.get(Risk.GREEN) * totalQuestions;
 
-        BigDecimal result = new BigDecimal((confidence.get() / maxConfidence) * 100);
+        BigDecimal result = (maxConfidence > 0 ) ? new BigDecimal((confidence.get() / maxConfidence) * 100) : BigDecimal.ZERO;
         result.setScale(0, RoundingMode.DOWN);
         return result;
     }

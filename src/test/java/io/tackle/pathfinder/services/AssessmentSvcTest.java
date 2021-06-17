@@ -32,7 +32,6 @@ import javax.ws.rs.BadRequestException;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -567,38 +566,44 @@ public class AssessmentSvcTest {
     public void given_TwoAssessmentsWith6AnswersButSharing2Questions_When_IdentifiedRisks_Then_ResultIs4LinesBut2Has2Applications() {
         Assessment assessment1 = createAssessment(Questionnaire.findAll().firstResult(), 5566L);
 
-        AssessmentQuestion question1 = getAssessmentQuestion(assessment1, 1);
-        AssessmentSingleOption option1 = getAssessmentOption(assessment1, 1);
+        AssessmentQuestion question1 = getAssessmentQuestion(assessment1, 1, 1);
+        AssessmentSingleOption option1 = getAssessmentOption(assessment1, 1, Risk.RED, 1);
         option1.selected = true;
 
-        AssessmentQuestion question2 = getAssessmentQuestion(assessment1, 2);
-        AssessmentSingleOption option2 = getAssessmentOption(assessment1, 2);
+        AssessmentSingleOption option2 = getAssessmentOption(assessment1, 2, Risk.AMBER, 1);
         option2.selected = true;
 
         Assessment assessment2 = createAssessment(Questionnaire.findAll().firstResult(), 6677L);
-        getAssessmentOption(assessment2, 1).selected = true;
-        getAssessmentOption(assessment2, 2).selected = true;
+        AssessmentSingleOption option5 = getAssessmentOption(assessment2, 1, Risk.RED, 1);
+        option5.selected = true;
+        AssessmentSingleOption option6 = getAssessmentOption(assessment2, 2, Risk.GREEN, 1);
+        option6.selected = true;
 
-        AssessmentQuestion question3 = getAssessmentQuestion(assessment2, 3);
-        AssessmentSingleOption option3 = getAssessmentOption(assessment2, 3);
+        AssessmentQuestion question3 = getAssessmentQuestion(assessment2, 3, 1);
+        AssessmentSingleOption option3 = getAssessmentOption(assessment2, 3, Risk.RED, 1);
         option3.selected = true;
 
-        AssessmentQuestion question4 = getAssessmentQuestion(assessment2, 4);
-        AssessmentSingleOption option4 = getAssessmentOption(assessment2, 4);
+        AssessmentSingleOption option4 = getAssessmentOption(assessment2, 4, Risk.UNKNOWN,1);
         option4.selected = true;
 
         List<RiskLineDto> riskLineDtos = assessmentSvc.identifiedRisks(List.of(5566L, 6677L));
 
-        assertThat(riskLineDtos).hasSize(4);
+        // we have answered 6 options : 3 RED , 1 AMBER, 1 GREEN, 1 UNKNOWN
+        // but only the RED answers are returned
+        assertThat(riskLineDtos).hasSize(2);
+
+        // It doesnt containe the answers with risk different than RED
+        assertThat(riskLineDtos).extracting(a -> a.getAnswer()).doesNotContain(option4.option);
+        assertThat(riskLineDtos).extracting(a -> a.getAnswer()).doesNotContain(option6.option);
+        assertThat(riskLineDtos).extracting(a -> a.getAnswer()).doesNotContain(option2.option);
+
         assertThat(riskLineDtos.stream()
                 .filter(e -> e.getQuestion().equals(question1.questionText) && e.getAnswer().equals(option1.option)).count()).isEqualTo(1L);
+
         assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question1.questionText) && e.getAnswer().equals(option1.option))
                 .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(5566L, 6677L);
-        assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question2.questionText) && e.getAnswer().equals(option2.option))
-                .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(5566L, 6677L);
+
         assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question3.questionText) && e.getAnswer().equals(option3.option))
-                .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(6677L);
-        assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question4.questionText) && e.getAnswer().equals(option4.option))
                 .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(6677L);
 
         assertThat(riskLineDtos).containsExactlyElementsOf(riskLineDtos.stream()
@@ -610,14 +615,36 @@ public class AssessmentSvcTest {
             })).collect(Collectors.toList()));
     }
 
-    private AssessmentQuestion getAssessmentQuestion(Assessment assessment1, Integer order) {
+    @Test
+    @Transactional
+    public void given_ListOfApplicationsWithOneWithAssessmentNotComplete_when_adoptionCandidate_then_NotFailsAndApplicationIsNotIncludedInResult() {
+        // assessment empty and STARTED
+        Assessment assessment1 = createAssessment(Questionnaire.findAll().firstResult(), 775566L);
+        assessment1.status = AssessmentStatus.STARTED;
+
+        // assessment full and COMPLETE
+        Assessment assessment2 = createAssessment(Questionnaire.findAll().firstResult(), 885566L);
+        assessment2.assessmentQuestionnaire.categories.forEach(cat -> cat.questions.forEach(que -> que.singleOptions.get(0).selected = true));
+        assessment2.status = AssessmentStatus.COMPLETE;
+
+        // assessment empty and COMPLETE
+        Assessment assessment3 = createAssessment(Questionnaire.findAll().firstResult(), 665566L);
+        assessment3.status = AssessmentStatus.COMPLETE;
+
+        List<AdoptionCandidateDto> adoptionCandidate = assessmentSvc.getAdoptionCandidate(List.of(775566L, 885566L, 665566L));
+        assertThat(adoptionCandidate).size().isEqualTo(2);
+        assertThat(adoptionCandidate).extracting(a -> a.applicationId).containsExactly(885566L, 665566L);
+        assertThat(adoptionCandidate).contains(new AdoptionCandidateDto(665566L, assessment3.id, 0));
+    }
+
+    private AssessmentQuestion getAssessmentQuestion(Assessment assessment1, Integer order, int catOrder) {
         return assessment1.assessmentQuestionnaire.categories.stream()
-                .filter(e -> e.order == order).findFirst().get()
+                .filter(e -> e.order == catOrder).findFirst().get()
                 .questions.stream().filter(e -> e.order == order).findFirst().get();
     }
 
-    private AssessmentSingleOption getAssessmentOption(Assessment assessment1, Integer order) {
-        return getAssessmentQuestion(assessment1, order)
-                .singleOptions.stream().filter(e -> e.order == order).findFirst().get();
+    private AssessmentSingleOption getAssessmentOption(Assessment assessment1, Integer questionOrder , Risk risk, int catOrder) {
+        return getAssessmentQuestion(assessment1, questionOrder, catOrder)
+                .singleOptions.stream().filter(e -> e.risk == risk).findFirst().get();
     }
 }
