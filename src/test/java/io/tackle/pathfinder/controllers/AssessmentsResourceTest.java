@@ -9,7 +9,6 @@ import io.tackle.commons.testcontainers.KeycloakTestResource;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.commons.tests.SecuredResourceTest;
 import io.tackle.pathfinder.dto.*;
-import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
@@ -24,7 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
-import javax.transaction.Transactional;
+import javax.transaction.*;
 
 import java.time.Duration;
 import java.time.LocalTime;
@@ -59,6 +58,9 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 	@Inject
     ManagedExecutor managedExecutor;
+
+	@Inject
+	UserTransaction userTransaction;
 
 	@BeforeEach
 	@Transactional
@@ -922,5 +924,46 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
 			.statusCode(200)
 			.body("size()", is(0));
+	}
+
+	@Test
+	public void given_ApplicationsAssessed_When_Confidence_Then_ResultIsTheExpected() throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
+		userTransaction.begin();
+		// create assessment
+		AssessmentHeaderDto assessmentREDHeader = assessmentSvc.createAssessment( 20008L);
+		AssessmentHeaderDto assessmentGREENHeader = assessmentSvc.createAssessment( 20009L);
+		AssessmentHeaderDto assessmentAMBERHeader = assessmentSvc.createAssessment( 20010L);
+		AssessmentHeaderDto assessmentUNKNOWNHeader = assessmentSvc.createAssessment( 20011L);
+		Assessment assessmentRED =  Assessment.findById(assessmentREDHeader.getId());
+		Assessment assessmentGREEN =  Assessment.findById(assessmentGREENHeader.getId());
+		Assessment assessmentAMBER =  Assessment.findById(assessmentAMBERHeader.getId());
+		Assessment assessmentUNKNOWN =  Assessment.findById(assessmentUNKNOWNHeader.getId());
+
+		// answer questions
+		assessmentRED.status = AssessmentStatus.COMPLETE;
+		assessmentRED.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.RED).findFirst().ifPresent(b -> b.selected = true)));
+		assessmentGREEN.status = AssessmentStatus.COMPLETE;
+		assessmentGREEN.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.GREEN).findFirst().ifPresent(b -> b.selected = true)));
+		assessmentAMBER.status = AssessmentStatus.COMPLETE;
+		assessmentAMBER.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.AMBER).findFirst().ifPresent(b -> b.selected = true)));
+		assessmentUNKNOWN.status = AssessmentStatus.COMPLETE;
+		assessmentUNKNOWN.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.UNKNOWN).findFirst().ifPresent(b -> b.selected = true)));
+
+		userTransaction.commit();
+
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(List.of(new ApplicationDto(20008L),new ApplicationDto(20009L),new ApplicationDto(20010L),new ApplicationDto(20011L)))
+		.when()
+			.post("/assessments/confidence")
+		.then()
+			.log().all()
+			.statusCode(200)
+			.body("find{it.assessmentId=="+ assessmentRED.id + "}.confidence", is(0))
+			.body("find{it.assessmentId=="+ assessmentGREEN.id + "}.confidence", is(100))
+			.body("find{it.assessmentId=="+ assessmentAMBER.id + "}.confidence", is(25))
+			.body("find{it.assessmentId=="+ assessmentUNKNOWN.id + "}.confidence", is(70));
+
 	}
 }
