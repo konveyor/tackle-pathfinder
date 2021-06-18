@@ -849,7 +849,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 		AssessmentCategoryDto category = assessment.getQuestionnaire().getCategories().get(0);
 		AssessmentQuestionDto question = category.getQuestions().get(0);
-		AssessmentQuestionOptionDto option = question.getOptions().get(0);
+		AssessmentQuestionOptionDto optionRed = question.getOptions().stream().filter(a -> a.getRisk() == Risk.RED).findFirst().get();
+		AssessmentQuestionOptionDto optionamber = question.getOptions().stream().filter(a -> a.getRisk() == Risk.AMBER).findFirst().get();
 
 		// Modification of 1 category comment, 1 option selected, 2 stakeholders , 2 stakeholdergroups
 		given()
@@ -867,7 +868,11 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 								.id(question.getId())
 								.options(List.of(
 									AssessmentQuestionOptionDto.builder()
-										.id(option.getId())
+										.id(optionRed.getId())
+										.checked(true)
+										.build(),
+									AssessmentQuestionOptionDto.builder()
+										.id(optionamber.getId())
 										.checked(true)
 										.build()
 								))
@@ -962,7 +967,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.statusCode(200)
 			.body("find{it.assessmentId=="+ assessmentRED.id + "}.confidence", is(0))
 			.body("find{it.assessmentId=="+ assessmentGREEN.id + "}.confidence", is(100))
-			.body("find{it.assessmentId=="+ assessmentAMBER.id + "}.confidence", is(25))
+			.body("find{it.assessmentId=="+ assessmentAMBER.id + "}.confidence", is(24))
 			.body("find{it.assessmentId=="+ assessmentUNKNOWN.id + "}.confidence", is(70));
 
 	}
