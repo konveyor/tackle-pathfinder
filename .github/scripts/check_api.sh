@@ -165,14 +165,18 @@ assessmentSource_json=$(curl -X GET "http://$api_ip/pathfinder/assessments/$asse
             -H "Authorization: Bearer $access_token" -s)
 categorySourceid=$(echo $assessmentSource_json | jq '.questionnaire.categories[0].id')
 categorySourceSecondid=$(echo $assessmentSource_json | jq '.questionnaire.categories[1].id')
-questionSourceid=$(echo $assessmentSource_json | jq '.questionnaire.categories[0].questions[0].id')
-optionSourceid=$(echo $assessmentSource_json | jq '.questionnaire.categories[0].questions[0].options[0].id')
+
+questionSourceid1=$(echo $assessmentSource_json | jq '.questionnaire.categories[0].questions[0].id')
+optionSourceid1=$(echo $assessmentSource_json | jq "first(.questionnaire.categories[0].questions[0].options[] | select (.risk == \"RED\")) | .id")
+
+questionSourceid2=$(echo $assessmentSource_json | jq '.questionnaire.categories[0].questions[0].id')
+optionSourceid2=$(echo $assessmentSource_json | jq "first(.questionnaire.categories[0].questions[0].options[] | select (.risk == \"AMBER\")) | .id")
 
 # Update assessment
 curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentSourceId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -w "%{http_code}" \
             -H 'Content-Type: application/json' \
-            -d "{ \"status\": \"STARTED\",\"stakeholders\": [9877,9844],\"stakeholderGroups\": [98333,98222,98111],\"questionnaire\": {\"categories\": [{\"id\": $categorySourceid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionSourceid,\"options\": [{\"id\": $optionSourceid,\"checked\": true}]}]},{\"id\": $categorySourceSecondid,\"comment\" : \"This is a test comment\"}]}}" \
+            -d "{ \"status\": \"STARTED\",\"stakeholders\": [9877,9844],\"stakeholderGroups\": [98333,98222,98111],\"questionnaire\": {\"categories\": [{\"id\": $categorySourceid,\"comment\" : \"This is a test comment\",\"questions\": [{\"id\": $questionSourceid1,\"options\": [{\"id\": $optionSourceid1,\"checked\": true}]}]},{\"id\": $categorySourceSecondid,\"comment\" : \"This is a test comment\"}]}}" \
              | grep "\"applicationId\":$applicationSource,\"status\":\"STARTED\"}200"
 
 # Get updated assessment
@@ -215,14 +219,14 @@ echo
 echo "15 >>> Requesting Landscape report"
 # using assessment from step 13
 categorySourceid=$(echo $assessmentSource_json | jq '.questionnaire.categories[] | select (.order == 1) | .id')
-questionSourceid=$(echo $assessmentSource_json | jq '.questionnaire.categories[] | select (.order == 1) | .questions[] | select (.order == 1) | .id')
+questionSourceid1=$(echo $assessmentSource_json | jq '.questionnaire.categories[] | select (.order == 1) | .questions[] | select (.order == 1) | .id')
 optionRedSourceid=$(echo $assessmentSource_json | \
        jq "first(.questionnaire.categories[] | select (.order == 1) | .questions[] | select (.order == 1) | .options[] | select (.risk == \"RED\")) | .id")
 
 curl -X PATCH "http://$api_ip/pathfinder/assessments/$assessmentSourceId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -w "%{http_code}" \
             -H 'Content-Type: application/json' \
-            -d "{ \"status\": \"COMPLETE\",\"questionnaire\": {\"categories\": [{\"id\": $categorySourceid,\"questions\": [{\"id\": $questionSourceid,\"options\": [{\"id\": $optionRedSourceid,\"checked\": true}]}]}]}}"
+            -d "{ \"status\": \"COMPLETE\",\"questionnaire\": {\"categories\": [{\"id\": $categorySourceid,\"questions\": [{\"id\": $questionSourceid1,\"options\": [{\"id\": $optionRedSourceid,\"checked\": true}]}]}]}}"
 
 landscapeJson=$(curl "http://$api_ip/pathfinder/assessments/assessment-risk" \
             -H 'Accept: application/json' \
@@ -233,14 +237,14 @@ echo $landscapeJson | grep "[{\"assessmentId\":$assessmentSourceId,\"risk\":\"RE
 
 echo
 echo
-echo "16 >>> Get Identified Risks for 3 applications , only 2 existing,  and 1 answer selected"
+echo "16 >>> Get Identified Risks for 3 applications , only 2 existing,  and only get the answer RED"
 
 req_identified_risks=$(curl -X POST "http://$api_ip/pathfinder/assessments/risks" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
             -d "[{\"applicationId\":10},{\"applicationId\":325100},{\"applicationId\":329100}]" \
             -H 'Content-Type: application/json' -s)
-test "$(echo $req_identified_risks | jq 'length')" = "2"
-test "$(echo $req_identified_risks | jq '.[] | select(.answer == "Unknown") | .applications | length')" = "2"
+test "$(echo $req_identified_risks | jq 'length')" = "1"
+test "$(echo $req_identified_risks | jq '.[0].applications | length')" = "2"
 
 echo
 echo
@@ -273,11 +277,12 @@ echo
 echo "19 >>> Checking the confidence of assessments"
 confidence=$(curl -X POST "http://$api_ip/pathfinder/assessments/confidence" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
-            -d "[{\"applicationId\":100} , {\"applicationId\": $applicationTarget}]" \
+            -d "[{\"applicationId\":100} , {\"applicationId\": $applicationSource}, {\"applicationId\": $applicationTarget}]" \
             -H 'Content-Type: application/json' )
-echo $confidence | grep "\"assessmentId\":$assessmentCopiedId"
+test "1" = "$(echo $confidence | jq 'length')"
+echo $confidence | grep "\"assessmentId\":$assessmentSourceId"
 echo $confidence | grep "\"confidence\":"
-echo $confidence | grep "\"applicationId\":$applicationTarget"
+echo $confidence | grep "\"applicationId\":$applicationSource"
 
 
 echo " +++++ API CHECK SUCCESSFUL ++++++"
