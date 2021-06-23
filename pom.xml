@@ -105,12 +105,12 @@
     <dependency>
       <groupId>com.github.konveyor.tackle-commons-rest</groupId>
       <artifactId>commons-rest</artifactId>
-      <version>main-SNAPSHOT</version>
+      <version>0.0.1</version>
     </dependency>
     <dependency>
       <groupId>com.github.konveyor.tackle-commons-rest</groupId>
       <artifactId>commons-rest-test</artifactId>
-      <version>main-SNAPSHOT</version>
+      <version>0.0.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
