@@ -1,5 +1,6 @@
 package io.tackle.pathfinder.services;
 
+import com.google.common.util.concurrent.AtomicDouble;
 import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.Risk;
@@ -16,6 +17,7 @@ import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.Value;
 import lombok.extern.java.Log;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -29,12 +31,13 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.*;
 import java.util.function.Function;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -46,6 +49,29 @@ public class AssessmentSvc {
 
     @Inject
     EntityManager entityManager;
+
+    @ConfigProperty(name = "confidence.risk.RED.weight")
+    Integer redWeight;
+    @ConfigProperty(name = "confidence.risk.GREEN.weight")
+    Integer greenWeight;
+    @ConfigProperty(name = "confidence.risk.AMBER.weight")
+    Integer amberWeight;
+    @ConfigProperty(name = "confidence.risk.UNKNOWN.weight")
+    Integer unknownWeight;
+
+    @ConfigProperty(name = "confidence.risk.AMBER.multiplier")
+    Double amberMultiplier;
+    @ConfigProperty(name = "confidence.risk.RED.multiplier")
+    Double redMultiplier;
+
+    @ConfigProperty(name = "confidence.risk.RED.adjuster")
+    Double redAdjuster;
+    @ConfigProperty(name = "confidence.risk.AMBER.adjuster")
+    Double amberAdjuster;
+    @ConfigProperty(name = "confidence.risk.GREEN.adjuster")
+    Double greenAdjuster;
+    @ConfigProperty(name = "confidence.risk.UNKNOWN.adjuster")
+    Double unknownAdjuster;
 
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
@@ -317,10 +343,10 @@ public class AssessmentSvc {
                 "            so.risk, " +
                 "            trunc(((0.0 + Count(*) OVER w_risk_count) / (Count(*) OVER (PARTITION BY assess.id)) * 100)) AS pct " +
                 "            FROM assessment_singleoption so " +
-                "                    join assessment_question qu on (qu.id = so.assessment_question_id) " +
-                "                    join assessment_category ca on (ca.id = qu.assessment_category_id) " +
-                "                    join assessment_questionnaire ques on (ques.id = ca.assessment_questionnaire_id) " +
-                "                    join assessment assess on (assess.id = ques.assessment_id) " +
+                "                    join assessment_question qu on (qu.id = so.assessment_question_id and qu.deleted is not true) " +
+                "                    join assessment_category ca on (ca.id = qu.assessment_category_id and ca.deleted is not true) " +
+                "                    join assessment_questionnaire ques on (ques.id = ca.assessment_questionnaire_id and ques.deleted is not true) " +
+                "                    join assessment assess on (assess.id = ques.assessment_id and assess.deleted is not true) " +
                 "            WHERE so.selected = true " +
                 "                   AND assess.application_id in (" + applicationIds.stream().map(e -> e.toString()).collect(Collectors.joining(",")) + ") " +
                 "                   AND assess.status = 'COMPLETE' " +
@@ -353,11 +379,77 @@ public class AssessmentSvc {
                 "      AND aq.deleted is not true\n" +
                 "      AND a.deleted is not true\n" +
                 "      AND a.application_id in (" + StringUtils.join(applicationList, ",") + ") " +
+                "      AND opt.risk = 'RED' " +
                 "group by cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option " +
                 "order by cat.category_order, q.question_order, opt.singleoption_order;";
 
         Query query = entityManager.createNativeQuery(sqlString);
         return mapper.riskListQueryToRiskLineDtoList(query.getResultList());
+    }
+    @Transactional
+    public List<AdoptionCandidateDto> getAdoptionCandidate(List<Long> applicationId) {
+        return applicationId.stream()
+            .map(a-> Assessment.find("applicationId", a).firstResultOptional())
+            .filter(b -> b.isPresent())
+            .filter(b -> ((Assessment) b.get()).status == AssessmentStatus.COMPLETE)
+            .map(c -> new AdoptionCandidateDto(((Assessment) c.get()).applicationId, ((Assessment) c.get()).id, calculateConfidence((Assessment) c.get())))
+            .collect(Collectors.toList());
+    }
+
+    private Integer calculateConfidence(Assessment assessment) {
+        Map<Risk, Integer> weightMap = Map.of(Risk.RED, redWeight,
+                                            Risk.UNKNOWN, unknownWeight,
+                                            Risk.AMBER, amberWeight,
+                                            Risk.GREEN, greenWeight);
+
+        List<AssessmentSingleOption> answeredOptions = assessment.assessmentQuestionnaire.categories.stream()
+            .flatMap(cat -> cat.questions.stream())
+            .flatMap(que -> que.singleOptions.stream())
+            .filter(opt -> opt.selected)
+            .collect(Collectors.toList());
+
+        long totalQuestions = assessment.assessmentQuestionnaire.categories.stream().flatMap(cat -> cat.questions.stream()).count();
+
+        // Grouping to know how many answers per Risk
+        Map<Risk, Long> answersCountByRisk = answeredOptions.stream()
+            .collect(Collectors.groupingBy(a -> a.risk, Collectors.counting()));
+
+
+        BigDecimal result = getConfidenceOldPathfinder(weightMap, answeredOptions, totalQuestions, answersCountByRisk);
+
+        return result.intValue();
+    }
+
+    private BigDecimal getConfidenceOldPathfinder(Map<Risk, Integer> weightMap, List<AssessmentSingleOption> answeredOptions, long totalQuestions, Map<Risk, Long> answersCountByRisk) {
+        Map<Risk, Double> confidenceMultiplier = Map.of(Risk.RED, redMultiplier, Risk.AMBER, amberMultiplier);
+        Map<Risk, Double> adjusterBase = Map.of(Risk.RED, redAdjuster, Risk.AMBER, amberAdjuster, Risk.GREEN, greenAdjuster, Risk.UNKNOWN, unknownAdjuster);
+
+        // Adjuster calculation
+        AtomicDouble adjuster = new AtomicDouble(1);
+        answersCountByRisk.entrySet().stream()
+            .filter(a -> a.getValue() > 0 )
+            .forEach(b -> updateAdjuster(adjusterBase, adjuster, b));
+
+        // Temp confidence iteration calculation
+        // TODO Apparently this formula seems wrong, as the first execution in the forEach is multiplying by 0
+        AtomicDouble confidence = new AtomicDouble(0.0);
+
+        answeredOptions.stream()
+            .sorted(Comparator.comparing(a -> weightMap.get(a.risk))) // sorting by weight to put REDs first
+            .forEach(opt -> {
+                confidence.set(confidence.get() * confidenceMultiplier.getOrDefault(opt.risk, 1.0));
+                confidence.getAndAdd(weightMap.get(opt.risk) * adjuster.get());
+            });
+
+        double maxConfidence = weightMap.get(Risk.GREEN) * totalQuestions;
+
+        BigDecimal result = (maxConfidence > 0 ) ? new BigDecimal((confidence.get() / maxConfidence) * 100) : BigDecimal.ZERO;
+        result.setScale(0, RoundingMode.DOWN);
+        return result;
+    }
+
+    private void updateAdjuster(Map<Risk, Double> adjusterBase, AtomicDouble adjuster, Map.Entry<Risk, Long> b) {
+        adjuster.set(adjuster.get() * Math.pow(adjusterBase.get(b.getKey()), b.getValue()));
     }
 
     private AssessmentRiskDto sqlRowToAssessmentRisk(Object row) {

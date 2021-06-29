@@ -1,5 +1,6 @@
 package io.tackle.pathfinder.controllers;
 
+import io.tackle.pathfinder.dto.AdoptionCandidateDto;
 import io.tackle.pathfinder.dto.ApplicationDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
@@ -93,9 +94,18 @@ public class AssessmentsResource {
   @POST
   @Path("/assessment-risk")
   @Produces("application/json")
+  @Consumes("application/json")
   public List<LandscapeDto> getLandscape(@NotNull @Valid List<ApplicationDto> applicationIds) {
     if (applicationIds.isEmpty()) throw new BadRequestException();
     return assessmentSvc.landscape(applicationIds.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
+  }
+
+  @POST
+  @Path("/confidence")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public List<AdoptionCandidateDto> adoptionCandidate(@NotNull @Valid List<ApplicationDto> applicationId) {
+    return service.getAdoptionCandidate(applicationId.stream().map(a -> a.getApplicationId()).collect(Collectors.toList()));
   }
 
 }
