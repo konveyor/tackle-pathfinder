@@ -27,7 +27,6 @@ import javax.transaction.*;
 
 import java.time.Duration;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -48,7 +47,9 @@ import static org.hamcrest.Matchers.is;
 @QuarkusTestResource(value = KeycloakTestResource.class,
         initArgs = {
                 @ResourceArg(name = KeycloakTestResource.IMPORT_REALM_JSON_PATH, value = "keycloak/quarkus-realm.json"),
-                @ResourceArg(name = KeycloakTestResource.REALM_NAME, value = "quarkus")
+                @ResourceArg(name = KeycloakTestResource.REALM_NAME, value = "quarkus"),
+				@ResourceArg(name = KeycloakTestResource.IMAGE_TAG, value = "latest")
+
         }
 )
 @Log
