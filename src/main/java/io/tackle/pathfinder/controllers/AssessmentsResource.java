@@ -7,10 +7,6 @@ import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.LandscapeDto;
 import io.tackle.pathfinder.dto.RiskLineDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
-import io.tackle.pathfinder.services.TranslatorSvc;
-import org.bouncycastle.util.encoders.Translator;
-import org.jboss.resteasy.annotations.Query;
-
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -26,10 +22,6 @@ import java.util.stream.Collectors;
 public class AssessmentsResource {
   @Inject
   AssessmentSvc assessmentSvc;
-
-  @Inject
-  TranslatorSvc translatorSvc;
-
 
   @GET
   @Produces("application/json")
@@ -60,7 +52,7 @@ public class AssessmentsResource {
   @Path("{assessmentId}")
   @Produces("application/json")
   public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @QueryParam("language") String language) {
-    return translatorSvc.translate(assessmentSvc.getAssessmentDtoByAssessmentId(assessmentId), language);
+    return assessmentSvc.getAssessmentDtoByAssessmentId(assessmentId, language);
   }  
   
   @PATCH
@@ -85,6 +77,7 @@ public class AssessmentsResource {
   @Consumes("application/json")
   public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<ApplicationDto> applicationList, @QueryParam("language") String language) {
     if (!applicationList.isEmpty()) {
+      // TODO Tanslate
       return assessmentSvc.identifiedRisks(applicationList.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
     } else {
       throw new BadRequestException();
@@ -105,7 +98,7 @@ public class AssessmentsResource {
   @Produces("application/json")
   @Consumes("application/json")
   public List<AdoptionCandidateDto> adoptionCandidate(@NotNull @Valid List<ApplicationDto> applicationId) {
-    return service.getAdoptionCandidate(applicationId.stream().map(a -> a.getApplicationId()).collect(Collectors.toList()));
+    return assessmentSvc.getAdoptionCandidate(applicationId.stream().map(a -> a.getApplicationId()).collect(Collectors.toList()));
   }
 
 }

@@ -19,7 +19,7 @@ import javax.persistence.Table;
 @AllArgsConstructor
 @Builder
 public class TranslatedText extends AbstractEntity {
-    public Integer group;
+    public String key;
     public String language;
     public String text;
 }

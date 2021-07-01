@@ -19,7 +19,6 @@ import lombok.Value;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.apache.commons.lang3.StringUtils;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -37,7 +36,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -45,7 +43,7 @@ import static java.util.stream.Collectors.toList;
 @Log
 public class AssessmentSvc {
     @Inject
-    AssessmentMapper mapper;
+    AssessmentMapper assessmentMapper;
 
     @Inject
     EntityManager entityManager;
@@ -75,7 +73,7 @@ public class AssessmentSvc {
 
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
-        return assessmentQuery.stream().findFirst().map(e -> mapper.assessmentToAssessmentHeaderDto(e));
+        return assessmentQuery.stream().findFirst().map(e -> assessmentMapper.assessmentToAssessmentHeaderDto(e));
     }
 
     @Transactional
@@ -90,7 +88,7 @@ public class AssessmentSvc {
 
             copyQuestionnaireIntoAssessment(assessment, defaultQuestionnaire());
 
-            return mapper.assessmentToAssessmentHeaderDto(assessment);
+            return assessmentMapper.assessmentToAssessmentHeaderDto(assessment);
         } else {
             throw new BadRequestException();
         }
@@ -114,6 +112,7 @@ public class AssessmentSvc {
                 .name(category.name)
                 .order(category.order)
                 .questionnaire(assessment.assessmentQuestionnaire)
+                .questionnaire_categoryId(category.id)
                 .build();
             assessmentCategory.persist();
 
@@ -125,6 +124,7 @@ public class AssessmentSvc {
                     .questionText(question.questionText)
                     .type(question.type)
                     .description(question.description)
+                    .questionnaire_questionId(question.id)
                     .build();
 
                 assessmentQuestion.persist();
@@ -136,6 +136,7 @@ public class AssessmentSvc {
                         .question(assessmentQuestion)
                         .risk(so.risk)
                         .selected(false)
+                        .questionnaire_optionId(so.id)
                         .build();
 
                     singleOption.persist();
@@ -155,11 +156,11 @@ public class AssessmentSvc {
         return Questionnaire.<Questionnaire>streamAll().findFirst().orElseThrow(NotFoundException::new);
     }
 
-    public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
+    public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId, String language) {
         log.log(Level.FINE, "Requesting Assessment " + assessmentId);
         Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
 
-        return mapper.assessmentToAssessmentDto(assessment);
+        return assessmentMapper.assessmentToAssessmentDto(assessment, StringUtils.defaultString(language));
     }
 
     @Transactional
@@ -241,7 +242,7 @@ public class AssessmentSvc {
                 }
             });
         }
-        return mapper.assessmentToAssessmentHeaderDto(assessment);
+        return assessmentMapper.assessmentToAssessmentHeaderDto(assessment);
     }
 
     @Transactional
@@ -282,7 +283,7 @@ public class AssessmentSvc {
                     return stakeholder;
                 }).collect(toList());
                 assessmentTarget.persist();
-                return mapper.assessmentToAssessmentHeaderDto(assessmentTarget);
+                return assessmentMapper.assessmentToAssessmentHeaderDto(assessmentTarget);
             }
         }
 
@@ -304,6 +305,7 @@ public class AssessmentSvc {
                 .name(cat.name)
                 .order(cat.order)
                 .questionnaire(questionnaire)
+                .questionnaire_categoryId(cat.questionnaire_categoryId)
                 .build();
             assessmentCategory.persist();
             assessmentCategory.questions = cat.questions.stream().map(que -> {
@@ -314,6 +316,7 @@ public class AssessmentSvc {
                     .order(que.order)
                     .questionText(que.questionText)
                     .type(que.type)
+                    .questionnaire_questionId(que.questionnaire_questionId)
                     .build();
                 assessmentQuestion.persist();
                 assessmentQuestion.singleOptions = que.singleOptions.stream().map(opt -> {
@@ -323,6 +326,7 @@ public class AssessmentSvc {
                         .question(assessmentQuestion)
                         .risk(opt.risk)
                         .selected(opt.selected)
+                        .questionnaire_optionId(opt.questionnaire_optionId)
                         .build();
                     singleOption.persist();
                     return singleOption;
@@ -384,7 +388,7 @@ public class AssessmentSvc {
                 "order by cat.category_order, q.question_order, opt.singleoption_order;";
 
         Query query = entityManager.createNativeQuery(sqlString);
-        return mapper.riskListQueryToRiskLineDtoList(query.getResultList());
+        return assessmentMapper.riskListQueryToRiskLineDtoList(query.getResultList());
     }
     @Transactional
     public List<AdoptionCandidateDto> getAdoptionCandidate(List<Long> applicationId) {
