@@ -41,4 +41,6 @@ public class AssessmentCategory extends AbstractEntity {
     @ManyToOne
     @JoinColumn(name="assessment_questionnaire_id", referencedColumnName="id")
     public AssessmentQuestionnaire questionnaire;
+
+    public Long questionnaire_categoryId;
 }
