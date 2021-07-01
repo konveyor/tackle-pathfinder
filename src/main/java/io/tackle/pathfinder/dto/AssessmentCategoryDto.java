@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
@@ -26,21 +27,14 @@ import java.util.List;
     "comment"
 })
 @Data
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @RegisterForReflection
 
 public class AssessmentCategoryDto extends BasicDto {
 
-    /**
-     * DB id
-     * (Required)
-     * 
-     */
-    @JsonProperty("id")
-    @JsonPropertyDescription("DB id")
-    private Long id;
+
     /**
      * Used for sorting multiple sections
      * (Required)
@@ -56,7 +50,7 @@ public class AssessmentCategoryDto extends BasicDto {
      */
     @JsonProperty("title")
     @JsonPropertyDescription("Title of the section. This will be represented as a Wizard's section")
-    public String title;
+    private String title;
 
 
     /**

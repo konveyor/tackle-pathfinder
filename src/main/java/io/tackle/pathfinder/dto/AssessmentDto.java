@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
@@ -32,20 +33,11 @@ import java.util.List;
     "questionnaire"
 })
 @Data
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @RegisterForReflection
 public class AssessmentDto extends BasicDto {
-
-    /**
-     * Assessment id
-     * (Required)
-     * 
-     */
-    @JsonProperty("id")
-    @JsonPropertyDescription("Assessment id")
-    private Long id;
     /**
      * Application id
      * 
