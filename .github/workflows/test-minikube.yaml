@@ -62,6 +62,7 @@ jobs:
       - name: Check during max 10 minutes to allow objects to be created and ready
         timeout-minutes: 10
         run: |
+          set -x
           while [[ ! "$(kubectl rollout status deployment tackle-pathfinder -n tackle)" =~ "successfully" ]]; do
             sleep 15
             kubectl get pods -n tackle
