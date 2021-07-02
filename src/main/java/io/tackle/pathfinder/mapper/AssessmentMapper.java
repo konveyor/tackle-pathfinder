@@ -13,6 +13,7 @@ import org.mapstruct.Mapping;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Mapper(componentModel = "cdi")
@@ -71,15 +72,24 @@ public abstract class AssessmentMapper {
     }
 
     protected String translateCategory(AssessmentCategory cat, String defaultText, String destLanguage, String field) {
-        return translate(Category.findById(cat.questionnaire_categoryId), defaultText, destLanguage, field);
+        return Optional.ofNullable(cat.questionnaire_categoryId)
+                .flatMap(a -> Category.findByIdOptional(a))
+                .map(a -> translate((PanacheEntity) a, defaultText, destLanguage, field))
+            .orElse(defaultText);
     }
 
     protected String translateQuestion(AssessmentQuestion que, String defaultText, String destLanguage, String field) {
-        return translate(Question.findById(que.questionnaire_questionId), defaultText, destLanguage, field);
+        return Optional.ofNullable(que.questionnaire_questionId)
+            .flatMap(a -> Question.findByIdOptional(a))
+            .map(a -> translate((PanacheEntity) a, defaultText, destLanguage, field))
+            .orElse(defaultText);
     }
 
     protected String translateOption(AssessmentSingleOption opt, String defaultText, String destLanguage, String field) {
-        return translate(SingleOption.findById(opt.questionnaire_optionId), defaultText, destLanguage, field);
+        return Optional.ofNullable(opt.questionnaire_optionId)
+            .flatMap(a -> SingleOption.findByIdOptional(a))
+            .map(a -> translate((PanacheEntity) a, defaultText, destLanguage, field))
+            .orElse(defaultText);
     }
 
     protected String translate(PanacheEntity dto, String defaultText, String destLanguage, String field) {

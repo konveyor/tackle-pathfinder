@@ -8,7 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 import javax.enterprise.context.ApplicationScoped;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
-import java.util.List;
 
 @ApplicationScoped
 @Log
@@ -23,20 +22,28 @@ public class TranslatorSvc {
         if (StringUtils.isBlank(destinationLanguage)) {
             return defaultText;
         }
-        TranslatedText translatedTextObj = TranslatedText.find("key=?1 and language=?2", key, destinationLanguage).firstResult();
-
-        return (translatedTextObj != null) ? translatedTextObj.text : defaultText;
+        return TranslatedText.find("key=?1 and language=?2", key, destinationLanguage)
+            .firstResultOptional().map( a -> ((TranslatedText)a).text)
+            .orElse(defaultText);
     }
 
-    public void addTranslation(@NotNull PanacheEntity entity, String concept, String text, String language) {
-        addTranslation(getKey(entity, concept), text, language);
+    public TranslatedText addOrUpdateTranslation(@NotNull PanacheEntity entity, String concept, String text, String language) {
+        return addOrUpdateTranslation(getKey(entity, concept), text, language);
     }
 
     @Transactional
-    public void addTranslation(@NotNull String key, String text, String language) {
-        TranslatedText.builder()
-            .key(key)
-            .text(text)
-            .language(language).build().persistAndFlush();
+    public TranslatedText addOrUpdateTranslation(@NotNull String key, String text, String language) {
+        TranslatedText translatedText = (TranslatedText) TranslatedText.find("key=?1 and language=?2", key, language)
+            .firstResultOptional()
+            .map(a -> {
+                ((TranslatedText)a).text = text;
+                return a;
+            })
+            .orElseGet(() -> TranslatedText.builder()
+                .key(key)
+                .text(text)
+                .language(language).build());
+        translatedText.persist();
+        return translatedText;
     }
 }
