@@ -7,7 +7,7 @@ create table translated_text (
      updateUser varchar(255),
      key varchar(255),
      language varchar(255),
-     text varchar(255),
+     text varchar(1000),
      primary key (id)
 );
 CREATE UNIQUE INDEX translated_text_key_language_unique_idx

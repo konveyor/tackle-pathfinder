@@ -50,7 +50,6 @@ jobs:
           done
       - name: Deploy Pathfinder on minikube
         run: |
-          set -x
           kubectl create namespace tackle
           kubectl apply -f src/test/resources/test-deployment.yaml -n tackle
           sed -e 's/imagePullPolicy: Always/imagePullPolicy: Never/g' \
