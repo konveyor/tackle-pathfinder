@@ -64,6 +64,7 @@ jobs:
         run: |
           while [[ ! "$(kubectl rollout status deployment tackle-pathfinder -n tackle)" =~ "successfully" ]]; do
             sleep 15
+            kubectl get pods -n tackle
           done
       - name: Print status on Minikube
         run : |
