@@ -63,9 +63,11 @@ jobs:
         timeout-minutes: 10
         run: |
           set -x
+          sleep 300
+          kubectl get pods -n tackle
+          kubectl rollout status deployment tackle-pathfinder -n tackle
           while [[ ! "$(kubectl rollout status deployment tackle-pathfinder -n tackle)" =~ "successfully" ]]; do
             sleep 15
-            kubectl get pods -n tackle
           done
       - name: Print status on Minikube
         run : |
