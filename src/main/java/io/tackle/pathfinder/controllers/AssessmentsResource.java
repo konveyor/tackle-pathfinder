@@ -1,12 +1,12 @@
 package io.tackle.pathfinder.controllers;
 
-import io.tackle.pathfinder.dto.AdoptionCandidateDto;
-import io.tackle.pathfinder.dto.ApplicationDto;
-import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
-import io.tackle.pathfinder.dto.LandscapeDto;
-import io.tackle.pathfinder.dto.RiskLineDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.services.AssessmentSvc;
+import io.tackle.pathfinder.services.TranslatorSvc;
+import lombok.extern.java.Log;
+import org.eclipse.microprofile.jwt.JsonWebToken;
+
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -14,14 +14,20 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Path("/assessments")
+@Log
 public class AssessmentsResource {
   @Inject
   AssessmentSvc assessmentSvc;
+
+  @Inject
+  TranslatorSvc translatorSvc;
+
+  @Inject
+  JsonWebToken accessToken;
 
   @GET
   @Produces("application/json")
@@ -51,8 +57,9 @@ public class AssessmentsResource {
   @GET
   @Path("{assessmentId}")
   @Produces("application/json")
-  public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @QueryParam("language") String language) {
-    return assessmentSvc.getAssessmentDtoByAssessmentId(assessmentId, language);
+  public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @QueryParam("language") String language) throws JsonProcessingException {
+    String lang = translatorSvc.getLanguage(accessToken.getRawToken(), language);
+    return assessmentSvc.getAssessmentDtoByAssessmentId(assessmentId, lang);
   }  
   
   @PATCH

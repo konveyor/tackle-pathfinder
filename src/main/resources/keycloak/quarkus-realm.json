@@ -1158,8 +1158,8 @@
       }
     } ]
   },
-  "internationalizationEnabled" : false,
-  "supportedLocales" : [ ],
+  "internationalizationEnabled" : true,
+  "supportedLocales" : [ "ES", "IT", "EN" ],
   "authenticationFlows" : [ {
     "id" : "d6c3e282-a738-4b8b-98c2-378b9faf8344",
     "alias" : "Handle Existing Account",
@@ -1594,6 +1594,9 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "attributes" : {
+      "locale" : [ "EN" ]
+    },
     "credentials" : [ {
       "type" : "password",
       "hashedSaltedValue" : "A3okqV2T/ybXTVEgKfosoSjP8Yc9IZbFP/SY4cEd6hag7TABQrQ6nUSuwagGt96l8cw1DTijO75PqX6uiTXMzw==",
@@ -1617,6 +1620,9 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "attributes" : {
+      "locale" : [ "ES" ]
+    },
     "credentials" : [ {
       "type" : "password",
       "hashedSaltedValue" : "JV3DUNLjqOadjbBOtC4rvacQI553CGaDGAzBS8MR5ReCr7SwF3E6CsW3T7/XO8ITZAsch8+A/6loeuCoVLLJrg==",

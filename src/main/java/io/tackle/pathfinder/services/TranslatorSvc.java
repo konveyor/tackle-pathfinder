@@ -1,5 +1,8 @@
 package io.tackle.pathfinder.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.tackle.pathfinder.model.i18n.TranslatedText;
 import lombok.extern.java.Log;
@@ -8,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import javax.enterprise.context.ApplicationScoped;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
+import java.util.Base64;
 
 @ApplicationScoped
 @Log
@@ -45,5 +49,20 @@ public class TranslatorSvc {
                 .language(language).build());
         translatedText.persist();
         return translatedText;
+    }
+
+    public String getLanguage(String token, String queryLanguage) throws JsonProcessingException {
+        if (StringUtils.isBlank(queryLanguage)) {
+            String tokenBodyJson = new String(Base64.getDecoder().decode(token.split("\\.")[1]));
+            String tokenLocale = getLocaleFromTokenBody(tokenBodyJson);
+            return tokenLocale;
+        } else return queryLanguage;
+    }
+
+    private String getLocaleFromTokenBody(String tokenBodyJson) throws JsonProcessingException {
+        ObjectMapper tokenJson = new ObjectMapper();
+        ObjectNode body = tokenJson.readValue(tokenBodyJson, ObjectNode.class);
+        String tokenLocale = body.has("locale") ? body.get("locale").textValue() : "null";
+        return tokenLocale;
     }
 }
