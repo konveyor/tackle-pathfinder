@@ -157,7 +157,7 @@ public class AssessmentSvc {
     }
 
     public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId, String language) {
-        log.log(Level.FINE, "Requesting Assessment " + assessmentId);
+        log.log(Level.FINE, "Requesting Assessment " + assessmentId + " in language " + language);
         Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
 
         return assessmentMapper.assessmentToAssessmentDto(assessment, StringUtils.defaultString(language));

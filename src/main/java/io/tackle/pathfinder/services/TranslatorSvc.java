@@ -26,7 +26,7 @@ public class TranslatorSvc {
         if (StringUtils.isBlank(destinationLanguage)) {
             return defaultText;
         }
-        return TranslatedText.find("key=?1 and language=?2", key, destinationLanguage)
+        return TranslatedText.find("key=?1 and language=?2", key, destinationLanguage.toUpperCase())
             .firstResultOptional().map( a -> ((TranslatedText)a).text)
             .orElse(defaultText);
     }
@@ -37,7 +37,7 @@ public class TranslatorSvc {
 
     @Transactional
     public TranslatedText addOrUpdateTranslation(@NotNull String key, String text, String language) {
-        TranslatedText translatedText = (TranslatedText) TranslatedText.find("key=?1 and language=?2", key, language)
+        TranslatedText translatedText = (TranslatedText) TranslatedText.find("key=?1 and language=?2", key, language.toUpperCase())
             .firstResultOptional()
             .map(a -> {
                 ((TranslatedText)a).text = text;
@@ -52,11 +52,11 @@ public class TranslatorSvc {
     }
 
     public String getLanguage(String token, String queryLanguage) throws JsonProcessingException {
-        if (StringUtils.isBlank(queryLanguage)) {
-            String tokenBodyJson = new String(Base64.getDecoder().decode(token.split("\\.")[1]));
-            String tokenLocale = getLocaleFromTokenBody(tokenBodyJson);
-            return tokenLocale;
-        } else return queryLanguage;
+        if (StringUtils.isNotBlank(queryLanguage)) return queryLanguage;
+
+        String tokenBodyJson = new String(Base64.getDecoder().decode(token.split("\\.")[1]));
+        String tokenLocale = getLocaleFromTokenBody(tokenBodyJson);
+        return tokenLocale;
     }
 
     private String getLocaleFromTokenBody(String tokenBodyJson) throws JsonProcessingException {
