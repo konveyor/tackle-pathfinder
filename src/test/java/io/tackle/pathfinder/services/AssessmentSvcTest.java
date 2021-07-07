@@ -587,7 +587,7 @@ public class AssessmentSvcTest {
         AssessmentSingleOption option4 = getAssessmentOption(assessment2, 4, Risk.UNKNOWN,1);
         option4.selected = true;
 
-        List<RiskLineDto> riskLineDtos = assessmentSvc.identifiedRisks(List.of(5566L, 6677L));
+        List<RiskLineDto> riskLineDtos = assessmentSvc.identifiedRisks(List.of(5566L, 6677L), "");
 
         // we have answered 6 options : 3 RED , 1 AMBER, 1 GREEN, 1 UNKNOWN
         // but only the RED answers are returned
