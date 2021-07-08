@@ -74,8 +74,8 @@ public abstract class AssessmentMapper {
         SingleOption option = SingleOption.findById(optionId.longValue());
 
         String categoryText = translate(category, category.name, language, "name");
-        String questionText = translate(question, question.questionText, language, "question_text");
-        String optionText = translate(question, option.option, language, "option");
+        String questionText = translate(question, question.questionText, language, "question");
+        String optionText = translate(option, option.option, language, "option");
         List<Long> applications = Arrays.stream(appsList).map(Long::parseLong).collect(Collectors.toList());
 
         return RiskLineDto.builder()

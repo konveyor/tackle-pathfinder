@@ -618,6 +618,51 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
+    public void given_TwoAssessments_when_RequestedIdentifiedRisksInSpanishAndNullLanguage_then_ApplicationsGroupAreTheSameAndTextsAreTranslated() { Assessment assessment1 = createAssessment(Questionnaire.findAll().firstResult(), 7766L);
+
+        AssessmentQuestion question1 = getAssessmentQuestion(assessment1, 1, 1);
+        AssessmentSingleOption option1 = getAssessmentOption(assessment1, 1, Risk.RED, 1);
+        option1.selected = true;
+
+        AssessmentSingleOption option2 = getAssessmentOption(assessment1, 2, Risk.AMBER, 1);
+        option2.selected = true;
+
+        Assessment assessment2 = createAssessment(Questionnaire.findAll().firstResult(), 8877L);
+        AssessmentSingleOption option5 = getAssessmentOption(assessment2, 1, Risk.RED, 1);
+        option5.selected = true;
+        AssessmentSingleOption option6 = getAssessmentOption(assessment2, 2, Risk.GREEN, 1);
+        option6.selected = true;
+
+        AssessmentQuestion question3 = getAssessmentQuestion(assessment2, 3, 1);
+        AssessmentSingleOption option3 = getAssessmentOption(assessment2, 3, Risk.RED, 1);
+        option3.selected = true;
+
+        AssessmentSingleOption option4 = getAssessmentOption(assessment2, 4, Risk.UNKNOWN,1);
+        option4.selected = true;
+
+        List<RiskLineDto> riskLineDtos = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "");
+        List<RiskLineDto> riskLineDtosES = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "ES");
+
+        // we have answered 6 options : 3 RED , 1 AMBER, 1 GREEN, 1 UNKNOWN
+        // but only the RED answers are returned
+        assertThat(riskLineDtos).hasSize(2);
+        assertThat(riskLineDtosES).hasSize(2);
+
+        assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question1.questionText) && e.getAnswer().equals(option1.option))
+            .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(7766L, 8877L);
+
+        assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question3.questionText) && e.getAnswer().equals(option3.option))
+            .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(8877L);
+
+        assertThat(riskLineDtosES.stream().filter(e -> e.getQuestion().equals("ES: " + question1.questionText) && e.getAnswer().equals("ES: " + option1.option))
+            .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(7766L, 8877L);
+
+        assertThat(riskLineDtosES.stream().filter(e -> e.getQuestion().equals("ES: " + question3.questionText) && e.getAnswer().equals("ES: " + option3.option))
+            .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(8877L);
+    }
+
+    @Test
+    @Transactional
     public void given_ListOfApplicationsWithOneWithAssessmentNotComplete_when_adoptionCandidate_then_NotFailsAndApplicationIsNotIncludedInResult() {
         // assessment empty and STARTED
         Assessment assessment1 = createAssessment(Questionnaire.findAll().firstResult(), 775566L);
