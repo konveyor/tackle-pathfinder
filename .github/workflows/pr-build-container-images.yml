@@ -21,7 +21,7 @@ jobs:
       - name: Build and Push to GitHub Packages
         run: |
           mvn -U -B package --file pom.xml \
-          -Pcontainer-image -Pnative -DskipTests \
+          -Pnative -Dquarkus.container-image.build=true -DskipTests \
           -Dquarkus.container-image.push=true \
           -Dquarkus.container-image.group=${{ github.repository_owner }} \
           -Dquarkus.container-image.name=${{ github.event.repository.name }}/tackle-pathfinder \
