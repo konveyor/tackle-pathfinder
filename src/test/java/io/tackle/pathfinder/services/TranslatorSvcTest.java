@@ -82,7 +82,7 @@ public class TranslatorSvcTest {
         assertThat(assessmentOptionDtoES.getOption()).startsWith("ES:");
 
         // Checking a language not existing, should give the original texts
-        assertThat(assessmentDtoCAT.getQuestionnaire().getLanguage()).isEqualTo("IT");
+        assertThat(assessmentDtoCAT.getQuestionnaire().getLanguage()).isEqualTo("CAT");
         assertThat(assessmentDtoCAT.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
