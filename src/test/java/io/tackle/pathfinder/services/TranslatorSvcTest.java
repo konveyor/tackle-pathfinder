@@ -44,7 +44,7 @@ public class TranslatorSvcTest {
 
         // when
         AssessmentDto assessmentDtoES = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "ES");
-        AssessmentDto assessmentDtoIT = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "IT");
+        AssessmentDto assessmentDtoCAT = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "CAT");
 
         // then
         assertThat(assessmentDtoEN.getQuestionnaire().getCategories()
@@ -82,12 +82,16 @@ public class TranslatorSvcTest {
         assertThat(assessmentOptionDtoES.getOption()).startsWith("ES:");
 
         // Checking a language not existing, should give the original texts
-        assertThat(assessmentDtoIT.getQuestionnaire().getLanguage()).isEqualTo("IT");
-        assertThat(assessmentDtoIT.getQuestionnaire().getCategories()
+        assertThat(assessmentDtoCAT.getQuestionnaire().getLanguage()).isEqualTo("IT");
+        assertThat(assessmentDtoCAT.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
             .findFirst()
-            .get().getTitle()).startsWith("IT:");
+            .get().getTitle()).isEqualTo(assessmentDtoEN.getQuestionnaire().getCategories()
+                                        .stream()
+                                        .filter(e -> e.getOrder() == 1)
+                                        .findFirst()
+                                        .get().getTitle());
     }
 
     @Test

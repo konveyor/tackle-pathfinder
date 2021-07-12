@@ -82,7 +82,7 @@ public class AssessmentsResource {
   @Path("risks")
   @Produces("application/json")
   @Consumes("application/json")
-  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<ApplicationDto> applicationList, @QueryParam("language") String language) {
+  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<ApplicationDto> applicationList) {
     if (!applicationList.isEmpty()) {
       // TODO Tanslate
       return assessmentSvc.identifiedRisks(applicationList.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
