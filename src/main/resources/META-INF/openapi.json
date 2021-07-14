@@ -3,7 +3,7 @@
     "info": {
         "title": "tackle-pathfinder",
         "version": "0.0.4",
-        "description": "Tackle PathFinder 0.0.4\n\nChanges : \n* added delete assessment function\n* added create assessment copying responses from another assessment\n* added bulk creation/copy of assessments\n* added identified risks function\n* added assessment confidence function"
+        "description": "Tackle PathFinder 0.0.4\n\nChanges : \n* added delete assessment function\n* added create assessment copying responses from another assessment\n* added bulk creation/copy of assessments\n* added identified risks function\n* added assessment confidence function\n* added multilanguage optional param for GetAssessment"
     },
     "paths": {
         "/assessments": {
@@ -143,6 +143,16 @@
         },
         "/assessments/{assessmentId}": {
             "get": {
+                "parameters": [
+                    {
+                        "name": "language",
+                        "description": "ISO language code for the response\nIf not specified the language used will be the original language of the questionnaire",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "content": {

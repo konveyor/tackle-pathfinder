@@ -3,6 +3,7 @@ package io.tackle.pathfinder.controllers;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import io.tackle.commons.testcontainers.KeycloakTestResource;
@@ -27,7 +28,6 @@ import javax.transaction.*;
 
 import java.time.Duration;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -49,6 +49,7 @@ import static org.hamcrest.Matchers.is;
         initArgs = {
                 @ResourceArg(name = KeycloakTestResource.IMPORT_REALM_JSON_PATH, value = "keycloak/quarkus-realm.json"),
                 @ResourceArg(name = KeycloakTestResource.REALM_NAME, value = "quarkus")
+
         }
 )
 @Log
@@ -970,5 +971,49 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.body("find{it.assessmentId=="+ assessmentAMBER.id + "}.confidence", is(24))
 			.body("find{it.assessmentId=="+ assessmentUNKNOWN.id + "}.confidence", is(70));
 
+	}
+
+	@Test
+	public void given_AssessmentAndTranslations_when_TranslationDeleted_then_ThatConceptHasTheNotTranslatedVallue() {
+		String KEYCLOAK_SERVER_URL = System.getProperty("quarkus.oidc.auth-server-url", "http://localhost:8180/auth");
+		String ACCESS_TOKEN_JDOE = RestAssured.given().relaxedHTTPSValidation()
+			.auth().preemptive()
+				.basic("backend-service", "secret")
+				.contentType("application/x-www-form-urlencoded")
+				.formParam("grant_type", "password")
+				.formParam("username", "jdoe")
+				.formParam("password", "jdoe")
+			.when()
+				.post(KEYCLOAK_SERVER_URL + "/protocol/openid-connect/token", new Object[0])
+			.then()
+				.extract()
+				.path("access_token", new String[0]).toString();
+
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON).auth().oauth2(ACCESS_TOKEN_JDOE)
+			.body(new ApplicationDto(35500L))
+			.when()
+			.post("/assessments")
+			.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Retrieval of the assessment created
+		AssessmentDto assessment = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON).auth().oauth2(ACCESS_TOKEN_JDOE)
+			.when()
+			.get("/assessments/" + header.getId())
+			.then()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getTitle().startsWith("ES:"))).isTrue();
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getQuestion().startsWith("ES:")))).isTrue();
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getDescription().startsWith("ES:")))).isTrue();
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getOptions().stream().allMatch(c -> c.getOption().startsWith("ES:"))))).isTrue();
 	}
 }

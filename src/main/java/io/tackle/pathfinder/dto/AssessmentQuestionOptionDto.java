@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 
 /**
@@ -27,20 +28,11 @@ import lombok.NoArgsConstructor;
     "checked"
 })
 @Data
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @RegisterForReflection
-public class AssessmentQuestionOptionDto {
-
-    /**
-     * The DB id
-     * (Required)
-     * 
-     */
-    @JsonProperty("id")
-    @JsonPropertyDescription("The DB id")
-    private Long id;
+public class AssessmentQuestionOptionDto extends BasicDto {
     /**
      * For sorting multiple radioButtons/checkboxes
      * (Required)

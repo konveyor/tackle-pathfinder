@@ -107,13 +107,14 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
-    public void given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent() throws InterruptedException {
+    public void given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent() {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 1410L);
 
         assertThat(assessment.stakeholdergroups).hasSize(2);
         assertThat(assessment.stakeholders).hasSize(3);
 
-        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment);
+        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment, "EN");
+
         assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
         assertThat(assessmentDto.getStakeholders()).hasSize(3); 
 
@@ -147,13 +148,13 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
-    public void given_CreatedAssessment_When_UpdateWithStakeholdersNull_Then_ItDoesntChangeStakeholders() throws InterruptedException {
+    public void given_CreatedAssessment_When_UpdateWithStakeholdersNull_Then_ItDoesntChangeStakeholders() {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 2410L);
 
         assertThat(assessment.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
         assertThat(assessment.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
 
-        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment);
+        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment, "EN");
         assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
         assertThat(assessmentDto.getStakeholders()).hasSize(3); 
 
@@ -176,7 +177,7 @@ public class AssessmentSvcTest {
         assertThat(assessment.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
         assertThat(assessment.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
 
-        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment);
+        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment, "EN");
         assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
         assertThat(assessmentDto.getStakeholders()).hasSize(3);
 
@@ -209,13 +210,13 @@ public class AssessmentSvcTest {
     
     @Test
     @Transactional
-    public void given_CreatedAssessment_When_UpdateWithStakeholdersEmpty_Then_ItDeleteAllStakeholders() throws InterruptedException {
+    public void given_CreatedAssessment_When_UpdateWithStakeholdersEmpty_Then_ItDeleteAllStakeholders() {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 3410L);
 
         assertThat(assessment.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(100L, 200L, 300L);
         assertThat(assessment.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(500L, 600L);
 
-        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment);
+        AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment, "EN");
         assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
         assertThat(assessmentDto.getStakeholders()).hasSize(3); 
 
@@ -231,7 +232,7 @@ public class AssessmentSvcTest {
     }
     
     @Transactional
-    private boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId) throws InterruptedException {
+    private boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId) {
         log.info("categories to check " + assessment.assessmentQuestionnaire.categories.stream().count());
         log.info("categories to check " + assessment.assessmentQuestionnaire.categories.stream().map(e -> e.id.toString()).collect(Collectors.joining(" ## ")));
 
@@ -349,8 +350,8 @@ public class AssessmentSvcTest {
         AssessmentHeaderDto copyHeader = assessmentSvc.copyAssessment(assessment.id, 9997200L);
         Assessment assessmentCopied = Assessment.findById(copyHeader.getId());
 
-        AssessmentDto assessmentSourceDto = assessmentMapper.assessmentToAssessmentDto(assessment);
-        AssessmentDto assessmentTargetDto = assessmentMapper.assessmentToAssessmentDto(assessmentCopied);
+        AssessmentDto assessmentSourceDto = assessmentMapper.assessmentToAssessmentDto(assessment, "EN");
+        AssessmentDto assessmentTargetDto = assessmentMapper.assessmentToAssessmentDto(assessmentCopied, "EN");
         		// Compare Values
 		assertThat(assessmentTargetDto)
         .usingRecursiveComparison()

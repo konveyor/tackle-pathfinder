@@ -42,4 +42,7 @@ public class AssessmentSingleOption extends AbstractEntity {
 
     @Basic(optional = false)
     public boolean selected;
+
+    public Long questionnaire_optionId;
+
 }
