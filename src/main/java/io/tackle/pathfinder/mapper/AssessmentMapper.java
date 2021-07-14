@@ -11,6 +11,7 @@ import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import javax.inject.Inject;
+import javax.persistence.Tuple;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -54,20 +55,20 @@ public abstract class AssessmentMapper {
     @Mapping(target = "stakeholderGroups", source = "stakeholdergroups")
     public abstract AssessmentDto assessmentToAssessmentDto(Assessment assessment, @Context String language);
 
-    private RiskLineDto getRiskLineDto(Object[] fields) {
+    private RiskLineDto getRiskLineDto(Tuple fields) {
         // cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option, array_agg(a.application_id)
-        String fieldApps = (String) fields[6];
+        String fieldApps = fields.get("applicationIds", String.class);
         String[] appsList = fieldApps.replace("{", "").replace("}", "").split(",");
         List<Long> applications = Arrays.stream(appsList).map(Long::parseLong).collect(Collectors.toList());
         return RiskLineDto.builder()
-            .category((String) fields[1])
-            .question((String) fields[3])
-            .answer((String) fields[5])
+            .category(fields.get("name", String.class))
+            .question(fields.get("question_text", String.class))
+            .answer(fields.get("option", String.class))
             .applications(applications)
             .build();
     }
 
-    public List<RiskLineDto> riskListQueryToRiskLineDtoList(List<Object[]> objectList) {
+    public List<RiskLineDto> riskListQueryToRiskLineDtoList(List<Tuple> objectList) {
         return objectList.stream().map(this::getRiskLineDto).collect(Collectors.toList());
     }
 

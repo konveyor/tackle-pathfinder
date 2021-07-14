@@ -24,12 +24,14 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import javax.persistence.Tuple;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.function.Function;
 import java.math.BigDecimal;
@@ -341,11 +343,12 @@ public class AssessmentSvc {
 
     @Transactional
     public List<LandscapeDto> landscape(List<Long> applicationIds) {
-            String sql = "SELECT cast(ID as int), RISK, cast(trunc(max(PCT)) as int) AS PERCENTAGE " +
+            String sql = "SELECT cast(ID as int), RISK, cast(trunc(max(PCT)) as int) AS PERCENTAGE , cast(application_id as int) " +
                 " FROM ( " +
                 "    SELECT assess.id, " +
                 "            so.risk, " +
-                "            trunc(((0.0 + Count(*) OVER w_risk_count) / (Count(*) OVER (PARTITION BY assess.id)) * 100)) AS pct " +
+                "            trunc(((0.0 + Count(*) OVER w_risk_count) / (Count(*) OVER (PARTITION BY assess.id)) * 100)) AS pct, " +
+                "            assess.application_id " +
                 "            FROM assessment_singleoption so " +
                 "                    join assessment_question qu on (qu.id = so.assessment_question_id and qu.deleted is not true) " +
                 "                    join assessment_category ca on (ca.id = qu.assessment_category_id and ca.deleted is not true) " +
@@ -356,23 +359,23 @@ public class AssessmentSvc {
                 "                   AND assess.status = 'COMPLETE' " +
                 "            window w_risk_count as (partition by assess.id, so.risk) " +
                 "    ) AS risks " +
-                " GROUP BY ID, risk;";
-            Query query = entityManager.createNativeQuery(sql);
+                " GROUP BY ID, risk, application_id;";
+            List<Tuple> query = entityManager.createNativeQuery(sql, Tuple.class).getResultList();
 
-            List<AssessmentRiskDto> resultMappedToAssessmentsRisk = (List<AssessmentRiskDto>) query.getResultList().stream()
+            List<AssessmentRiskDto> resultMappedToAssessmentsRisk = query.stream()
                 .map(this::sqlRowToAssessmentRisk)
                 .collect(Collectors.toList());
 
             List<LandscapeDto> collect = resultMappedToAssessmentsRisk.stream()
                 .collect(Collectors.groupingBy(e -> e.id, Collectors.mapping(Function.identity(), Collectors.maxBy(this::compareAssessmentRisk))))
                 .values().stream()
-                .map(a -> new LandscapeDto(a.get().getId().longValue(), "UNKNOWN".equalsIgnoreCase(a.get().getRisk()) ? Risk.GREEN : Risk.valueOf(a.get().getRisk())))
+                .map(a -> new LandscapeDto(a.get().getId().longValue(), "UNKNOWN".equalsIgnoreCase(a.get().getRisk()) ? Risk.GREEN : Risk.valueOf(a.get().getRisk()), a.get().applicationId.longValue()))
                 .collect(toList());
             return collect;
     }
     @Transactional
     public List<RiskLineDto> identifiedRisks(List<Long> applicationList) {
-        String sqlString = "select cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option, cast(array_agg(a.application_id) as text) \n" +
+        String sqlString = "select cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option, cast(array_agg(a.application_id) as text) as applicationIds \n" +
                 "from assessment_category cat join assessment_question q on cat.id = q.assessment_category_id\n" +
                 "                             join assessment_singleoption opt on q.id = opt.assessment_question_id and opt.selected is true\n" +
                 "                             join assessment_questionnaire aq on cat.assessment_questionnaire_id = aq.id\n" +
@@ -387,8 +390,8 @@ public class AssessmentSvc {
                 "group by cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option " +
                 "order by cat.category_order, q.question_order, opt.singleoption_order;";
 
-        Query query = entityManager.createNativeQuery(sqlString);
-        return assessmentMapper.riskListQueryToRiskLineDtoList(query.getResultList());
+        List<Tuple> query = entityManager.createNativeQuery(sqlString, Tuple.class).getResultList();
+        return assessmentMapper.riskListQueryToRiskLineDtoList(query);
     }
     @Transactional
     public List<AdoptionCandidateDto> getAdoptionCandidate(List<Long> applicationId) {
@@ -456,8 +459,8 @@ public class AssessmentSvc {
         adjuster.set(adjuster.get() * Math.pow(adjusterBase.get(b.getKey()), b.getValue()));
     }
 
-    private AssessmentRiskDto sqlRowToAssessmentRisk(Object row) {
-        return new AssessmentRiskDto((Integer) ((Object[]) row)[0], (String) ((Object[]) row)[1], (Integer) ((Object[]) row)[2]);
+    private AssessmentRiskDto sqlRowToAssessmentRisk(Tuple row) {
+        return new AssessmentRiskDto(row.get("id", Integer.class), row.get("risk", String.class), row.get("percentage", Integer.class), row.get("application_id", Integer.class));
     }
 
     private int compareAssessmentRisk(AssessmentRiskDto o1, AssessmentRiskDto o2) {
@@ -478,5 +481,6 @@ public class AssessmentSvc {
         Integer id;
         String risk;
         Integer percentage;
+        Integer applicationId;
     }
 }

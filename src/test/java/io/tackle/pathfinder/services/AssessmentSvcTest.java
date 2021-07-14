@@ -384,7 +384,7 @@ public class AssessmentSvcTest {
         List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(899200L, 898200L));
 
         // asserts
-        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.RED), new LandscapeDto(assessment2.id, Risk.RED));
+        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.RED, assessment1.applicationId), new LandscapeDto(assessment2.id, Risk.RED, assessment2.applicationId));
     }
 
     @Test
@@ -409,7 +409,7 @@ public class AssessmentSvcTest {
         List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(896200L, 895200L));
 
         // asserts
-        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.GREEN), new LandscapeDto(assessment2.id, Risk.GREEN));
+        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.GREEN, assessment1.applicationId), new LandscapeDto(assessment2.id, Risk.GREEN, assessment2.applicationId));
     }
 
     @Test
@@ -431,7 +431,7 @@ public class AssessmentSvcTest {
         List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(894200L, 893200L));
 
         // asserts
-        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.AMBER), new LandscapeDto(assessment2.id, Risk.AMBER));
+        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.AMBER, assessment1.applicationId), new LandscapeDto(assessment2.id, Risk.AMBER, assessment2.applicationId));
     }
 
     @Test
@@ -452,7 +452,7 @@ public class AssessmentSvcTest {
         List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(1894200L, 1893200L));
 
         // asserts
-        assertThat(landscape).containsExactly(new LandscapeDto(assessment1.id, Risk.AMBER));
+        assertThat(landscape).containsExactly(new LandscapeDto(assessment1.id, Risk.AMBER, assessment1.applicationId));
     }
 
 

@@ -821,7 +821,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.extract().as(LandscapeDto[].class);
 
 		// assert
-		assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(header1.getId(), Risk.GREEN), new LandscapeDto(header2.getId(), Risk.RED));
+		assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(header1.getId(), Risk.GREEN, header1.getApplicationId()), new LandscapeDto(header2.getId(), Risk.RED, header2.getApplicationId()));
 	}
 
 	@Test
