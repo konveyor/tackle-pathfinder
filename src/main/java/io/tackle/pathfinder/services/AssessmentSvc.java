@@ -343,7 +343,7 @@ public class AssessmentSvc {
 
     @Transactional
     public List<LandscapeDto> landscape(List<Long> applicationIds) {
-            String sql = "SELECT cast(ID as int), RISK, cast(trunc(max(PCT)) as int) AS PERCENTAGE , cast(application_id as int) " +
+            String sql = "SELECT ID, RISK, cast(trunc(max(PCT)) as int) AS PERCENTAGE , application_id " +
                 " FROM ( " +
                 "    SELECT assess.id, " +
                 "            so.risk, " +
@@ -460,7 +460,7 @@ public class AssessmentSvc {
     }
 
     private AssessmentRiskDto sqlRowToAssessmentRisk(Tuple row) {
-        return new AssessmentRiskDto(row.get("id", Integer.class), row.get("risk", String.class), row.get("percentage", Integer.class), row.get("application_id", Integer.class));
+        return new AssessmentRiskDto(row.get("id", BigInteger.class).longValue(), row.get("risk", String.class), row.get("percentage", Integer.class), row.get("application_id", BigInteger.class).longValue());
     }
 
     private int compareAssessmentRisk(AssessmentRiskDto o1, AssessmentRiskDto o2) {
@@ -478,9 +478,9 @@ public class AssessmentSvc {
 
     @Value
     public class AssessmentRiskDto {
-        Integer id;
+        Long id;
         String risk;
         Integer percentage;
-        Integer applicationId;
+        Long applicationId;
     }
 }
