@@ -1,15 +1,12 @@
 package io.tackle.pathfinder.mapper;
 
-import com.sun.xml.bind.v2.runtime.unmarshaller.XsiNilLoader;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.model.assessment.*;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import io.tackle.pathfinder.services.TranslatorSvc;
-import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -43,7 +40,7 @@ public abstract class AssessmentMapper {
     public abstract AssessmentCategoryDto assessmentCategoryToAssessmentCategoryDto(AssessmentCategory category, @Context String language);
 
     public abstract List<AssessmentCategoryDto> assessmentCategoryListToAssessmentCategoryDtoList(List<AssessmentCategory> categoryList, @Context String language);
-    
+
     @Mapping(target="title", source="name")
     @Mapping(target = "language", expression="java(language)")
     public abstract AssessmentQuestionnaireDto assessmentQuestionnaireToAssessmentQuestionnaireDto(AssessmentQuestionnaire questionnaire, @Context String language);
@@ -59,7 +56,6 @@ public abstract class AssessmentMapper {
     @Mapping(target = "stakeholderGroups", source = "stakeholdergroups")
     public abstract AssessmentDto assessmentToAssessmentDto(Assessment assessment, @Context String language);
 
-    @Transactional
     private RiskLineDto getRiskLineDto(Object[] fields, @Context String language) {
         // c.id, q.id, so.id, c.category_order, q.question_order, opt.singleoption_order, cast(array_agg(a.application_id) as text
         String fieldApps = (String) fields[6];
@@ -86,7 +82,6 @@ public abstract class AssessmentMapper {
                 .build();
     }
 
-    @Transactional
     public List<RiskLineDto> riskListQueryToRiskLineDtoList(List<Object[]> objectList, @Context String language) {
         return objectList.stream().map(a -> getRiskLineDto(a, language)).collect(Collectors.toList());
     }
