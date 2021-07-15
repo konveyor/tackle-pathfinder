@@ -39,6 +39,7 @@ package Assessment {
         assessment_questionnaire_id : long
         order : integer
         name : string
+        questionaire_category_id : long
     }
     entity assessment_question {
         assessment_category_id : long
@@ -48,6 +49,7 @@ package Assessment {
         tooltip : string
         question : string
         comment : string
+        questionnaire_question_id : long
     }
 
     entity assessment_single_option {
@@ -56,6 +58,7 @@ package Assessment {
         risk : [RED,AMBER,GREEN]
         option : string
         selected : boolean
+        questionnaire_option_id : long
     }
 
     entity assessment_stakeholder {
@@ -113,9 +116,9 @@ package Questionaire {
 }
 
 package Translation {
-    entity text {
-        translation_group : integer
-        language : [ES,FR, EN, IT]
+    entity Translated_Text {
+        key : string <<Table_ID_Field>>
+        language : [ES, FR, EN, IT]
         text : string
     }
 }

@@ -10,15 +10,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.0.0
       - name: Setup Minikube
-        uses: manusa/actions-setup-minikube@v2.3.1
+        uses: manusa/actions-setup-minikube@v2.4.2
         with:
-          minikube version: 'v1.16.0'
-          kubernetes version: 'v1.19.2'
+          minikube version: v1.21.0
+          kubernetes version: 'v1.21.0'
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
-          start args: '--addons=registry --addons=ingress --cpus 2 --memory 6000'
+          start args: ' --addons=ingress --cpus 2 --memory 6000'
       - name: Get minikube IP
         id: getMinikubeIp
         run: echo "::set-output name=value::$(minikube ip)"
@@ -38,23 +38,23 @@ jobs:
             -Dquarkus.container-image.build=true \
             -Dquarkus.container-image.group=${{ github.repository_owner }} \
             -Dquarkus.container-image.additional-tags=latest-jar \
-            -Dquarkus.container-image.tag=0.0.1-SNAPSHOT-native \
+            -Dquarkus.container-image.tag=gh-test \
             -Dquarkus.container-image.registry=quay.io \
             -Dquarkus.native.container-build=true
-          minikube cache add quay.io/${{ github.repository_owner }}/tackle-pathfinder:0.0.1-SNAPSHOT-native
-          minikube cache list
+          minikube image load quay.io/${{ github.repository_owner }}/tackle-pathfinder:gh-test
       - name: Check during max 2 minutes to allow Minikube ingress to be ready
         timeout-minutes: 2
         run: |
-          while [[ ! "$(kubectl rollout status deployment ingress-nginx-controller -n kube-system)" =~ "successfully" ]]; do
+          while [[ ! "$(kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx)" =~ "successfully" ]]; do
             sleep 15
           done
       - name: Deploy Pathfinder on minikube
         run: |
-          set -x
           kubectl create namespace tackle
           kubectl apply -f src/test/resources/test-deployment.yaml -n tackle
-          sed 's/imagePullPolicy: Always/imagePullPolicy: Never/g' src/main/kubernetes/tackle-pathfinder.yaml | kubectl apply -n tackle -f -
+          sed -e 's/imagePullPolicy: Always/imagePullPolicy: Never/g' \
+              -e 's/image: quay.io\/konveyor\/tackle-pathfinder:0.0.1-SNAPSHOT-native/image: quay.io\/${{ github.repository_owner }}\/tackle-pathfinder:gh-test/g' \
+              src/main/kubernetes/tackle-pathfinder.yaml | kubectl apply -n tackle -f -
       - name: Print status on Minikube
         run : |
           set -x
@@ -63,6 +63,8 @@ jobs:
       - name: Check during max 10 minutes to allow objects to be created and ready
         timeout-minutes: 10
         run: |
+          set -x
+          sleep 300
           while [[ ! "$(kubectl rollout status deployment tackle-pathfinder -n tackle)" =~ "successfully" ]]; do
             sleep 15
           done
