@@ -394,8 +394,7 @@ public class AssessmentSvc {
                 " order by cat.category_order, que.question_order, opt.singleoption_order;";
 
         Query query = entityManager.createNativeQuery(sqlString);
-        List resultList = query.getResultList();
-        return assessmentMapper.riskListQueryToRiskLineDtoList(resultList, language);
+        return assessmentMapper.riskListQueryToRiskLineDtoList(query.getResultList(), language);
     }
     @Transactional
     public List<AdoptionCandidateDto> getAdoptionCandidate(List<Long> applicationId) {
