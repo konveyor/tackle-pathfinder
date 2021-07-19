@@ -57,7 +57,7 @@ public class AssessmentsResource {
   @GET
   @Path("{assessmentId}")
   @Produces("application/json")
-  public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @QueryParam("language") String language) throws JsonProcessingException {
+  public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @QueryParam("language") String language) {
     String lang = translatorSvc.getLanguage(accessToken.getRawToken(), language);
     return assessmentSvc.getAssessmentDtoByAssessmentId(assessmentId, lang);
   }  
@@ -82,10 +82,10 @@ public class AssessmentsResource {
   @Path("risks")
   @Produces("application/json")
   @Consumes("application/json")
-  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<ApplicationDto> applicationList) {
+  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<ApplicationDto> applicationList, @QueryParam("language") String language) {
     if (!applicationList.isEmpty()) {
-      // TODO Tanslate
-      return assessmentSvc.identifiedRisks(applicationList.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
+      String lang = translatorSvc.getLanguage(accessToken.getRawToken(), language);
+      return assessmentSvc.identifiedRisks(applicationList.stream().map(ApplicationDto::getApplicationId).collect(Collectors.toList()), lang);
     } else {
       throw new BadRequestException();
     }
@@ -97,7 +97,7 @@ public class AssessmentsResource {
   @Consumes("application/json")
   public List<LandscapeDto> getLandscape(@NotNull @Valid List<ApplicationDto> applicationIds) {
     if (applicationIds.isEmpty()) throw new BadRequestException();
-    return assessmentSvc.landscape(applicationIds.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
+    return assessmentSvc.landscape(applicationIds.stream().map(ApplicationDto::getApplicationId).collect(Collectors.toList()));
   }
 
   @POST
@@ -105,7 +105,7 @@ public class AssessmentsResource {
   @Produces("application/json")
   @Consumes("application/json")
   public List<AdoptionCandidateDto> adoptionCandidate(@NotNull @Valid List<ApplicationDto> applicationId) {
-    return assessmentSvc.getAdoptionCandidate(applicationId.stream().map(a -> a.getApplicationId()).collect(Collectors.toList()));
+    return assessmentSvc.getAdoptionCandidate(applicationId.stream().map(ApplicationDto::getApplicationId).collect(Collectors.toList()));
   }
 
 }
