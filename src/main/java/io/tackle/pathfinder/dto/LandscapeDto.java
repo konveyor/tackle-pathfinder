@@ -7,4 +7,5 @@ import lombok.Value;
 public class LandscapeDto {
     Long assessmentId;
     Risk risk;
+    Long applicationId;
 }
