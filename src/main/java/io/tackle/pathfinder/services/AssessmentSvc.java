@@ -49,6 +49,7 @@ import java.util.function.Function;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -84,10 +85,6 @@ public class AssessmentSvc {
     @ConfigProperty(name = "confidence.risk.UNKNOWN.adjuster")
     Double unknownAdjuster;
 
-    public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
-        List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
-        return assessmentQuery.stream().findFirst().map(e -> assessmentMapper.assessmentToAssessmentHeaderDto(e));
-    }
     @Inject
     EventBus eventBus;
 
@@ -122,9 +119,8 @@ public class AssessmentSvc {
     public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
         return Assessment.find("application_id", applicationId)
                         .firstResultOptional()
-                        .map(e -> mapper.assessmentToAssessmentHeaderDto((Assessment) e));
+                        .map(e -> assessmentMapper.assessmentToAssessmentHeaderDto((Assessment) e));
     }
-
 
     @Transactional
     public Assessment copyQuestionnaireIntoAssessment(Assessment assessment, Questionnaire questionnaire) {
@@ -190,8 +186,6 @@ public class AssessmentSvc {
 
     public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId, String language) {
         log.log(Level.FINE, "Requesting Assessment " + assessmentId + " in language " + language);
-    public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
-        log.log(Level.FINE,"Requesting Assessment " + assessmentId);
         Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
 
         return assessmentMapper.assessmentToAssessmentDto(assessment, StringUtils.defaultString(language));
@@ -290,7 +284,7 @@ public class AssessmentSvc {
             .username(identityContext.getPrincipal().getName())
         .build()
         .execute();
-        return mapper.assessmentToAssessmentHeaderDto(assessment);
+        return assessmentMapper.assessmentToAssessmentHeaderDto(assessment);
     }
 
     @Transactional
@@ -310,7 +304,7 @@ public class AssessmentSvc {
         eventBus.send("process-bulk-assessment-creation", bulkNew.id);
 
         log.info("Finishing request");
-        return mapper.assessmentBulkToassessmentBulkDto(bulkNew);
+        return assessmentMapper.assessmentBulkToassessmentBulkDto(bulkNew);
     }
 
     @Transactional
@@ -412,7 +406,7 @@ public class AssessmentSvc {
     public AssessmentBulkDto bulkGet(@NotNull Long bulkId) {
         AssessmentBulk bulk = (AssessmentBulk) AssessmentBulk.findByIdOptional(bulkId).orElseThrow(NotFoundException::new);
 
-        return mapper.assessmentBulkToassessmentBulkDto(bulk);
+        return assessmentMapper.assessmentBulkToassessmentBulkDto(bulk);
 	}
 
     @Transactional
@@ -464,13 +458,14 @@ public class AssessmentSvc {
                 "      AND opt.deleted is not true\n" +
                 "      AND aq.deleted is not true\n" +
                 "      AND a.deleted is not true\n" +
-                "      AND a.application_id in (" + StringUtils.join(applicationList, ",") + ") " +
-                "      AND opt.risk = 'RED' " +
+//                "      AND a.application_id in (" + StringUtils.join(applicationList, ",") + ") " +
+//                "      AND opt.risk = 'RED' " +
                 " group by cid, qid, soid, cat.category_order, que.question_order, opt.singleoption_order \n" +
                 " order by cat.category_order, que.question_order, opt.singleoption_order;";
 
         Query query = entityManager.createNativeQuery(sqlString);
-        return assessmentMapper.riskListQueryToRiskLineDtoList(query.getResultList(), language);
+        List resultList = query.getResultList();
+        return assessmentMapper.riskListQueryToRiskLineDtoList(resultList, language);
     }
     @Transactional
     public List<AdoptionCandidateDto> getAdoptionCandidate(List<Long> applicationId) {
@@ -553,7 +548,6 @@ public class AssessmentSvc {
         else if ("UNKNOWN".equalsIgnoreCase(o2.risk)) return -1;
         else return 0; // this should not happen
     }
-
 
     @Value
     public class AssessmentRiskDto {

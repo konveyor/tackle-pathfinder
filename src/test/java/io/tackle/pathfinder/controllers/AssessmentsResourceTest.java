@@ -1,5 +1,6 @@
 package io.tackle.pathfinder.controllers;
 
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
@@ -72,7 +73,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 	public void init() {
 		log.info("Assessments count : " + Assessment.count());
 		log.info("Questionnaire count : " + Questionnaire.count());
-		Assessment.streamAll().forEach(e -> e.delete());
+		Assessment.streamAll().forEach(PanacheEntityBase::delete);
 		log.info("After delete Assessments count : " + Assessment.count());
 		log.info("After delete Questionnaire count : " + Questionnaire.count());
 	}
@@ -175,7 +176,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 	}	
 	
 	@Test
-	public void given_SameApplication_When_SeveralCreateAssessment_Then_Returns400()  {
+	public void given_SameApplication_When_SeveralCreateAssessment_Then_Returns400() throws InterruptedException {
 		CompletableFuture<ValidatableResponse> future1 = managedExecutor.supplyAsync(() -> {
 			log.info("Async 1 request Assessment : " + LocalTime.now());
 			ValidatableResponse response = given()

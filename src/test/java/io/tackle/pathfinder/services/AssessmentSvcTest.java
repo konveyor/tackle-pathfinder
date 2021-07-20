@@ -1,5 +1,6 @@
 package io.tackle.pathfinder.services;
 
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.test.common.QuarkusTestResource;
@@ -39,6 +40,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -291,9 +293,28 @@ public class AssessmentSvcTest {
         transaction.begin();
         Questionnaire questionnaire = createQuestionnaire();
         transaction.commit();
-        CompletableFuture<Assessment> future1 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire, 57L));
+
+        CompletableFuture<Assessment> future1 = managedExecutor.supplyAsync(() -> {
+            try {
+                transaction.begin();
+                Assessment assessment = createAssessment(questionnaire, 57L);
+                transaction.commit();
+                return assessment;
+            } catch (Exception exc) {
+                return null;
+            }
+        });
         Thread.sleep(500);
-        CompletableFuture<Assessment> future4 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire, 57L));
+        CompletableFuture<Assessment> future4 = managedExecutor.supplyAsync(() -> {
+            try {
+                transaction.begin();
+                Assessment assessment = createAssessment(questionnaire, 57L);
+                transaction.commit();
+                return assessment;
+            } catch (Exception exc) {
+                throw new CompletionException(exc);
+            }
+        });
         assertThat(future1).succeedsWithin(Duration.ofSeconds(10)).matches(e -> e.id > 0);
         assertThat(future4).failsWithin(Duration.ofSeconds(1));
     }
@@ -518,7 +539,7 @@ public class AssessmentSvcTest {
 
         addStakeholdersToAssessment(assessment);
 
-        return assessmentSvc.copyQuestionnaireIntoAssessment(assessment, questionnaire);
+        return assessment;
     }
 
     @Transactional
@@ -639,7 +660,8 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
-    public void given_TwoAssessments_when_RequestedIdentifiedRisksInSpanishAndNullLanguage_then_ApplicationsGroupAreTheSameAndTextsAreTranslated() { Assessment assessment1 = createAssessment(Questionnaire.findAll().firstResult(), 7766L);
+    public void given_TwoAssessments_when_RequestedIdentifiedRisksInSpanishAndNullLanguage_then_ApplicationsGroupAreTheSameAndTextsAreTranslated() {
+        Assessment assessment1 = createAssessment(Questionnaire.findAll().firstResult(), 7766L);
 
         AssessmentQuestion question1 = getAssessmentQuestion(assessment1, 1, 1);
         AssessmentSingleOption option1 = getAssessmentOption(assessment1, 1, Risk.RED, 1);
@@ -660,6 +682,8 @@ public class AssessmentSvcTest {
 
         AssessmentSingleOption option4 = getAssessmentOption(assessment2, 4, Risk.UNKNOWN,1);
         option4.selected = true;
+
+        List<PanacheEntityBase> panacheEntityBases = Assessment.listAll();
 
         List<RiskLineDto> riskLineDtos = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "");
         List<RiskLineDto> riskLineDtosES = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "ES");

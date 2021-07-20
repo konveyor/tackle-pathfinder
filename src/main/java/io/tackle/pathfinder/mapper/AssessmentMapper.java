@@ -3,6 +3,8 @@ package io.tackle.pathfinder.mapper;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.model.assessment.*;
+import io.tackle.pathfinder.model.bulk.AssessmentBulk;
+import io.tackle.pathfinder.model.bulk.AssessmentBulkApplication;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
@@ -18,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Mapper(componentModel = "cdi")
 public abstract class AssessmentMapper {
@@ -118,4 +121,26 @@ public abstract class AssessmentMapper {
         return translatorSvc.translate(key, destLanguage, defaultText);
     }
 
+    public AssessmentBulkDto assessmentBulkToassessmentBulkDto(AssessmentBulk bulk) {
+        return AssessmentBulkDto.builder()
+            .bulkId(bulk.id)
+            .applications(Stream.of(bulk.applications.split(",")).map(Long::parseLong).collect(Collectors.toList()))
+            .completed(bulk.completed)
+            .fromAssessmentId(bulk.fromAssessmentId)
+            .assessments(bulk.bulkApplications.stream().map(e -> this.assessmentBulkApplicationToassessmentHeaderBulkDto(e)).collect(Collectors.toList()))
+            .build();
+    }
+
+    protected AssessmentHeaderBulkDto assessmentBulkApplicationToassessmentHeaderBulkDto(AssessmentBulkApplication application) {
+        AssessmentHeaderBulkDto dto = AssessmentHeaderBulkDto.builder()
+            .applicationId(application.applicationId)
+            .id(application.assessmentId)
+            .error(application.error)
+            .build();
+        if (application.assessmentId != null) {
+            Assessment assessment = Assessment.findById(application.assessmentId);
+            dto.setStatus(assessment.status);
+        }
+        return dto;
+    }
 }
