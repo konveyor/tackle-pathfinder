@@ -683,8 +683,6 @@ public class AssessmentSvcTest {
         AssessmentSingleOption option4 = getAssessmentOption(assessment2, 4, Risk.UNKNOWN,1);
         option4.selected = true;
 
-        List<PanacheEntityBase> panacheEntityBases = Assessment.listAll();
-
         List<RiskLineDto> riskLineDtos = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "");
         List<RiskLineDto> riskLineDtosES = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "ES");
 

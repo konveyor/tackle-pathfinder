@@ -458,14 +458,13 @@ public class AssessmentSvc {
                 "      AND opt.deleted is not true\n" +
                 "      AND aq.deleted is not true\n" +
                 "      AND a.deleted is not true\n" +
-//                "      AND a.application_id in (" + StringUtils.join(applicationList, ",") + ") " +
-//                "      AND opt.risk = 'RED' " +
+                "      AND a.application_id in (" + StringUtils.join(applicationList, ",") + ") " +
+                "      AND opt.risk = 'RED' " +
                 " group by cid, qid, soid, cat.category_order, que.question_order, opt.singleoption_order \n" +
                 " order by cat.category_order, que.question_order, opt.singleoption_order;";
 
         Query query = entityManager.createNativeQuery(sqlString);
-        List resultList = query.getResultList();
-        return assessmentMapper.riskListQueryToRiskLineDtoList(resultList, language);
+        return assessmentMapper.riskListQueryToRiskLineDtoList(query.getResultList(), language);
     }
     @Transactional
     public List<AdoptionCandidateDto> getAdoptionCandidate(List<Long> applicationId) {

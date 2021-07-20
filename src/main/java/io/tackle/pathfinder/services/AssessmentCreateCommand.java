@@ -1,8 +1,6 @@
 package io.tackle.pathfinder.services;
 
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentStatus;
-import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
@@ -65,6 +63,7 @@ public class AssessmentCreateCommand {
                     .name(category.name)
                     .order(category.order)
                     .questionnaire(assessment.assessmentQuestionnaire )
+                    .questionnaire_categoryId(category.id)
                     .createUser(username)
                     .build();
 
@@ -77,6 +76,7 @@ public class AssessmentCreateCommand {
                         .type(question.type)
                         .description(question.description)
                         .createUser(username)
+                        .questionnaire_questionId(question.id)
                         .build();
 
                 for (SingleOption so : question.singleOptions) {
@@ -87,6 +87,7 @@ public class AssessmentCreateCommand {
                         .risk(so.risk)
                         .selected(false)
                         .createUser(username)
+                        .questionnaire_optionId(so.id)
                         .build();
 
                     assessmentQuestion.singleOptions.add(singleOption);
@@ -154,6 +155,7 @@ public class AssessmentCreateCommand {
                 .order(cat.order)
                 .questionnaire(questionnaire)
                 .createUser(username)
+                .questionnaire_categoryId(cat.questionnaire_categoryId)
                 .build();
             assessmentCategory.questions.addAll(cat.questions.stream().map(que -> {
                 AssessmentQuestion assessmentQuestion = AssessmentQuestion.builder()
@@ -164,6 +166,7 @@ public class AssessmentCreateCommand {
                 .questionText(que.questionText)
                 .type(que.type)
                 .createUser(username)
+                .questionnaire_questionId(que.questionnaire_questionId)
                 .build();
                 assessmentQuestion.singleOptions.addAll(que.singleOptions.stream().map(opt -> {
                     AssessmentSingleOption singleOption = AssessmentSingleOption.builder()
@@ -173,6 +176,7 @@ public class AssessmentCreateCommand {
                     .risk(opt.risk)
                     .selected(opt.selected)
                     .createUser(username)
+                    .questionnaire_optionId(opt.questionnaire_optionId)
                     .build();
                     return singleOption;
                 }).collect(Collectors.toList()));
