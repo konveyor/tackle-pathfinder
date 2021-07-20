@@ -54,7 +54,6 @@ import static org.hamcrest.Matchers.is;
         initArgs = {
                 @ResourceArg(name = KeycloakTestResource.IMPORT_REALM_JSON_PATH, value = "keycloak/quarkus-realm.json"),
                 @ResourceArg(name = KeycloakTestResource.REALM_NAME, value = "quarkus")
-
         }
 )
 @Log
