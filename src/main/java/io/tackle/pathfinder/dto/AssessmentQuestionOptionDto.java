@@ -6,10 +6,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import io.tackle.pathfinder.model.Risk;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 
 /**
@@ -26,20 +28,11 @@ import lombok.NoArgsConstructor;
     "checked"
 })
 @Data
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @RegisterForReflection
-public class AssessmentQuestionOptionDto {
-
-    /**
-     * The DB id
-     * (Required)
-     * 
-     */
-    @JsonProperty("id")
-    @JsonPropertyDescription("The DB id")
-    private Long id;
+public class AssessmentQuestionOptionDto extends BasicDto {
     /**
      * For sorting multiple radioButtons/checkboxes
      * (Required)
@@ -64,5 +57,14 @@ public class AssessmentQuestionOptionDto {
     @JsonProperty("checked")
     @JsonPropertyDescription("Whether or not this option was selected by the user")
     private Boolean checked;
+
+    /**
+     * Risk associated to this option
+     * (Required)
+     *
+     */
+    @JsonProperty("risk")
+    @JsonPropertyDescription("Risk associated to this option")
+    private Risk risk;
 
 }

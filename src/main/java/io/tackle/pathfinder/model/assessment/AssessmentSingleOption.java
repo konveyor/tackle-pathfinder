@@ -60,4 +60,7 @@ public class AssessmentSingleOption extends PanacheEntity {
 
     @Basic(optional = false)
     public boolean selected;
+
+    public Long questionnaire_optionId;
+
 }

@@ -3,12 +3,14 @@ package io.tackle.pathfinder.controllers;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import io.tackle.commons.testcontainers.KeycloakTestResource;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.commons.tests.SecuredResourceTest;
 import io.tackle.pathfinder.dto.*;
+import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
 import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
@@ -25,7 +27,7 @@ import org.awaitility.Awaitility;
 
 
 import javax.inject.Inject;
-import javax.transaction.Transactional;
+import javax.transaction.*;
 
 import java.time.Duration;
 import java.time.LocalTime;
@@ -51,6 +53,7 @@ import static org.hamcrest.Matchers.is;
         initArgs = {
                 @ResourceArg(name = KeycloakTestResource.IMPORT_REALM_JSON_PATH, value = "keycloak/quarkus-realm.json"),
                 @ResourceArg(name = KeycloakTestResource.REALM_NAME, value = "quarkus")
+
         }
 )
 @Log
@@ -60,6 +63,9 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 	@Inject
     ManagedExecutor managedExecutor;
+
+	@Inject
+	UserTransaction userTransaction;
 
 	@BeforeEach
 	@Transactional
@@ -185,6 +191,9 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			return response;
 		});
 		
+		// To force second call starts a bit later than first one
+		Thread.sleep(500);
+		
 		CompletableFuture<ValidatableResponse> future2 = managedExecutor.supplyAsync(() -> {
 			log.info("Async 2 request Assessment : " + LocalTime.now());
 
@@ -243,12 +252,14 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.body("stakeholderGroups.size()", is(2))
 			.body("questionnaire.categories.size()", is(5))
 			.body("questionnaire.categories.find{it.order==2}.comment", is("This is a test comment"))
-			.body("questionnaire.categories.find{it.order==5}.title", is("Application Cross-Cutting concerns"))
+			.body("questionnaire.categories.find{it.order==5}.title", is("Application cross-cutting concerns"))
 			.body("questionnaire.categories.find{it.order==5}.questions.size()", is(6))
 
-			.body("questionnaire.categories.find{it.order==1}.questions.find{it.question=='What is the Mean Time to Recover (MTTR) when a fault is found with the application in production?'}.description", is("Gauge the problem resolution time, MTTR (mean time to recover) is the average time it takes to repair/recover a system"))
-			.body("questionnaire.categories.find{it.order==1}.questions.find{it.question=='What is the Mean Time to Recover (MTTR) when a fault is found with the application in production?'}.options.size()", is(6))
-			.body("questionnaire.categories.find{it.order==5}.questions.find{it.question=='How mature is the existing containerisation process, if any?'}.options.find{it.option=='Application containerisation not attempted as yet'}.checked", is(true));
+			.body("questionnaire.categories.find{it.order==1}.questions.find{it.question=='What is the application\\\'s mean time to recover (MTTR) from failure in a production environment?'}.description", is("Average time for the application to recover from failure"))
+			.body("questionnaire.categories.find{it.order==1}.questions.find{it.question=='What is the application\\\'s mean time to recover (MTTR) from failure in a production environment?'}.options.size()", is(6))
+			.body("questionnaire.categories.find{it.order==5}.questions.find{it.question=='How mature is the containerization process, if any?'}.options.find{it.option=='Application containerization has not yet been attempted'}.checked", is(true))
+  		    .body("questionnaire.categories.find{it.order==5}.questions.find{it.question=='How mature is the containerization process, if any?'}.options.find{it.option=='Application containerization has not yet been attempted'}.risk", is("GREEN"));
+
 	}
 
 	@Test
@@ -575,8 +586,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		group.persist();
 		assessment.stakeholdergroups.add(group);
 
-		AssessmentSingleOption.update("set selected = true where option = 'Application containerisation not attempted as yet'");
-		AssessmentCategory.update("set comment = 'This is a test comment' where name='Application Dependencies'");
+		AssessmentSingleOption.update("set selected = true where option = 'Application containerization has not yet been attempted'");
+		AssessmentCategory.update("set comment = 'This is a test comment' where name='Application dependencies'");
     }
 
 	@Test
@@ -908,5 +919,283 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.find{it.order==" + question.getOrder() + "}.options.size()", is(question.getOptions().size() ))
 			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.find{it.order==" + question.getOrder() + "}.options.find{it.order==" + option.getOrder() + "}.checked", is(true));
 
+	}
+
+	@Test
+	public void given_ApplicationsAssessed_When_LandscapeRequested_Then_ExpectedJSONIsReturned() {
+		// create 2 assessments
+		// Creation of the Assessment
+		AssessmentHeaderDto header1 = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(new ApplicationDto(659500L))
+			.when()
+				.post("/assessments")
+			.then()
+				.statusCode(201)
+				.extract().as(AssessmentHeaderDto.class);
+		// Creation of the Assessment
+		AssessmentHeaderDto header2 = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(new ApplicationDto(669500L))
+			.when()
+				.post("/assessments")
+			.then()
+				.statusCode(201)
+				.extract().as(AssessmentHeaderDto.class);
+
+		// get both assessments
+		// Get the contents of the assessment
+		AssessmentDto assessmentSource1 = given()
+			.when()
+			.get("/assessments/" + header1.getId())
+			.then()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+		// Get the contents of the assessment
+		AssessmentDto assessmentSource2 = given()
+			.when()
+			.get("/assessments/" + header2.getId())
+			.then()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+
+		// answer questions and complete the assessment
+		assessmentSource1.getQuestionnaire().getCategories().forEach(a -> a.getQuestions().forEach(b -> b.getOptions().stream().filter(c -> c.getRisk() == Risk.GREEN).findFirst().ifPresent(d -> d.setChecked(true))));
+		assessmentSource2.getQuestionnaire().getCategories().forEach(a -> a.getQuestions().forEach(b -> b.getOptions().stream().filter(c -> c.getRisk() == Risk.RED).findFirst().ifPresent(d -> d.setChecked(true))));
+		assessmentSource1.setStatus(AssessmentStatus.COMPLETE);
+		assessmentSource2.setStatus(AssessmentStatus.COMPLETE);
+
+		// Update assessments
+		// Modification of status to complete
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(assessmentSource1)
+			.when()
+			.patch("/assessments/" + header1.getId())
+			.then()
+			.statusCode(200)
+			.body("id", equalTo(header1.getId().intValue()),
+				"status", equalTo("COMPLETE"));
+
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(assessmentSource2)
+			.when()
+			.patch("/assessments/" + header2.getId())
+			.then()
+			.statusCode(200)
+			.body("id", equalTo(header2.getId().intValue()),
+				"status", equalTo("COMPLETE"));
+
+		// request Landscape
+		LandscapeDto[] landscape = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(List.of(new ApplicationDto(659500L), new ApplicationDto(669500L)))
+			.when()
+				.post("/assessments/assessment-risk")
+			.then()
+				.statusCode(200)
+			.extract().as(LandscapeDto[].class);
+
+		// assert
+		assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(header1.getId(), Risk.GREEN), new LandscapeDto(header2.getId(), Risk.RED));
+	}
+
+	@Test
+	public void given_ApplicationList_WhenIdentifiedRisks_Then_ResultListOfAnswers() {
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(new ApplicationDto(15500L))
+				.when()
+				.post("/assessments")
+				.then()
+				.log().all()
+				.statusCode(201)
+				.extract().as(AssessmentHeaderDto.class);
+
+		// Retrieval of the assessment created
+		AssessmentDto assessment = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.when()
+				.get("/assessments/" + header.getId())
+				.then()
+				.statusCode(200)
+				.extract().as(AssessmentDto.class);
+
+		AssessmentCategoryDto category = assessment.getQuestionnaire().getCategories().get(0);
+		AssessmentQuestionDto question = category.getQuestions().get(0);
+		AssessmentQuestionOptionDto optionRed = question.getOptions().stream().filter(a -> a.getRisk() == Risk.RED).findFirst().get();
+		AssessmentQuestionOptionDto optionamber = question.getOptions().stream().filter(a -> a.getRisk() == Risk.AMBER).findFirst().get();
+
+		// Modification of 1 category comment, 1 option selected, 2 stakeholders , 2 stakeholdergroups
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(AssessmentDto.builder()
+				.applicationId(15500L)
+				.id(header.getId())
+				.questionnaire(AssessmentQuestionnaireDto.builder()
+					.categories(List.of(AssessmentCategoryDto.builder()
+						.id(category.getId())
+						.comment("USER COMMENT 1")
+						.questions(List.of(
+							AssessmentQuestionDto.builder()
+								.id(question.getId())
+								.options(List.of(
+									AssessmentQuestionOptionDto.builder()
+										.id(optionRed.getId())
+										.checked(true)
+										.build(),
+									AssessmentQuestionOptionDto.builder()
+										.id(optionamber.getId())
+										.checked(true)
+										.build()
+								))
+								.build()
+						))
+						.build()))
+					.build())
+				.stakeholderGroups(List.of(1000L, 2000L))
+				.stakeholders(List.of(444L, 555L))
+				.build())
+				.when()
+				.patch("/assessments/" + header.getId())
+				.then()
+				.statusCode(200)
+				.body("id", equalTo(header.getId().intValue()),
+						"applicationId", equalTo(15500),
+						"status", equalTo("STARTED"));
+
+		RiskLineDto[] riskLineDtos = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(List.of(new ApplicationDto(15500L),new ApplicationDto(589500L),new ApplicationDto(689500L)))
+		.when()
+			.post("/assessments/risks")
+		.then()
+			.log().all()
+			.statusCode(200)
+		.extract().as(RiskLineDto[].class);
+
+		assertThat(riskLineDtos).hasSize(1);
+		assertThat(riskLineDtos[0].getApplications()).containsExactlyInAnyOrder(15500L);
+	}
+
+	@Test
+	public void given_EmptyListOfApplications_when_IdentifiedRisks_then_HTTP400() {
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.post("/assessments/risks")
+		.then()
+			.log().all()
+			.statusCode(400);
+	}
+
+	@Test
+	public void given_ListOfApplicationsWithNoAssessments_when_IdentifiedRisks_then_EmptyList() {
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(List.of(new ApplicationDto(91L), new ApplicationDto(92L), new ApplicationDto(93L)))
+		.when()
+			.post("/assessments/risks")
+		.then()
+			.statusCode(200)
+			.body("size()", is(0));
+	}
+
+	@Test
+	public void given_ApplicationsAssessed_When_Confidence_Then_ResultIsTheExpected() throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
+		userTransaction.begin();
+		// create assessment
+		AssessmentHeaderDto assessmentREDHeader = assessmentSvc.createAssessment( 20008L);
+		AssessmentHeaderDto assessmentGREENHeader = assessmentSvc.createAssessment( 20009L);
+		AssessmentHeaderDto assessmentAMBERHeader = assessmentSvc.createAssessment( 20010L);
+		AssessmentHeaderDto assessmentUNKNOWNHeader = assessmentSvc.createAssessment( 20011L);
+		Assessment assessmentRED =  Assessment.findById(assessmentREDHeader.getId());
+		Assessment assessmentGREEN =  Assessment.findById(assessmentGREENHeader.getId());
+		Assessment assessmentAMBER =  Assessment.findById(assessmentAMBERHeader.getId());
+		Assessment assessmentUNKNOWN =  Assessment.findById(assessmentUNKNOWNHeader.getId());
+
+		// answer questions
+		assessmentRED.status = AssessmentStatus.COMPLETE;
+		assessmentRED.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.RED).findFirst().ifPresent(b -> b.selected = true)));
+		assessmentGREEN.status = AssessmentStatus.COMPLETE;
+		assessmentGREEN.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.GREEN).findFirst().ifPresent(b -> b.selected = true)));
+		assessmentAMBER.status = AssessmentStatus.COMPLETE;
+		assessmentAMBER.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.AMBER).findFirst().ifPresent(b -> b.selected = true)));
+		assessmentUNKNOWN.status = AssessmentStatus.COMPLETE;
+		assessmentUNKNOWN.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.UNKNOWN).findFirst().ifPresent(b -> b.selected = true)));
+
+		userTransaction.commit();
+
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(List.of(new ApplicationDto(20008L),new ApplicationDto(20009L),new ApplicationDto(20010L),new ApplicationDto(20011L)))
+		.when()
+			.post("/assessments/confidence")
+		.then()
+			.log().all()
+			.statusCode(200)
+			.body("find{it.assessmentId=="+ assessmentRED.id + "}.confidence", is(0))
+			.body("find{it.assessmentId=="+ assessmentGREEN.id + "}.confidence", is(100))
+			.body("find{it.assessmentId=="+ assessmentAMBER.id + "}.confidence", is(24))
+			.body("find{it.assessmentId=="+ assessmentUNKNOWN.id + "}.confidence", is(70));
+
+	}
+
+	@Test
+	public void given_AssessmentAndTranslations_when_TranslationDeleted_then_ThatConceptHasTheNotTranslatedVallue() {
+		String KEYCLOAK_SERVER_URL = System.getProperty("quarkus.oidc.auth-server-url", "http://localhost:8180/auth");
+		String ACCESS_TOKEN_JDOE = RestAssured.given().relaxedHTTPSValidation()
+			.auth().preemptive()
+				.basic("backend-service", "secret")
+				.contentType("application/x-www-form-urlencoded")
+				.formParam("grant_type", "password")
+				.formParam("username", "jdoe")
+				.formParam("password", "jdoe")
+			.when()
+				.post(KEYCLOAK_SERVER_URL + "/protocol/openid-connect/token", new Object[0])
+			.then()
+				.extract()
+				.path("access_token", new String[0]).toString();
+
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON).auth().oauth2(ACCESS_TOKEN_JDOE)
+			.body(new ApplicationDto(35500L))
+			.when()
+			.post("/assessments")
+			.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Retrieval of the assessment created
+		AssessmentDto assessment = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON).auth().oauth2(ACCESS_TOKEN_JDOE)
+			.when()
+			.get("/assessments/" + header.getId())
+			.then()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getTitle().startsWith("ES:"))).isTrue();
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getQuestion().startsWith("ES:")))).isTrue();
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getDescription().startsWith("ES:")))).isTrue();
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getOptions().stream().allMatch(c -> c.getOption().startsWith("ES:"))))).isTrue();
 	}
 }

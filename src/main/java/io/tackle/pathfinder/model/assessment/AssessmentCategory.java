@@ -58,4 +58,6 @@ public class AssessmentCategory extends PanacheEntity {
     @ManyToOne
     @JoinColumn(name="assessment_questionnaire_id", referencedColumnName="id")
     public AssessmentQuestionnaire questionnaire;
+
+    public Long questionnaire_categoryId;
 }

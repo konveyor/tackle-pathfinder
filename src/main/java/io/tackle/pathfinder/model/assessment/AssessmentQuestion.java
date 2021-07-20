@@ -70,4 +70,7 @@ public class AssessmentQuestion extends PanacheEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name="assessment_category_id", referencedColumnName="id", nullable = false)
     public AssessmentCategory category;
+
+    public Long questionnaire_questionId;
+
 }
