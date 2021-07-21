@@ -1,0 +1,73 @@
+INSERT INTO translated_text
+(id, deleted, key, text, language)
+SELECT nextval('hibernate_sequence'), false, 'Category_' || id || '_name', 'Detalles de la Aplicación', 'ES'
+FROM category
+where deleted is not true and name = 'Application Details';
+
+INSERT INTO translated_text
+(id, deleted, key, text, language)
+SELECT nextval('hibernate_sequence'), false, 'Category_' || id || '_name', 'Dependencias de la Aplicación', 'ES'
+FROM category
+where deleted is not true and name = 'Application Dependencies';
+
+INSERT INTO translated_text
+(id, deleted, key, text, language)
+SELECT nextval('hibernate_sequence'), false, 'Category_' || id || '_name', 'Arquitectura de la Aplicación', 'ES'
+FROM category
+where deleted is not true and name = 'Application Architecture';
+
+INSERT INTO translated_text
+(id, deleted, key, text, language)
+SELECT nextval('hibernate_sequence'), false, 'Category_' || id || '_name', 'Observabilidad de la Aplicación', 'ES'
+FROM category
+where deleted is not true and name = 'Application Observability';
+
+INSERT INTO translated_text
+(id, deleted, key, text, language)
+SELECT nextval('hibernate_sequence'), false, 'Category_' || id || '_name', '*********', 'ES'
+FROM category
+where deleted is not true and name = 'Application Cross-Cutting concerns';
+
+-- ---------------------------------------------------------------------------
+
+INSERT INTO translated_text
+(id, deleted, key, text, language)
+SELECT nextval('hibernate_sequence'), false, 'Question_' || id || '_question',
+       'El equipo de desarrollo entiende y activamente desarrolla la aplicación?', 'ES'
+FROM question
+where deleted is not true
+  and question_text = 'Does the application development team understand and actively develop the application?'
+  and description = 'How much knowledge does the team have regarding the development or usage of the application';
+
+INSERT INTO translated_text
+(id, deleted, key, text, language)
+SELECT nextval('hibernate_sequence'), false, 'Question_' || id || '_description',
+       'Que nivel de conocimiento tiene el equipo respecto del desarrollo o uso de la aplicación?', 'ES'
+FROM question
+where deleted is not true
+  and question_text = 'Does the application development team understand and actively develop the application?'
+  and description = 'How much knowledge does the team have regarding the development or usage of the application';
+
+INSERT INTO translated_text
+(id, deleted, key, text, language)
+SELECT nextval('hibernate_sequence'), false, 'Question_' || id || '_question',
+       'El equipo de desarrollo entiende y activamente desarrolla la aplicación?', 'ES'
+FROM question
+where deleted is not true
+  and question_text = 'How is the application supported in Production?'
+  and description = 'How much knowledge does the team have to support the application in production';
+
+INSERT INTO translated_text
+(id, deleted, key, text, language)
+SELECT nextval('hibernate_sequence'), false, 'Question_' || id || '_description',
+       'Que nivel de conocimiento tiene el equipo respecto del desarrollo o uso de la aplicación?', 'ES'
+FROM question
+where deleted is not true
+  and question_text = 'Does the application development team understand and actively develop the application?'
+  and description = 'How much knowledge does the team have regarding the development or usage of the application';
+
+
+
+
+
+
