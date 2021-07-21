@@ -378,7 +378,7 @@ public class AssessmentSvc {
         //String sqlString = "select cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option, cast(array_agg(a.application_id) as text) \n" +
         String sqlString = " select c.id as cid, q.id as qid, so.id as soid, " +
                            " cat.category_order, que.question_order, opt.singleoption_order, \n" +
-                           " cast(array_agg(a.application_id) as text) \n" +
+                           " cast(array_agg(a.application_id) as text) as applicationIds \n" +
                 " from assessment_category cat join assessment_question que on cat.id = que.assessment_category_id \n" +
                 "                             join assessment_singleoption opt on que.id = opt.assessment_question_id and opt.selected is true \n" +
                 "                             join assessment_questionnaire aq on cat.assessment_questionnaire_id = aq.id \n" +

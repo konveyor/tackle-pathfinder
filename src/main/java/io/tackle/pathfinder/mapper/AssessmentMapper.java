@@ -58,14 +58,14 @@ public abstract class AssessmentMapper {
     @Mapping(target = "stakeholderGroups", source = "stakeholdergroups")
     public abstract AssessmentDto assessmentToAssessmentDto(Assessment assessment, @Context String language);
 
-    private RiskLineDto getRiskLineDto(Tuple fields) {
+    private RiskLineDto getRiskLineDto(Tuple fields, @Context String language) {
         // cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option, array_agg(a.application_id)
         String fieldApps = fields.get("applicationIds", String.class);
         String[] appsList = fieldApps.replace("{", "").replace("}", "").split(",");
 
-        BigInteger categoryId = (BigInteger) fields[0];
-        BigInteger questionId = (BigInteger) fields[1];
-        BigInteger optionId = (BigInteger) fields[2];
+        BigInteger categoryId = fields.get("cid", BigInteger.class);
+        BigInteger questionId = fields.get("qid", BigInteger.class);
+        BigInteger optionId = fields.get("soid", BigInteger.class);
 
         Category category = Category.findById(categoryId.longValue());
         Question question = Question.findById(questionId.longValue());
@@ -77,15 +77,15 @@ public abstract class AssessmentMapper {
         List<Long> applications = Arrays.stream(appsList).map(Long::parseLong).collect(Collectors.toList());
 
         return RiskLineDto.builder()
-            .category(fields.get("name", String.class))
-            .question(fields.get("question_text", String.class))
-            .answer(fields.get("option", String.class))
+            .category(categoryText)
+            .question(questionText)
+            .answer(optionText)
             .applications(applications)
             .build();
     }
 
-    public List<RiskLineDto> riskListQueryToRiskLineDtoList(List<Tuple> objectList) {
-        return objectList.stream().map(this::getRiskLineDto).collect(Collectors.toList());
+    public List<RiskLineDto> riskListQueryToRiskLineDtoList(List<Tuple> objectList, @Context String language) {
+        return objectList.stream().map(a -> getRiskLineDto(a, language)).collect(Collectors.toList());
     }
 
     @Transactional
