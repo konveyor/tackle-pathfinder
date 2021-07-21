@@ -374,24 +374,31 @@ public class AssessmentSvc {
             return collect;
     }
     @Transactional
-    public List<RiskLineDto> identifiedRisks(List<Long> applicationList) {
-        String sqlString = "select cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option, cast(array_agg(a.application_id) as text) as applicationIds \n" +
-                "from assessment_category cat join assessment_question q on cat.id = q.assessment_category_id\n" +
-                "                             join assessment_singleoption opt on q.id = opt.assessment_question_id and opt.selected is true\n" +
-                "                             join assessment_questionnaire aq on cat.assessment_questionnaire_id = aq.id\n" +
-                "                             join assessment a on aq.assessment_id = a.id\n" +
-                "where cat.deleted is not true\n" +
+    public List<RiskLineDto> identifiedRisks(List<Long> applicationList, String language) {
+        //String sqlString = "select cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option, cast(array_agg(a.application_id) as text) \n" +
+        String sqlString = " select c.id as cid, q.id as qid, so.id as soid, " +
+                           " cat.category_order, que.question_order, opt.singleoption_order, \n" +
+                           " cast(array_agg(a.application_id) as text) \n" +
+                " from assessment_category cat join assessment_question que on cat.id = que.assessment_category_id \n" +
+                "                             join assessment_singleoption opt on que.id = opt.assessment_question_id and opt.selected is true \n" +
+                "                             join assessment_questionnaire aq on cat.assessment_questionnaire_id = aq.id \n" +
+                "                             join assessment a on aq.assessment_id = a.id\n " +
+                "                             join category c on (c.id = cat.questionnaire_categoryid)\n " +
+                "                             join question q on (q.id = que.questionnaire_questionid) \n " +
+                "                             join single_option so on (so.id = opt.questionnaire_optionid) \n" +
+                " where cat.deleted is not true\n" +
                 "      AND q.deleted is not true\n" +
                 "      AND opt.deleted is not true\n" +
                 "      AND aq.deleted is not true\n" +
                 "      AND a.deleted is not true\n" +
                 "      AND a.application_id in (" + StringUtils.join(applicationList, ",") + ") " +
                 "      AND opt.risk = 'RED' " +
-                "group by cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option " +
-                "order by cat.category_order, q.question_order, opt.singleoption_order;";
+                " group by cid, qid, soid, cat.category_order, que.question_order, opt.singleoption_order \n" +
+                " order by cat.category_order, que.question_order, opt.singleoption_order;";
+
 
         List<Tuple> query = entityManager.createNativeQuery(sqlString, Tuple.class).getResultList();
-        return assessmentMapper.riskListQueryToRiskLineDtoList(query);
+        return assessmentMapper.riskListQueryToRiskLineDtoList(query, language);
     }
     @Transactional
     public List<AdoptionCandidateDto> getAdoptionCandidate(List<Long> applicationId) {

@@ -18,10 +18,10 @@
     <quarkus.platform.version>1.12.2.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
     <mapstruct.version>1.4.2.Final</mapstruct.version>
-    <lombok.version>1.18.18</lombok.version>
-    <testcontainers.version>1.15.2</testcontainers.version>
+    <lombok.version>1.18.20</lombok.version>
+    <testcontainers.version>1.15.3</testcontainers.version>
     <keycloak.version>12.0.3</keycloak.version>
-    <jacoco.version>0.8.6</jacoco.version>
+    <jacoco.version>0.8.7</jacoco.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -132,7 +132,7 @@
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>3.19.0</version>
+      <version>3.20.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>

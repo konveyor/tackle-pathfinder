@@ -7,10 +7,13 @@ import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import io.tackle.pathfinder.services.TranslatorSvc;
+import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import javax.inject.Inject;
+import javax.transaction.*;
+import java.math.BigInteger;
 import javax.persistence.Tuple;
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +42,7 @@ public abstract class AssessmentMapper {
     public abstract AssessmentCategoryDto assessmentCategoryToAssessmentCategoryDto(AssessmentCategory category, @Context String language);
 
     public abstract List<AssessmentCategoryDto> assessmentCategoryListToAssessmentCategoryDtoList(List<AssessmentCategory> categoryList, @Context String language);
-    
+
     @Mapping(target="title", source="name")
     @Mapping(target = "language", expression="java(language)")
     public abstract AssessmentQuestionnaireDto assessmentQuestionnaireToAssessmentQuestionnaireDto(AssessmentQuestionnaire questionnaire, @Context String language);
@@ -59,7 +62,20 @@ public abstract class AssessmentMapper {
         // cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option, array_agg(a.application_id)
         String fieldApps = fields.get("applicationIds", String.class);
         String[] appsList = fieldApps.replace("{", "").replace("}", "").split(",");
+
+        BigInteger categoryId = (BigInteger) fields[0];
+        BigInteger questionId = (BigInteger) fields[1];
+        BigInteger optionId = (BigInteger) fields[2];
+
+        Category category = Category.findById(categoryId.longValue());
+        Question question = Question.findById(questionId.longValue());
+        SingleOption option = SingleOption.findById(optionId.longValue());
+
+        String categoryText = translate(category, category.name, language, "name");
+        String questionText = translate(question, question.questionText, language, "question");
+        String optionText = translate(option, option.option, language, "option");
         List<Long> applications = Arrays.stream(appsList).map(Long::parseLong).collect(Collectors.toList());
+
         return RiskLineDto.builder()
             .category(fields.get("name", String.class))
             .question(fields.get("question_text", String.class))
@@ -72,6 +88,7 @@ public abstract class AssessmentMapper {
         return objectList.stream().map(this::getRiskLineDto).collect(Collectors.toList());
     }
 
+    @Transactional
     protected String translateCategory(AssessmentCategory cat, String defaultText, String destLanguage, String field) {
         return Optional.ofNullable(cat.questionnaire_categoryId)
                 .flatMap(a -> Category.findByIdOptional(a))
@@ -79,6 +96,7 @@ public abstract class AssessmentMapper {
             .orElse(defaultText);
     }
 
+    @Transactional
     protected String translateQuestion(AssessmentQuestion que, String defaultText, String destLanguage, String field) {
         return Optional.ofNullable(que.questionnaire_questionId)
             .flatMap(a -> Question.findByIdOptional(a))
@@ -86,6 +104,7 @@ public abstract class AssessmentMapper {
             .orElse(defaultText);
     }
 
+    @Transactional
     protected String translateOption(AssessmentSingleOption opt, String defaultText, String destLanguage, String field) {
         return Optional.ofNullable(opt.questionnaire_optionId)
             .flatMap(a -> SingleOption.findByIdOptional(a))
@@ -94,7 +113,8 @@ public abstract class AssessmentMapper {
     }
 
     protected String translate(PanacheEntity dto, String defaultText, String destLanguage, String field) {
-        // {table}_{id}_field  , dest language
+        if (StringUtils.isBlank(destLanguage)) return defaultText;
+
         String key = translatorSvc.getKey(dto, field);
         return translatorSvc.translate(key, destLanguage, defaultText);
     }
