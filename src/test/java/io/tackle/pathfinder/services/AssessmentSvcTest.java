@@ -422,7 +422,7 @@ public class AssessmentSvcTest {
         List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(899200L, 898200L));
 
         // asserts
-        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.RED), new LandscapeDto(assessment2.id, Risk.RED));
+        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.RED, assessment1.applicationId), new LandscapeDto(assessment2.id, Risk.RED, assessment2.applicationId));
     }
 
     @Test
@@ -447,14 +447,14 @@ public class AssessmentSvcTest {
         List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(896200L, 895200L));
 
         // asserts
-        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.GREEN), new LandscapeDto(assessment2.id, Risk.GREEN));
+        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.GREEN, assessment1.applicationId), new LandscapeDto(assessment2.id, Risk.GREEN, assessment2.applicationId));
     }
 
     @Test
     @Transactional
     public void given_AssessmentWithNoRedAnswersSeveralAmber_When_landscape_Then_ResultIsAMBER() {
         // create 2 assessments
-        AssessmentHeaderDto assessmentHeader1 = assessmentSvc.createAssessment(894200L);
+        AssessmentHeaderDto assessmentHeader1 = assessmentSvc.createAssessment(Long.MAX_VALUE-1);
         AssessmentHeaderDto assessmentHeader2 = assessmentSvc.createAssessment(893200L);
         Assessment assessment1 =  Assessment.findById(assessmentHeader1.getId());
         Assessment assessment2 =  Assessment.findById(assessmentHeader2.getId());
@@ -466,10 +466,10 @@ public class AssessmentSvcTest {
         assessment2.assessmentQuestionnaire.categories.forEach(e -> e.questions.forEach(f -> f.singleOptions.stream().filter(a -> a.risk == Risk.AMBER).findFirst().ifPresent(b -> b.selected = true)));
 
         // get landscape report of both
-        List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(894200L, 893200L));
+        List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(Long.MAX_VALUE-1, 893200L));
 
         // asserts
-        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.AMBER), new LandscapeDto(assessment2.id, Risk.AMBER));
+        assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(assessment1.id, Risk.AMBER, assessment1.applicationId), new LandscapeDto(assessment2.id, Risk.AMBER, assessment2.applicationId));
     }
 
     @Test
@@ -490,7 +490,7 @@ public class AssessmentSvcTest {
         List<LandscapeDto> landscape = assessmentSvc.landscape(List.of(1894200L, 1893200L));
 
         // asserts
-        assertThat(landscape).containsExactly(new LandscapeDto(assessment1.id, Risk.AMBER));
+        assertThat(landscape).containsExactly(new LandscapeDto(assessment1.id, Risk.AMBER, assessment1.applicationId));
     }
 
 
@@ -607,7 +607,7 @@ public class AssessmentSvcTest {
     @Transactional
     @Test
     public void given_TwoAssessmentsWith6AnswersButSharing2Questions_When_IdentifiedRisks_Then_ResultIs4LinesBut2Has2Applications() {
-        Assessment assessment1 = createAssessment(Questionnaire.findAll().firstResult(), 5566L);
+        Assessment assessment1 = createAssessment(Questionnaire.findAll().firstResult(), Long.MAX_VALUE);
 
         AssessmentQuestion question1 = getAssessmentQuestion(assessment1, 1, 1);
         AssessmentSingleOption option1 = getAssessmentOption(assessment1, 1, Risk.RED, 1);
@@ -629,7 +629,7 @@ public class AssessmentSvcTest {
         AssessmentSingleOption option4 = getAssessmentOption(assessment2, 4, Risk.UNKNOWN,1);
         option4.selected = true;
 
-        List<RiskLineDto> riskLineDtos = assessmentSvc.identifiedRisks(List.of(5566L, 6677L), "");
+        List<RiskLineDto> riskLineDtos = assessmentSvc.identifiedRisks(List.of(Long.MAX_VALUE, 6677L), "");
 
         // we have answered 6 options : 3 RED , 1 AMBER, 1 GREEN, 1 UNKNOWN
         // but only the RED answers are returned
@@ -644,7 +644,7 @@ public class AssessmentSvcTest {
                 .filter(e -> e.getQuestion().equals(question1.questionText) && e.getAnswer().equals(option1.option)).count()).isEqualTo(1L);
 
         assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question1.questionText) && e.getAnswer().equals(option1.option))
-                .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(5566L, 6677L);
+                .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(Long.MAX_VALUE, 6677L);
 
         assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question3.questionText) && e.getAnswer().equals(option3.option))
                 .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(6677L);

@@ -314,7 +314,7 @@ landscapeJson=$(curl "http://$api_ip/pathfinder/assessments/assessment-risk" \
             -H "Authorization: Bearer $access_token" -w "%{http_code}" \
             -d "[{\"applicationId\":325100},{\"applicationId\":998899}]" \
             -H 'Content-Type: application/json')
-echo $landscapeJson | grep "[{\"assessmentId\":$assessmentSourceId,\"risk\":\"RED\"}]"
+echo $landscapeJson | grep "[{\"assessmentId\":$assessmentSourceId,\"risk\":\"RED\",\"applicationId\":325100}]"
 
 echo
 echo
