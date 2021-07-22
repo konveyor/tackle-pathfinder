@@ -14,6 +14,7 @@ import org.mapstruct.Mapping;
 import javax.inject.Inject;
 import javax.transaction.*;
 import java.math.BigInteger;
+import javax.persistence.Tuple;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -57,14 +58,14 @@ public abstract class AssessmentMapper {
     @Mapping(target = "stakeholderGroups", source = "stakeholdergroups")
     public abstract AssessmentDto assessmentToAssessmentDto(Assessment assessment, @Context String language);
 
-    private RiskLineDto getRiskLineDto(Object[] fields, @Context String language) {
-        // c.id, q.id, so.id, c.category_order, q.question_order, opt.singleoption_order, cast(array_agg(a.application_id) as text
-        String fieldApps = (String) fields[6];
+    private RiskLineDto getRiskLineDto(Tuple fields, @Context String language) {
+        // cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option, array_agg(a.application_id)
+        String fieldApps = fields.get("applicationIds", String.class);
         String[] appsList = fieldApps.replace("{", "").replace("}", "").split(",");
 
-        BigInteger categoryId = (BigInteger) fields[0];
-        BigInteger questionId = (BigInteger) fields[1];
-        BigInteger optionId = (BigInteger) fields[2];
+        BigInteger categoryId = fields.get("cid", BigInteger.class);
+        BigInteger questionId = fields.get("qid", BigInteger.class);
+        BigInteger optionId = fields.get("soid", BigInteger.class);
 
         Category category = Category.findById(categoryId.longValue());
         Question question = Question.findById(questionId.longValue());
@@ -76,14 +77,14 @@ public abstract class AssessmentMapper {
         List<Long> applications = Arrays.stream(appsList).map(Long::parseLong).collect(Collectors.toList());
 
         return RiskLineDto.builder()
-                .category(categoryText)
-                .question(questionText)
-                .answer(optionText)
-                .applications(applications)
-                .build();
+            .category(categoryText)
+            .question(questionText)
+            .answer(optionText)
+            .applications(applications)
+            .build();
     }
 
-    public List<RiskLineDto> riskListQueryToRiskLineDtoList(List<Object[]> objectList, @Context String language) {
+    public List<RiskLineDto> riskListQueryToRiskLineDtoList(List<Tuple> objectList, @Context String language) {
         return objectList.stream().map(a -> getRiskLineDto(a, language)).collect(Collectors.toList());
     }
 
