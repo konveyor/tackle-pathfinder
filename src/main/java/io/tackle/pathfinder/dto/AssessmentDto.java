@@ -58,14 +58,14 @@ public class AssessmentDto extends BasicDto {
      */
     @JsonProperty("stakeholders")
     @JsonPropertyDescription("List of ids of stakeholders")
-    private List<Long> stakeholders ;
+    private List<Long> stakeholders; 
     /**
      * List of ids of stakeholder groups
      * 
      */
     @JsonProperty("stakeholderGroups")
     @JsonPropertyDescription("List of ids of stakeholder groups")
-    private List<Long> stakeholderGroups;
+    private List<Long> stakeholderGroups; 
     /**
      * 
      * (Required)

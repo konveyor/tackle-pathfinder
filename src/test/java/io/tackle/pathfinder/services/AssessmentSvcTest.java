@@ -1,9 +1,12 @@
 package io.tackle.pathfinder.services;
 
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.mock.PanacheMock;
+import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectMock;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
@@ -22,18 +25,22 @@ import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.context.ManagedExecutor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import javax.inject.Inject;
 import javax.transaction.*;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.SecurityContext;
 
+import java.security.Principal;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -61,9 +68,17 @@ public class AssessmentSvcTest {
     @Inject
     UserTransaction transaction;
 
+    @InjectMock
+    SecurityIdentity securityIdentity;
+
+    @BeforeEach
+    public void setup() {
+        Mockito.when(securityIdentity.getPrincipal()).thenReturn(() -> "testuser");
+    }
+
     @Test
     @Transactional
-    public void given_Questionnaire_when_CopyQuestionnaireIntoAssessment_should_BeIdentical() throws InterruptedException {
+    public void given_Questionnaire_when_CopyQuestionnaireIntoAssessment_should_BeIdentical()  {
         Questionnaire questionnaire = createQuestionnaire();
         List<Category> categories = questionnaire.categories;
 
@@ -107,8 +122,10 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
-    public void given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent() {
+    public void given_CreatedAssessment_When_Update_Then_ItChangesOnlyThePartSent()  {
         Assessment assessment = createAssessment(Questionnaire.findAll().firstResult(), 1410L);
+        assertThat(assessment.updateUser).isBlank();
+        assertThat(assessment.createUser).isNotBlank();
 
         assertThat(assessment.stakeholdergroups).hasSize(2);
         assertThat(assessment.stakeholders).hasSize(3);
@@ -144,6 +161,7 @@ public class AssessmentSvcTest {
 
         assertThat(getCheckedForOption(assessmentUpdated, assessmentCategoryDto.getId(), assessmentQuestionDto.getId(),
                 assessmentQuestionOptionDto.getId())).isTrue();
+        assertThat(assessmentUpdated.updateUser).isNotBlank();
     }
 
     @Test
@@ -232,8 +250,8 @@ public class AssessmentSvcTest {
     }
     
     @Transactional
-    private boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId) {
-        log.info("categories to check " + assessment.assessmentQuestionnaire.categories.stream().count());
+    private boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId)  {
+        log.info("categories to check " + assessment.assessmentQuestionnaire.categories.size());
         log.info("categories to check " + assessment.assessmentQuestionnaire.categories.stream().map(e -> e.id.toString()).collect(Collectors.joining(" ## ")));
 
         log.info("ids " + categoryId + "--" + questionId + "--" + optionId);
@@ -271,12 +289,32 @@ public class AssessmentSvcTest {
     }
 
     @Test
-    @Transactional
-    public void given_SameApplication_when_SeveralAssessmentCreation_should_ThrowException() throws InterruptedException {
+    public void given_SameApplication_when_SeveralAssessmentCreation_should_ThrowException() throws InterruptedException, SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
+        transaction.begin();
         Questionnaire questionnaire = createQuestionnaire();
-        CompletableFuture<Assessment> future1 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire, 5L));
+        transaction.commit();
+
+        CompletableFuture<Assessment> future1 = managedExecutor.supplyAsync(() -> {
+            try {
+                transaction.begin();
+                Assessment assessment = createAssessment(questionnaire, 57L);
+                transaction.commit();
+                return assessment;
+            } catch (Exception exc) {
+                return null;
+            }
+        });
         Thread.sleep(500);
-        CompletableFuture<Assessment> future4 = managedExecutor.supplyAsync(() -> createAssessment(questionnaire, 5L));
+        CompletableFuture<Assessment> future4 = managedExecutor.supplyAsync(() -> {
+            try {
+                transaction.begin();
+                Assessment assessment = createAssessment(questionnaire, 57L);
+                transaction.commit();
+                return assessment;
+            } catch (Exception exc) {
+                throw new CompletionException(exc);
+            }
+        });
         assertThat(future1).succeedsWithin(Duration.ofSeconds(10)).matches(e -> e.id > 0);
         assertThat(future4).failsWithin(Duration.ofSeconds(1));
     }
@@ -347,7 +385,7 @@ public class AssessmentSvcTest {
         assessment.assessmentQuestionnaire.categories.get(0).questions.get(0).singleOptions.get(0).selected = true;
         assessment.status = AssessmentStatus.COMPLETE;
 
-        AssessmentHeaderDto copyHeader = assessmentSvc.copyAssessment(assessment.id, 9997200L);
+        AssessmentHeaderDto copyHeader = assessmentSvc.newAssessment(assessment.id, 9997200L);
         Assessment assessmentCopied = Assessment.findById(copyHeader.getId());
 
         AssessmentDto assessmentSourceDto = assessmentMapper.assessmentToAssessmentDto(assessment, "EN");
@@ -492,12 +530,16 @@ public class AssessmentSvcTest {
     @Transactional
     public Assessment createAssessment(Questionnaire questionnaire, long applicationId) {
         log.info("Creating an assessment ");
-        Assessment assessment = Assessment.builder().applicationId(applicationId).build();
-        assessment.persistAndFlush();
+        Assessment assessment = AssessmentCreateCommand.builder()
+            .applicationId(applicationId)
+            .questionnaireId(questionnaire.id)
+            .username("testuser")
+            .build()
+            .execute();
 
         addStakeholdersToAssessment(assessment);
 
-        return assessmentSvc.copyQuestionnaireIntoAssessment(assessment, questionnaire);
+        return assessment;
     }
 
     @Transactional
@@ -529,10 +571,10 @@ public class AssessmentSvcTest {
         Question question = Question.builder()
             .name("question-" + i)
             .order(i)
+            .category(category)
             .questionText("questionText-" + i)
             .description("tooltip-" + i)
             .type(QuestionType.SINGLE)
-            .category(category)
             .build();
         question.persistAndFlush();
 
@@ -618,7 +660,8 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
-    public void given_TwoAssessments_when_RequestedIdentifiedRisksInSpanishAndNullLanguage_then_ApplicationsGroupAreTheSameAndTextsAreTranslated() { Assessment assessment1 = createAssessment(Questionnaire.findAll().firstResult(), 7766L);
+    public void given_TwoAssessments_when_RequestedIdentifiedRisksInSpanishAndNullLanguage_then_ApplicationsGroupAreTheSameAndTextsAreTranslated() {
+        Assessment assessment1 = createAssessment(Questionnaire.findAll().firstResult(), 7766L);
 
         AssessmentQuestion question1 = getAssessmentQuestion(assessment1, 1, 1);
         AssessmentSingleOption option1 = getAssessmentOption(assessment1, 1, Risk.RED, 1);

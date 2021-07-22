@@ -2,6 +2,12 @@ package io.tackle.pathfinder.services;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import io.tackle.pathfinder.dto.*;
+import io.quarkus.security.identity.SecurityIdentity;
+import io.quarkus.vertx.ConsumeEvent;
+import io.smallrye.common.annotation.Blocking;
+import io.tackle.pathfinder.dto.AssessmentBulkDto;
+import io.tackle.pathfinder.dto.AssessmentDto;
+import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
@@ -16,6 +22,8 @@ import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.Value;
+import io.tackle.pathfinder.model.bulk.AssessmentBulk;
+import io.vertx.core.eventbus.EventBus;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.apache.commons.lang3.StringUtils;
@@ -24,8 +32,14 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.persistence.Tuple;
 import javax.transaction.Transactional;
+import javax.transaction.UserTransaction;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
@@ -73,10 +87,17 @@ public class AssessmentSvc {
     @ConfigProperty(name = "confidence.risk.UNKNOWN.adjuster")
     Double unknownAdjuster;
 
-    public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
-        List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
-        return assessmentQuery.stream().findFirst().map(e -> assessmentMapper.assessmentToAssessmentHeaderDto(e));
-    }
+    @Inject
+    EventBus eventBus;
+
+    @Inject
+    SecurityIdentity identityContext;
+
+    @Inject
+    UserTransaction transaction;
+
+    @Inject
+    BulkCreateSvc bulkSvc;
 
     @Transactional
     public AssessmentHeaderDto createAssessment(@NotNull Long applicationId) {
@@ -94,6 +115,12 @@ public class AssessmentSvc {
         } else {
             throw new BadRequestException();
         }
+    }
+
+    public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
+        return Assessment.find("application_id", applicationId)
+                        .firstResultOptional()
+                        .map(e -> assessmentMapper.assessmentToAssessmentHeaderDto((Assessment) e));
     }
 
     @Transactional
@@ -224,6 +251,7 @@ public class AssessmentSvc {
                 AssessmentCategory category = AssessmentCategory.find("assessment_questionnaire_id=?1 and id=?2", assessment_questionnaire.id, categ.getId()).<AssessmentCategory>firstResultOptional().orElseThrow(BadRequestException::new);
                 if (categ.getComment() != null) {
                     category.comment = categ.getComment();
+                    category.updateUser = identityContext.getPrincipal().getName();
                     log.log(Level.FINE, "Setting category comment : " + category.comment);
                 }
 
@@ -236,6 +264,7 @@ public class AssessmentSvc {
                                 AssessmentSingleOption option = AssessmentSingleOption.find("assessment_question_id=?1 and id=?2", question.id, opt.getId()).<AssessmentSingleOption>firstResultOptional().orElseThrow(BadRequestException::new);
                                 if (opt.getChecked() != null) {
                                     option.selected = opt.getChecked();
+                                    option.updateUser = identityContext.getPrincipal().getName();
                                     log.log(Level.FINE, "Setting option checked : " + option.selected);
                                 }
                             });
@@ -244,6 +273,18 @@ public class AssessmentSvc {
                 }
             });
         }
+        assessment.updateUser = identityContext.getPrincipal().getName();
+        return assessmentMapper.assessmentToAssessmentHeaderDto(assessment);
+    }
+
+    @Transactional
+    public AssessmentHeaderDto newAssessment(Long fromAssessmentId, @NotNull @Valid Long applicationId) {
+        Assessment assessment = AssessmentCreateCommand.builder()
+            .applicationId(applicationId)
+            .fromAssessmentId(fromAssessmentId)
+            .username(identityContext.getPrincipal().getName())
+        .build()
+        .execute();
         return assessmentMapper.assessmentToAssessmentHeaderDto(assessment);
     }
 
@@ -253,6 +294,29 @@ public class AssessmentSvc {
         boolean deleted = Assessment.deleteById(assessment.id);
         log.log(Level.FINE, "Deleted assessment : " + assessmentId + " = " + deleted);
         if (!deleted) throw new BadRequestException();
+    }
+
+    public AssessmentBulkDto bulkCreateAssessments(Long fromAssessmentId, @NotNull @Valid List<Long> appList) throws NotSupportedException, SystemException, SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException {
+        // We manage manually the transaction to be sure the consumer starts after this transaction has been commited
+        transaction.begin();
+        AssessmentBulk bulkNew = bulkSvc.newAssessmentBulk(fromAssessmentId, appList, identityContext.getPrincipal().getName());
+        transaction.commit();
+
+        eventBus.send("process-bulk-assessment-creation", bulkNew.id);
+
+        log.info("Finishing request");
+        return assessmentMapper.assessmentBulkToassessmentBulkDto(bulkNew);
+    }
+
+    @Transactional
+    @ConsumeEvent("process-bulk-assessment-creation")
+    @Blocking
+    public void processApplicationAssessmentCreationAsync(Long bulkId) {
+        log.log(Level.FINE, "Starting async process");
+
+        AssessmentBulk bulk = (AssessmentBulk) AssessmentBulk.findByIdOptional(bulkId).orElseThrow(NotFoundException::new);
+        log.log(Level.FINE, "Bulk : " + bulk.id);
+        bulkSvc.processBulkApplications(bulk);
     }
 
     @Transactional
@@ -340,6 +404,11 @@ public class AssessmentSvc {
 
         return questionnaire;
     }
+    public AssessmentBulkDto bulkGet(@NotNull Long bulkId) {
+        AssessmentBulk bulk = (AssessmentBulk) AssessmentBulk.findByIdOptional(bulkId).orElseThrow(NotFoundException::new);
+
+        return assessmentMapper.assessmentBulkToassessmentBulkDto(bulk);
+	}
 
     @Transactional
     public List<LandscapeDto> landscape(List<Long> applicationIds) {
@@ -481,7 +550,6 @@ public class AssessmentSvc {
         else if ("UNKNOWN".equalsIgnoreCase(o2.risk)) return -1;
         else return 0; // this should not happen
     }
-
 
     @Value
     public class AssessmentRiskDto {
