@@ -1,8 +1,8 @@
--- This script inserts a translation of all the elements in 2 additional languages ES, IT
+-- This script inserts a translation of all the elements in 2 additional languages CA, IT
 -- simply creates the translation prefixing the text with the language code
 INSERT INTO translated_text
 (id, deleted, key, text, language)
-SELECT nextval('hibernate_sequence'), false, 'Category_' || id || '_name', 'ES: ' || name, 'ES'
+SELECT nextval('hibernate_sequence'), false, 'Category_' || id || '_name', 'CA: ' || name, 'CA'
 FROM category
 where deleted is not true;
 
@@ -14,7 +14,7 @@ where deleted is not true;
 
 INSERT INTO translated_text
 (id, deleted, key, text, language)
-SELECT nextval('hibernate_sequence'), false, 'Question_' || id || '_question', 'ES: ' || question.question_text, 'ES'
+SELECT nextval('hibernate_sequence'), false, 'Question_' || id || '_question', 'CA: ' || question.question_text, 'CA'
 FROM question
 where deleted is not true;
 
@@ -26,7 +26,7 @@ where deleted is not true;
 
 INSERT INTO translated_text
 (id, deleted, key, text, language)
-SELECT nextval('hibernate_sequence'), false, 'Question_' || id || '_description', 'ES: ' || question.description, 'ES'
+SELECT nextval('hibernate_sequence'), false, 'Question_' || id || '_description', 'CA: ' || question.description, 'CA'
 FROM question
 where deleted is not true;
 
@@ -44,7 +44,7 @@ where deleted is not true;
 
 INSERT INTO translated_text
 (id, deleted, key, text, language)
-SELECT nextval('hibernate_sequence'), false, 'SingleOption_' || id || '_option', 'ES: ' || option, 'ES'
+SELECT nextval('hibernate_sequence'), false, 'SingleOption_' || id || '_option', 'CA: ' || option, 'CA'
 FROM single_option
 where deleted is not true;
 

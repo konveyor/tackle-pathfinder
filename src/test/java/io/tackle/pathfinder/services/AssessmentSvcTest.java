@@ -63,7 +63,7 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
-    public void given_Questionnaire_when_CopyQuestionnaireIntoAssessment_should_BeIdentical() throws InterruptedException {
+    public void given_Questionnaire_when_CopyQuestionnaireIntoAssessment_should_BeIdentical() {
         Questionnaire questionnaire = createQuestionnaire();
         List<Category> categories = questionnaire.categories;
 
@@ -641,7 +641,7 @@ public class AssessmentSvcTest {
         option4.selected = true;
 
         List<RiskLineDto> riskLineDtos = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "");
-        List<RiskLineDto> riskLineDtosES = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "ES");
+        List<RiskLineDto> riskLineDtosES = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "CA");
 
         // we have answered 6 options : 3 RED , 1 AMBER, 1 GREEN, 1 UNKNOWN
         // but only the RED answers are returned
@@ -654,10 +654,10 @@ public class AssessmentSvcTest {
         assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question3.questionText) && e.getAnswer().equals(option3.option))
             .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(8877L);
 
-        assertThat(riskLineDtosES.stream().filter(e -> e.getQuestion().equals("ES: " + question1.questionText) && e.getAnswer().equals("ES: " + option1.option))
+        assertThat(riskLineDtosES.stream().filter(e -> e.getQuestion().equals("CA: " + question1.questionText) && e.getAnswer().equals("CA: " + option1.option))
             .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(7766L, 8877L);
 
-        assertThat(riskLineDtosES.stream().filter(e -> e.getQuestion().equals("ES: " + question3.questionText) && e.getAnswer().equals("ES: " + option3.option))
+        assertThat(riskLineDtosES.stream().filter(e -> e.getQuestion().equals("CA: " + question3.questionText) && e.getAnswer().equals("CA: " + option3.option))
             .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(8877L);
     }
 

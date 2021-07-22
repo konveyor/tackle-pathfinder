@@ -1,24 +1,25 @@
 package io.tackle.pathfinder.services;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
-import io.tackle.pathfinder.dto.*;
+import io.tackle.pathfinder.dto.AssessmentDto;
+import io.tackle.pathfinder.dto.AssessmentHeaderDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
-import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
-import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
+import io.tackle.pathfinder.model.i18n.TranslatedText;
 import io.tackle.pathfinder.model.questionnaire.Category;
-import io.tackle.pathfinder.model.questionnaire.Question;
-import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import java.util.List;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
     initArgs = {
@@ -43,34 +44,34 @@ public class TranslatorSvcTest {
         AssessmentDto assessmentDtoEN = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoENHeader.getId(), "EN");
 
         // when
-        AssessmentDto assessmentDtoES = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "ES");
-        AssessmentDto assessmentDtoCAT = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "CAT");
+        AssessmentDto assessmentDtoCAT = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "CA");
+        AssessmentDto assessmentDtoFR = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "FR");
 
         // then
         assertThat(assessmentDtoEN.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
             .findFirst()
-            .get().getTitle()).doesNotStartWith("ES:").doesNotStartWith("IT:").isNotBlank();
+            .get().getTitle()).doesNotStartWith("CA:").doesNotStartWith("IT:").isNotBlank();
 
         // Checking 2 existing languages have translated texts
-        assertThat(assessmentDtoES.getQuestionnaire().getLanguage()).isEqualTo("ES");
-        assertThat(assessmentDtoES.getQuestionnaire().getCategories()
+        assertThat(assessmentDtoCAT.getQuestionnaire().getLanguage()).isEqualTo("CA");
+        assertThat(assessmentDtoCAT.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
             .findFirst()
-            .get().getTitle()).startsWith("ES:");
-        AssessmentQuestionDto assessmentQuestionDtoES = assessmentDtoES.getQuestionnaire().getCategories()
+            .get().getTitle()).startsWith("CA:");
+        AssessmentQuestionDto assessmentQuestionDtoES = assessmentDtoCAT.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
             .findFirst()
             .get().getQuestions().stream()
             .filter(a -> a.getOrder() == 1)
             .findFirst().get();
-        assertThat(assessmentQuestionDtoES.getQuestion()).startsWith("ES:");
-        assertThat(assessmentQuestionDtoES.getDescription()).startsWith("ES:");
+        assertThat(assessmentQuestionDtoES.getQuestion()).startsWith("CA:");
+        assertThat(assessmentQuestionDtoES.getDescription()).startsWith("CA:");
 
-        AssessmentQuestionOptionDto assessmentOptionDtoES = assessmentDtoES.getQuestionnaire().getCategories()
+        AssessmentQuestionOptionDto assessmentOptionDtoES = assessmentDtoCAT.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
             .findFirst()
@@ -79,11 +80,11 @@ public class TranslatorSvcTest {
             .findFirst().get().getOptions().stream()
             .filter(b -> b.getOrder() == 1)
             .findFirst().get();
-        assertThat(assessmentOptionDtoES.getOption()).startsWith("ES:");
+        assertThat(assessmentOptionDtoES.getOption()).startsWith("CA:");
 
         // Checking a language not existing, should give the original texts
-        assertThat(assessmentDtoCAT.getQuestionnaire().getLanguage()).isEqualTo("CAT");
-        assertThat(assessmentDtoCAT.getQuestionnaire().getCategories()
+        assertThat(assessmentDtoFR.getQuestionnaire().getLanguage()).isEqualTo("FR");
+        assertThat(assessmentDtoFR.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
             .findFirst()
@@ -114,13 +115,13 @@ public class TranslatorSvcTest {
                     });
             });
 
-        AssessmentDto assessmentDtoES = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "ES");
-        assertThat(assessmentDtoES.getQuestionnaire().getLanguage()).isEqualTo("ES");
+        AssessmentDto assessmentDtoES = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "CA");
+        assertThat(assessmentDtoES.getQuestionnaire().getLanguage()).isEqualTo("CA");
         assertThat(assessmentDtoES.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
             .findFirst()
-            .get().getTitle()).doesNotStartWith("ES:").isNotBlank(); // no translation happened
+            .get().getTitle()).doesNotStartWith("CA:").isNotBlank(); // no translation happened
     }
 
     @Test
@@ -148,8 +149,8 @@ public class TranslatorSvcTest {
                     });
             });
 
-        AssessmentDto assessmentDtoES = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "ES");
-        assertThat(assessmentDtoES.getQuestionnaire().getLanguage()).isEqualTo("ES");
+        AssessmentDto assessmentDtoES = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "CA");
+        assertThat(assessmentDtoES.getQuestionnaire().getLanguage()).isEqualTo("CA");
         assertThat(assessmentDtoES.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
@@ -169,27 +170,34 @@ public class TranslatorSvcTest {
             .findFirst()
             .get();
         Category category = Category.findById(assessmentCategory.questionnaire_categoryId);
-        translatorSvc.addOrUpdateTranslation(category, "name", "CAT: Category Traduit al catala", "CAT");
+        translatorSvc.addOrUpdateTranslation(category, "name", "JP: Category Traduit al japanese", "JP");
 
         // when
-        AssessmentDto assessmentDtoCAT = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "CAT");
+        AssessmentDto assessmentDtoCA = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "JP");
 
         // then
-        assertThat(assessmentDtoCAT.getQuestionnaire().getCategories()
+        assertThat(assessmentDtoCA.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
             .findFirst()
-            .get().getTitle()).startsWith("CAT:");
+            .get().getTitle()).startsWith("JP:");
 
         // when
-        translatorSvc.addOrUpdateTranslation(category, "name", "CAT: Category Traduit al catala", "CAT").delete();
-        AssessmentDto assessmentDtoCAT2 = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "CAT");
+        translatorSvc.addOrUpdateTranslation(category, "name", "JP: Category Traduit al japanese", "JP").delete();
+        AssessmentDto assessmentDtoCA2 = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "JP");
         // then
-        assertThat(assessmentDtoCAT2.getQuestionnaire().getCategories()
+        assertThat(assessmentDtoCA2.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
             .findFirst()
-            .get().getTitle()).doesNotStartWith("CAT:"); // No translation made
+            .get().getTitle()).doesNotStartWith("JP:"); // No translation made
+    }
+
+    @Test
+    @Transactional
+    public void given_AllTheTranslationsAddedForSpanish_when_CheckingAllTranslationsInTable_then_correctNumberIsReturned() {
+        List<PanacheEntityBase> listTranslations = TranslatedText.list("language", "ES");
+        assertThat(listTranslations).size().isEqualTo(235);
     }
 
 }
