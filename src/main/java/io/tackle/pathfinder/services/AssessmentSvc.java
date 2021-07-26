@@ -78,6 +78,11 @@ public class AssessmentSvc {
 
     @Transactional
     public AssessmentHeaderDto createAssessment(@NotNull Long applicationId) {
+        return createAssessment(applicationId, null);
+    }
+
+    @Transactional
+    public AssessmentHeaderDto createAssessment(@NotNull Long applicationId, Long questionnaireId) {
         long count = Assessment.count("application_id", applicationId);
         log.log(Level.FINE, "Assessments for application_id [ " + applicationId + "] : " + count);
         if (count == 0) {
@@ -86,7 +91,10 @@ public class AssessmentSvc {
             assessment.status = AssessmentStatus.STARTED;
             assessment.persistAndFlush();
 
-            copyQuestionnaireIntoAssessment(assessment, defaultQuestionnaire());
+            Questionnaire questionnaire = (Questionnaire) Optional.ofNullable(questionnaireId)
+                .map(Questionnaire::findById)
+                .orElse(defaultQuestionnaire());
+            copyQuestionnaireIntoAssessment(assessment,  questionnaire);
 
             return assessmentMapper.assessmentToAssessmentHeaderDto(assessment);
         } else {

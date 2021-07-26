@@ -1,6 +1,5 @@
 package io.tackle.pathfinder.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.services.AssessmentSvc;
 import io.tackle.pathfinder.services.TranslatorSvc;
@@ -38,13 +37,13 @@ public class AssessmentsResource {
   @POST
   @Produces("application/json")
   @Consumes("application/json")
-  public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data) {
+  public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data, @QueryParam("questionnaireId") Long questionnaireId) {
     AssessmentHeaderDto createAssessment;
     
     if (fromAssessmentId != null) {
       createAssessment = assessmentSvc.copyAssessment(fromAssessmentId, data.getApplicationId());
     } else {
-      createAssessment = assessmentSvc.createAssessment(data.getApplicationId());
+      createAssessment = assessmentSvc.createAssessment(data.getApplicationId(), questionnaireId);
     }
     
     return Response
