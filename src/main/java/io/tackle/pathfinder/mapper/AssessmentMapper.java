@@ -20,9 +20,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Mapper(componentModel = "cdi")
-public abstract class AssessmentMapper {
-    @Inject
-    TranslatorSvc translatorSvc;
+public abstract class AssessmentMapper extends TranslatorMapper{
 
     public abstract AssessmentHeaderDto assessmentToAssessmentHeaderDto(Assessment assessment);
 
@@ -43,7 +41,7 @@ public abstract class AssessmentMapper {
     public abstract List<AssessmentCategoryDto> assessmentCategoryListToAssessmentCategoryDtoList(List<AssessmentCategory> categoryList, @Context String language);
 
     @Mapping(target="title", source="name")
-    @Mapping(target = "language", expression="java(language)")
+    @Mapping(target = "language", expression="java(org.apache.commons.lang3.StringUtils.defaultString(language, questionnaire.languageCode))")
     public abstract AssessmentQuestionnaireDto assessmentQuestionnaireToAssessmentQuestionnaireDto(AssessmentQuestionnaire questionnaire, @Context String language);
 
     public List<Long> assessmentStakeholderListToLongList(List<AssessmentStakeholder> stakeholder) {
@@ -110,12 +108,4 @@ public abstract class AssessmentMapper {
             .map(a -> translate((PanacheEntity) a, defaultText, destLanguage, field))
             .orElse(defaultText);
     }
-
-    protected String translate(PanacheEntity dto, String defaultText, String destLanguage, String field) {
-        if (StringUtils.isBlank(destLanguage)) return defaultText;
-
-        String key = translatorSvc.getKey(dto, field);
-        return translatorSvc.translate(key, destLanguage, defaultText);
-    }
-
 }

@@ -91,9 +91,7 @@ public class AssessmentSvc {
             assessment.status = AssessmentStatus.STARTED;
             assessment.persistAndFlush();
 
-            Questionnaire questionnaire = (Questionnaire) Optional.ofNullable(questionnaireId)
-                .map(Questionnaire::findById)
-                .orElse(defaultQuestionnaire());
+            Questionnaire questionnaire = questionnaireId != null ? Questionnaire.findById(questionnaireId) : defaultQuestionnaire();
             copyQuestionnaireIntoAssessment(assessment,  questionnaire);
 
             return assessmentMapper.assessmentToAssessmentHeaderDto(assessment);

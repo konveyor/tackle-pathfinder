@@ -18,7 +18,11 @@ import java.util.Base64;
 public class TranslatorSvc {
 
     public String getKey(PanacheEntity b, String concept) {
-        return String.format("%s_%s_%s", b.getClass().getSimpleName(), b.id, concept);
+        return getKey(b.getClass().getSimpleName(), b.id, concept);
+    }
+
+    public String getKey(String table, Long id, String field) {
+        return String.format("%s_%s_%s", table, id, field);
     }
 
     @Transactional
