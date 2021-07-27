@@ -36,7 +36,7 @@ public class QuestionnairesResourceTest extends SecuredResourceTest {
             .extract().as(QuestionnaireHeaderDto[].class);
 
         assertThat(questionnaires)
-            .hasSize(1)
+            .hasSizeGreaterThan(0)
             .usingRecursiveComparison()
             .ignoringFields("id")
             .isEqualTo(QuestionnaireHeaderDto.builder()
@@ -48,11 +48,11 @@ public class QuestionnairesResourceTest extends SecuredResourceTest {
     @Test
     public void given_Questionnaire_When_GetInADifferentLanguage_Then_ReturnsHeaderDtoInThatLanguage() throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
         userTransaction.begin();
-        translatorSvc.addOrUpdateTranslation(Questionnaire.findAll().firstResult(), "name", "CAT Pathfinder", "CA");
+        translatorSvc.addOrUpdateTranslation(Questionnaire.findAll().firstResult(), "name", "CA Pathfinder", "CA");
         userTransaction.commit();
 
         QuestionnaireHeaderDto[] questionnaires = given()
-            .queryParam("language", "CAT")
+            .queryParam("language", "CA")
             .when()
             .get("/questionnaires")
             .then()
@@ -60,12 +60,12 @@ public class QuestionnairesResourceTest extends SecuredResourceTest {
             .extract().as(QuestionnaireHeaderDto[].class);
 
         assertThat(questionnaires)
-            .hasSize(1)
+            .hasSizeGreaterThan(0)
             .usingRecursiveComparison()
             .ignoringFields("id")
             .isEqualTo(QuestionnaireHeaderDto.builder()
-                .name("CAT Pathfinder")
-                .language("CAT")
+                .name("CA Pathfinder")
+                .language("CA")
                 .build());
     }
 }
