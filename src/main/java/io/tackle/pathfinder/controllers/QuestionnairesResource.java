@@ -1,6 +1,7 @@
 package io.tackle.pathfinder.controllers;
 
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
+import io.tackle.pathfinder.dto.questionnaire.QuestionnaireDto;
 import io.tackle.pathfinder.dto.questionnaire.QuestionnaireHeaderDto;
 import io.tackle.pathfinder.services.AssessmentSvc;
 import io.tackle.pathfinder.services.QuestionnaireSvc;
@@ -9,10 +10,7 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,4 +31,14 @@ public class QuestionnairesResource {
         String lang = translatorSvc.getLanguage(accessToken.getRawToken(), language);
         return questionnaireSvc.getQuestionnaireHeaderList(lang);
     }
+
+    @GET
+    @Path("/{questionnaireId}")
+    @Produces("application/json")
+    public QuestionnaireDto getQuestionnaire(@PathParam ("questionnaireId") Long questionnaireId, @QueryParam("language") String language) {
+        String lang = translatorSvc.getLanguage(accessToken.getRawToken(), language);
+        return questionnaireSvc.getQuestionnaire(questionnaireId, lang);
+    }
+
+
 }
