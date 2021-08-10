@@ -1,13 +1,14 @@
 package io.tackle.pathfinder.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.services.AssessmentSvc;
-import io.tackle.pathfinder.services.TranslatorSvc;
 import lombok.extern.java.Log;
-import org.eclipse.microprofile.jwt.JsonWebToken;
-
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -16,6 +17,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.eclipse.microprofile.jwt.JsonWebToken;
+import io.tackle.pathfinder.services.TranslatorSvc;
 
 @Path("/assessments")
 @Log
@@ -108,4 +111,22 @@ public class AssessmentsResource {
     return assessmentSvc.getAdoptionCandidate(applicationId.stream().map(ApplicationDto::getApplicationId).collect(Collectors.toList()));
   }
 
+  @POST
+  @Path("bulk")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public Response bulkCreate(@NotNull @Valid AssessmentBulkPostDto data) throws SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException, NotSupportedException {
+    List<Long> appsList = data.getApplications().stream()
+                          .map(e -> e.getApplicationId())
+                          .collect(Collectors.toList());
+    return Response.accepted().entity(assessmentSvc.bulkCreateAssessments(data.getFromAssessmentId(), appsList)).build();
+  }
+
+  @GET
+  @Path("bulk/{bulkId}")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public AssessmentBulkDto bulkGet(@NotNull @PathParam("bulkId") Long bulkId) {
+    return assessmentSvc.bulkGet(bulkId);
+  }
 }
