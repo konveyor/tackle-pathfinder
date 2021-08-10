@@ -26,6 +26,6 @@ jobs:
           -Dquarkus.container-image.group=${{ github.repository_owner }} \
           -Dquarkus.container-image.name=${{ github.event.repository.name }}/tackle-pathfinder \
           -Dquarkus.container-image.tag=${{ steps.extract_branch.outputs.branch }} \
-          -Dquarkus.container-image.registry=docker.pkg.github.com \
+          -Dquarkus.container-image.registry=ghcr.io \
           -Dquarkus.container-image.username=${{ github.actor }} \
           -Dquarkus.container-image.password=${{ secrets.GITHUB_TOKEN }}
