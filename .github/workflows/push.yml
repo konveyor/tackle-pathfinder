@@ -16,7 +16,7 @@ jobs:
       with:
         java-version: 11
     - name: Cache Maven packages
-      uses: actions/cache@v2.1.4
+      uses: actions/cache@v2.1.6
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -35,7 +35,7 @@ jobs:
       with:
         java-version: 11
     - name: Cache Maven packages
-      uses: actions/cache@v2.1.4
+      uses: actions/cache@v2.1.6
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -56,7 +56,7 @@ jobs:
       with:
         java-version: 11
     - name: Cache Maven packages
-      uses: actions/cache@v2.1.4
+      uses: actions/cache@v2.1.6
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -86,7 +86,7 @@ jobs:
       with:
         java-version: 11
     - name: Cache Maven packages
-      uses: actions/cache@v2.1.4
+      uses: actions/cache@v2.1.6
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -113,14 +113,14 @@ jobs:
         with:
           java-version: 11
       - name: Cache Maven packages
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v2.1.6
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: Generate jacoco report
         run: ./mvnw -U verify -Pjacoco
-      - uses: codecov/codecov-action@v1
+      - uses: codecov/codecov-action@v1.5.0
         with:
           file: ./target/site/jacoco/jacoco.xml
           name: codecov

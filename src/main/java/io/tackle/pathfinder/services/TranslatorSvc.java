@@ -51,18 +51,20 @@ public class TranslatorSvc {
         return translatedText;
     }
 
-    public String getLanguage(String token, String queryLanguage) throws JsonProcessingException {
+    public String getLanguage(String token, String queryLanguage) {
         if (StringUtils.isNotBlank(queryLanguage)) return queryLanguage;
 
         String tokenBodyJson = new String(Base64.getDecoder().decode(token.split("\\.")[1]));
-        String tokenLocale = getLocaleFromTokenBody(tokenBodyJson);
-        return tokenLocale;
+        return getLocaleFromTokenBody(tokenBodyJson);
     }
 
-    private String getLocaleFromTokenBody(String tokenBodyJson) throws JsonProcessingException {
+    private String getLocaleFromTokenBody(String tokenBodyJson) {
         ObjectMapper tokenJson = new ObjectMapper();
-        ObjectNode body = tokenJson.readValue(tokenBodyJson, ObjectNode.class);
-        String tokenLocale = body.has("locale") ? body.get("locale").textValue() : "null";
-        return tokenLocale;
+        try {
+            ObjectNode body = tokenJson.readValue(tokenBodyJson, ObjectNode.class);
+            return body.has("locale") ? body.get("locale").textValue() : "null";
+        } catch (JsonProcessingException e) {
+            return null;
+        }
     }
 }

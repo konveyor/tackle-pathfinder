@@ -3,18 +3,25 @@ package io.tackle.pathfinder.mapper;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.model.assessment.*;
+import io.tackle.pathfinder.model.bulk.AssessmentBulk;
+import io.tackle.pathfinder.model.bulk.AssessmentBulkApplication;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import io.tackle.pathfinder.services.TranslatorSvc;
+import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import javax.inject.Inject;
+import javax.transaction.*;
+import java.math.BigInteger;
+import javax.persistence.Tuple;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Mapper(componentModel = "cdi")
 public abstract class AssessmentMapper {
@@ -38,7 +45,7 @@ public abstract class AssessmentMapper {
     public abstract AssessmentCategoryDto assessmentCategoryToAssessmentCategoryDto(AssessmentCategory category, @Context String language);
 
     public abstract List<AssessmentCategoryDto> assessmentCategoryListToAssessmentCategoryDtoList(List<AssessmentCategory> categoryList, @Context String language);
-    
+
     @Mapping(target="title", source="name")
     @Mapping(target = "language", expression="java(language)")
     public abstract AssessmentQuestionnaireDto assessmentQuestionnaireToAssessmentQuestionnaireDto(AssessmentQuestionnaire questionnaire, @Context String language);
@@ -54,23 +61,37 @@ public abstract class AssessmentMapper {
     @Mapping(target = "stakeholderGroups", source = "stakeholdergroups")
     public abstract AssessmentDto assessmentToAssessmentDto(Assessment assessment, @Context String language);
 
-    private RiskLineDto getRiskLineDto(Object[] fields) {
+    private RiskLineDto getRiskLineDto(Tuple fields, @Context String language) {
         // cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option, array_agg(a.application_id)
-        String fieldApps = (String) fields[6];
+        String fieldApps = fields.get("applicationIds", String.class);
         String[] appsList = fieldApps.replace("{", "").replace("}", "").split(",");
+
+        BigInteger categoryId = fields.get("cid", BigInteger.class);
+        BigInteger questionId = fields.get("qid", BigInteger.class);
+        BigInteger optionId = fields.get("soid", BigInteger.class);
+
+        Category category = Category.findById(categoryId.longValue());
+        Question question = Question.findById(questionId.longValue());
+        SingleOption option = SingleOption.findById(optionId.longValue());
+
+        String categoryText = translate(category, category.name, language, "name");
+        String questionText = translate(question, question.questionText, language, "question");
+        String optionText = translate(option, option.option, language, "option");
         List<Long> applications = Arrays.stream(appsList).map(Long::parseLong).collect(Collectors.toList());
+
         return RiskLineDto.builder()
-            .category((String) fields[1])
-            .question((String) fields[3])
-            .answer((String) fields[5])
+            .category(categoryText)
+            .question(questionText)
+            .answer(optionText)
             .applications(applications)
             .build();
     }
 
-    public List<RiskLineDto> riskListQueryToRiskLineDtoList(List<Object[]> objectList) {
-        return objectList.stream().map(this::getRiskLineDto).collect(Collectors.toList());
+    public List<RiskLineDto> riskListQueryToRiskLineDtoList(List<Tuple> objectList, @Context String language) {
+        return objectList.stream().map(a -> getRiskLineDto(a, language)).collect(Collectors.toList());
     }
 
+    @Transactional
     protected String translateCategory(AssessmentCategory cat, String defaultText, String destLanguage, String field) {
         return Optional.ofNullable(cat.questionnaire_categoryId)
                 .flatMap(a -> Category.findByIdOptional(a))
@@ -78,6 +99,7 @@ public abstract class AssessmentMapper {
             .orElse(defaultText);
     }
 
+    @Transactional
     protected String translateQuestion(AssessmentQuestion que, String defaultText, String destLanguage, String field) {
         return Optional.ofNullable(que.questionnaire_questionId)
             .flatMap(a -> Question.findByIdOptional(a))
@@ -85,6 +107,7 @@ public abstract class AssessmentMapper {
             .orElse(defaultText);
     }
 
+    @Transactional
     protected String translateOption(AssessmentSingleOption opt, String defaultText, String destLanguage, String field) {
         return Optional.ofNullable(opt.questionnaire_optionId)
             .flatMap(a -> SingleOption.findByIdOptional(a))
@@ -93,9 +116,32 @@ public abstract class AssessmentMapper {
     }
 
     protected String translate(PanacheEntity dto, String defaultText, String destLanguage, String field) {
-        // {table}_{id}_field  , dest language
+        if (StringUtils.isBlank(destLanguage)) return defaultText;
+
         String key = translatorSvc.getKey(dto, field);
         return translatorSvc.translate(key, destLanguage, defaultText);
     }
 
+    public AssessmentBulkDto assessmentBulkToassessmentBulkDto(AssessmentBulk bulk) {
+        return AssessmentBulkDto.builder()
+            .bulkId(bulk.id)
+            .applications(Stream.of(bulk.applications.split(",")).map(Long::parseLong).collect(Collectors.toList()))
+            .completed(bulk.completed)
+            .fromAssessmentId(bulk.fromAssessmentId)
+            .assessments(bulk.bulkApplications.stream().map(e -> this.assessmentBulkApplicationToassessmentHeaderBulkDto(e)).collect(Collectors.toList()))
+            .build();
+    }
+
+    protected AssessmentHeaderBulkDto assessmentBulkApplicationToassessmentHeaderBulkDto(AssessmentBulkApplication application) {
+        AssessmentHeaderBulkDto dto = AssessmentHeaderBulkDto.builder()
+            .applicationId(application.applicationId)
+            .id(application.assessmentId)
+            .error(application.error)
+            .build();
+        if (application.assessmentId != null) {
+            Assessment assessment = Assessment.findById(application.assessmentId);
+            dto.setStatus(assessment.status);
+        }
+        return dto;
+    }
 }
