@@ -1,30 +1,30 @@
 INSERT INTO translated_text (id, deleted, key, text, language)
 SELECT nextval('hibernate_sequence'), false,
-       'Category_' || id || '_name', 'Detalles de la Aplicación', 'ES'
+       'Category_' || id || '_name', 'Detalles de la aplicación', 'ES'
 FROM category
 WHERE name = 'Application details' and deleted is not true;
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 SELECT nextval('hibernate_sequence'), false,
-       'Category_' || id || '_name', 'Dependencias de la Aplicación', 'ES'
+       'Category_' || id || '_name', 'Dependencias de la aplicación', 'ES'
 FROM category
 WHERE name = 'Application dependencies' and deleted is not true;
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 SELECT nextval('hibernate_sequence'), false,
-       'Category_' || id || '_name', 'Arquitectura de la Aplicación', 'ES'
+       'Category_' || id || '_name', 'Arquitectura de la aplicación', 'ES'
 FROM category
 WHERE name = 'Application architecture' and deleted is not true;
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 SELECT nextval('hibernate_sequence'), false,
-       'Category_' || id || '_name', 'Observabilidad de la Aplicación', 'ES'
+       'Category_' || id || '_name', 'Observabilidad de la aplicación', 'ES'
 FROM category
 WHERE name = 'Application observability' and deleted is not true;
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 SELECT nextval('hibernate_sequence'), false,
-       'Category_' || id || '_name', 'Problemas transversales de la Aplicación', 'ES'
+       'Category_' || id || '_name', 'Problemas transversales de la aplicación', 'ES'
 FROM category
 WHERE name = 'Application cross-cutting concerns' and deleted is not true;
 
@@ -32,7 +32,7 @@ WHERE name = 'Application cross-cutting concerns' and deleted is not true;
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-       'Question_' || question.id || '_question', '¿El equipo de desarrollo de la aplicación la entiende y desarrolla activamente?', 'ES'
+       'Question_' || question.id || '_question', '¿El equipo de desarrollo de la aplicación entiende y desarrolla la aplicación activamente?', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
         question.question_text='Does the application development team understand and actively develop the application?' and
@@ -64,7 +64,7 @@ where question.deleted is not true and
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-       'Question_' || question.id || '_question', '¿Cuál es el tiempo medio de recuperación (MTTR) desde un fallo en un entorno de producción?', 'ES'
+       'Question_' || question.id || '_question', '¿Cuál es el tiempo medio de recuperación (MTTR) de una falla en un entorno de producción?', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
         question.question_text='What is the application''s mean time to recover (MTTR) from failure in a production environment?' and
@@ -72,7 +72,7 @@ where question.deleted is not true and
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'Question_' || question.id || '_question', '¿Dispone la aplicación de requerimientos legales y/o de licenciamiento?', 'ES'
+'Question_' || question.id || '_question', '¿La aplicación tiene requerimientos legales y/o de licenciamiento?', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
        question.question_text='Does the application have legal and/or licensing requirements?' and
@@ -128,7 +128,7 @@ where question.deleted is not true and
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'Question_' || question.id || '_question', '¿Qué tan flexible es la aplicación? Como se recupera de cortes y reinicios?', 'ES'
+'Question_' || question.id || '_question', '¿Qué tan flexible es la aplicación? ¿Cómo se recupera de cortes y reinicios?', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
        question.question_text='How resilient is the application? How well does it recover from outages and restarts?' and
@@ -168,7 +168,7 @@ where question.deleted is not true and
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'Question_' || question.id || '_question', '¿Cómo usa la aplicación el logging y como se accede a esos logs?', 'ES'
+'Question_' || question.id || '_question', '¿Cómo usa la aplicación el logging y cómo se accede a esos logs?', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
        question.question_text='How does the application use logging and how are the logs accessed?' and
@@ -208,7 +208,7 @@ where question.deleted is not true and
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'Question_' || question.id || '_question', '¿Cómo se verifica la aplicación?', 'ES'
+'Question_' || question.id || '_question', '¿Cómo se testea la aplicación?', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
        question.question_text='How is the application tested?' and
@@ -264,7 +264,7 @@ where question.deleted is not true and
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'Question_' || question.id || '_description', '¿Tiene el equipo suficiente conocimiento para dar soporte a la aplicación en producción?', 'ES'
+'Question_' || question.id || '_description', '¿El equipo tiene suficiente conocimiento para dar soporte a la aplicación en producción?', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
        question.description='Does the team have sufficient knowledge to support the application in production?' and
@@ -288,7 +288,7 @@ where question.deleted is not true and
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'Question_' || question.id || '_description', 'Tiempo medio para que la aplicación se recupere de un fallo', 'ES'
+'Question_' || question.id || '_description', 'Tiempo promedio para que la aplicación se recupere de un fallo', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
        question.description='Average time for the application to recover from failure' and
@@ -320,7 +320,7 @@ where question.deleted is not true and
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'Question_' || question.id || '_description', 'Solo Linux y ciertas versiones de Microsoft Windows estan soportadas en contenedores. Compruebe las ultimas versiones y requerimientos.', 'ES'
+'Question_' || question.id || '_description', 'Solo Linux y ciertas versiones de Microsoft Windows están soportadas en contenedores. Compruebe las últimas versiones y requerimientos.', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
        question.description='Only Linux and certain Microsoft Windows versions are supported in containers. Check the latest versions and requirements.' and
@@ -400,7 +400,7 @@ where question.deleted is not true and
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'Question_' || question.id || '_description', '¿Las métricas de la aplicación estan disponibles, si son  necesarias (ejemplo: OpenShift Container Platform recoge métricas de CPU y memory)?', 'ES'
+'Question_' || question.id || '_description', '¿Las métricas de la aplicación están disponibles, si son  necesarias (ejemplo: OpenShift Container Platform recoge métricas de CPU y memory)?', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
        question.description='Are application metrics available, if necessary (example: OpenShift Container Platform collects CPU and memory metrics)?' and
@@ -432,7 +432,7 @@ where question.deleted is not true and
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-       'Question_' || question.id || '_description', '¿Se verifica la aplicación? ¿Es facil de verificar (ejemplo: verificación automatizada)? ¿Se verifica en producción?', 'ES'
+       'Question_' || question.id || '_description', '¿Se verifica la aplicación? ¿Es fácil de verificar (ejemplo: verificación automatizada)? ¿Se verifica en producción?', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
         question.description='Is the application is tested? Is it easy to test (example: automated testing)? Is it tested in production?' and
@@ -472,7 +472,7 @@ where question.deleted is not true and
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-       'Question_' || question.id || '_description', '¿Cómo obtiene credenciales la aplicación, claves, o certificados? Systemas externos son dependencias de ejecución.', 'ES'
+       'Question_' || question.id || '_description', '¿Cómo obtiene credenciales la aplicación, claves, o certificados? Sistemas externos son dependencias de ejecución.', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
         question.description='How does the application retrieve credentials, keys, or certificates? External systems are runtime dependencies.' and
@@ -991,7 +991,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_20_option', 'Mas de 6 meses', 'ES'
+'SingleOption_20_option', 'Más de 6 meses', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1171,7 +1171,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_48_option', 'Monolito masivo (alto uso de memoria y CPU), despliegue único, escalado vertical unicamente', 'ES'
+'SingleOption_48_option', 'Monolito masivo (alto uso de memoria y CPU), despliegue único, únicamente escalado vertical', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1191,7 +1191,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_50_option', 'Monolito complejo, orden estricto de inicio de dependencias en ejecucion, arquitectura no flexible', 'ES'
+'SingleOption_50_option', 'Monolito complejo, orden estricto de inicio de dependencias en ejecución, arquitectura no flexible', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1211,7 +1211,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_56_option', 'Requiere una CPU que no esta soportada por Red Hat', 'ES'
+'SingleOption_56_option', 'Requiere una CPU que no está soportada por Red Hat', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1281,7 +1281,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_66_option', 'Distribución standar Linux', 'ES'
+'SingleOption_66_option', 'Distribución estándar Linux', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1291,7 +1291,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_69_option', 'No recomendado la ejecución del componente en un contenedor', 'ES'
+'SingleOption_69_option', 'No es recomendado la ejecución del componente en un contenedor', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1301,7 +1301,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_70_option', 'Sin soporte de vendedor para contenedores', 'ES'
+'SingleOption_70_option', 'Sin soporte para contenedores por parte del vendedor', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1341,7 +1341,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_74_option', 'Sin componentes de terceros requeridos', 'ES'
+'SingleOption_74_option', 'No hay componentes de terceros requeridos', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1351,7 +1351,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_77_option', 'Las dependencias son dificiles o caras de cambiar porque son antiguas o de terceros', 'ES'
+'SingleOption_77_option', 'Las dependencias son difíciles o caras de cambiar porque son antiguas o de terceros', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1391,7 +1391,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_84_option', 'La disponibilidad de la dependencia solo esta verificada cuando la aplicación está procesando tráfico', 'ES'
+'SingleOption_84_option', 'La disponibilidad de la dependencia es verificada solamente cuando la aplicación está procesando tráfico', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1411,7 +1411,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_86_option', 'La aplicación no está lista hasta que las dependencias estan verificadas y disponibles', 'ES'
+'SingleOption_86_option', 'La aplicación no está lista hasta que las dependencias están verificadas y disponibles', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1421,7 +1421,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_87_option', 'Proceso limitado disponible si las dependencias no estan disponible', 'ES'
+'SingleOption_87_option', 'Proceso limitado disponible si las dependencias no están disponibles', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1441,7 +1441,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_92_option', 'La aplicación no se puede re iniciar limpiamente después de fallo, requiere intervención manual', 'ES'
+'SingleOption_92_option', 'La aplicación no se puede reiniciar limpiamente después de fallo, requiere intervención manual', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1481,7 +1481,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_96_option', 'Los contenedores de la aplicación son terminados aleatoriamente para verificar la flexibilidad; se siguen principios de ingenieria del caos', 'ES'
+'SingleOption_96_option', 'Los contenedores de la aplicación son terminados aleatoriamente para verificar la flexibilidad; se siguen principios de ingeniería del caos', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1641,7 +1641,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_127_option', 'Los logs no estan disponibles o son internos sin medio de exportarlos', 'ES'
+'SingleOption_127_option', 'Los logs no están disponibles o son internos sin forma de ser exportados', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1651,7 +1651,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_128_option', 'Los logs estan en un formato personalizado binario, expuestos con protocolos no estandar', 'ES'
+'SingleOption_128_option', 'Los logs están en un formato personalizado binario, expuestos con protocolos no estándar', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1661,7 +1661,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_129_option', 'Los logs estan expuestos usando syslog', 'ES'
+'SingleOption_129_option', 'Los logs están expuestos usando syslog', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1681,7 +1681,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_131_option', 'Los logs son reenviados a sistema de log externo (ejemplo: Splunk)', 'ES'
+'SingleOption_131_option', 'Los logs son reenviados a un sistema de log externo (ejemplo: Splunk)', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1741,7 +1741,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_139_option', 'XXXX', 'ES'
+'SingleOption_139_option', 'Las métricas son coleccionadas y expuestas con ayuda de los endpoints incorporados en Prometheus ', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1940,7 +1940,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-       'SingleOption_173_option', 'Multiples ficheros de configuración en multiples localizaciones de sistema de ficheros', 'ES'
+       'SingleOption_173_option', 'Multiples ficheros de configuración en múltiples localizaciones de sistema de ficheros', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1990,7 +1990,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-       'SingleOption_180_option', 'Claves/certificados ligados a direcciónes IP y generados en tiempo de ejecución para cada instancia de aplicación', 'ES'
+       'SingleOption_180_option', 'Claves/certificados ligados a direcciones IP y generados en tiempo de ejecución para cada instancia de aplicación', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -2080,7 +2080,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-       'SingleOption_192_option', 'Depliegue automatizado con una pipeline completa de CI/CD, intervención mínima para la promoción a través de etapas de pipeline', 'ES'
+       'SingleOption_192_option', 'Despliegue automatizado con una pipeline completa de CI/CD, intervención mínima para la promoción a través de etapas de pipeline', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
