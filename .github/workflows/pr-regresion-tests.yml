@@ -104,9 +104,9 @@ jobs:
           working-directory: tackle-ui-tests
           record: false
           start: npx echo "Starting Minikube Cypress tests"
-          config: pageLoadTimeout=100000
+          config: pageLoadTimeout=100000,retries=2
           browser: ${{ matrix.browser }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_user: admin
-          CYPRESS_pass: admin
+          CYPRESS_user: tackle
+          CYPRESS_pass: password
