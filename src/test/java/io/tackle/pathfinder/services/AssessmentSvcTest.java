@@ -660,7 +660,7 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
-    public void given_TwoAssessments_when_RequestedIdentifiedRisksInSpanishAndNullLanguage_then_ApplicationsGroupAreTheSameAndTextsAreTranslated() {
+    public void given_TwoAssessments_when_RequestedIdentifiedRisksInCatalanAndNullLanguage_then_ApplicationsGroupAreTheSameAndTextsAreTranslated() {
         Assessment assessment1 = createAssessment(Questionnaire.findAll().firstResult(), 7766L);
 
         AssessmentQuestion question1 = getAssessmentQuestion(assessment1, 1, 1);
