@@ -1641,6 +1641,17 @@
     "notBefore" : 0,
     "groups" : [ ]
   }, {
+    "username" : "pedro",
+    "enabled" : true,
+    "attributes" : {
+      "locale" : [ "ES" ]
+    },
+    "credentials" : [ {
+      "type" : "password",
+      "value" : "pedro"
+    } ],
+    "realmRoles" : ["user"]
+  }, {
     "id" : "948c59ec-46ed-4d99-aa43-02900029b930",
     "createdTimestamp" : 1554245880023,
     "username" : "service-account-backend-service",
