@@ -684,12 +684,12 @@ public class AssessmentSvcTest {
         option4.selected = true;
 
         List<RiskLineDto> riskLineDtos = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "");
-        List<RiskLineDto> riskLineDtosES = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "CA");
+        List<RiskLineDto> riskLineDtosCA = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "CA");
 
         // we have answered 6 options : 3 RED , 1 AMBER, 1 GREEN, 1 UNKNOWN
         // but only the RED answers are returned
         assertThat(riskLineDtos).hasSize(2);
-        assertThat(riskLineDtosES).hasSize(2);
+        assertThat(riskLineDtosCA).hasSize(2);
 
         assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question1.questionText) && e.getAnswer().equals(option1.option))
             .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(7766L, 8877L);
@@ -697,10 +697,10 @@ public class AssessmentSvcTest {
         assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question3.questionText) && e.getAnswer().equals(option3.option))
             .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(8877L);
 
-        assertThat(riskLineDtosES.stream().filter(e -> e.getQuestion().equals("CA: " + question1.questionText) && e.getAnswer().equals("CA: " + option1.option))
+        assertThat(riskLineDtosCA.stream().filter(e -> e.getQuestion().equals("CA: " + question1.questionText) && e.getAnswer().equals("CA: " + option1.option))
             .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(7766L, 8877L);
 
-        assertThat(riskLineDtosES.stream().filter(e -> e.getQuestion().equals("CA: " + question3.questionText) && e.getAnswer().equals("CA: " + option3.option))
+        assertThat(riskLineDtosCA.stream().filter(e -> e.getQuestion().equals("CA: " + question3.questionText) && e.getAnswer().equals("CA: " + option3.option))
             .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(8877L);
     }
 

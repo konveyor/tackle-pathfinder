@@ -44,7 +44,7 @@ public class TranslatorSvcTest {
         AssessmentDto assessmentDtoEN = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoENHeader.getId(), "EN");
 
         // when
-        AssessmentDto assessmentDtoCAT = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "CA");
+        AssessmentDto assessmentDtoCA = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "CA");
         AssessmentDto assessmentDtoFR = assessmentSvc.getAssessmentDtoByAssessmentId(assessmentDtoEN.getId(), "FR");
 
         // then
@@ -55,13 +55,13 @@ public class TranslatorSvcTest {
             .get().getTitle()).doesNotStartWith("CA:").doesNotStartWith("IT:").isNotBlank();
 
         // Checking 2 existing languages have translated texts
-        assertThat(assessmentDtoCAT.getQuestionnaire().getLanguage()).isEqualTo("CA");
-        assertThat(assessmentDtoCAT.getQuestionnaire().getCategories()
+        assertThat(assessmentDtoCA.getQuestionnaire().getLanguage()).isEqualTo("CA");
+        assertThat(assessmentDtoCA.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
             .findFirst()
             .get().getTitle()).startsWith("CA:");
-        AssessmentQuestionDto assessmentQuestionDtoES = assessmentDtoCAT.getQuestionnaire().getCategories()
+        AssessmentQuestionDto assessmentQuestionDtoES = assessmentDtoCA.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
             .findFirst()
@@ -71,7 +71,7 @@ public class TranslatorSvcTest {
         assertThat(assessmentQuestionDtoES.getQuestion()).startsWith("CA:");
         assertThat(assessmentQuestionDtoES.getDescription()).startsWith("CA:");
 
-        AssessmentQuestionOptionDto assessmentOptionDtoES = assessmentDtoCAT.getQuestionnaire().getCategories()
+        AssessmentQuestionOptionDto assessmentOptionDtoES = assessmentDtoCA.getQuestionnaire().getCategories()
             .stream()
             .filter(e -> e.getOrder() == 1)
             .findFirst()
