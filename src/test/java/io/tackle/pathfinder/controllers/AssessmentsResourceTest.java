@@ -1193,9 +1193,9 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.statusCode(200)
 			.extract().as(AssessmentDto.class);
 
-		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getTitle().startsWith("ES:"))).isTrue();
-		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getQuestion().startsWith("ES:")))).isTrue();
-		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getDescription().startsWith("ES:")))).isTrue();
-		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getOptions().stream().allMatch(c -> c.getOption().startsWith("ES:"))))).isTrue();
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getTitle().startsWith("CA:"))).isTrue();
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getQuestion().startsWith("CA:")))).isTrue();
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getDescription().startsWith("CA:")))).isTrue();
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getOptions().stream().allMatch(c -> c.getOption().startsWith("CA:"))))).isTrue();
 	}
 }
