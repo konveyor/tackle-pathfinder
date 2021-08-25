@@ -120,7 +120,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Generate jacoco report
         run: ./mvnw -U verify -Pjacoco
-      - uses: codecov/codecov-action@v1.5.0
+      - uses: codecov/codecov-action@v2.0.3
         with:
           file: ./target/site/jacoco/jacoco.xml
           name: codecov
