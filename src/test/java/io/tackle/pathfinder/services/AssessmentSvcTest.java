@@ -133,7 +133,7 @@ public class AssessmentSvcTest {
         AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment, "EN");
 
         assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
-        assertThat(assessmentDto.getStakeholders()).hasSize(3); 
+        assertThat(assessmentDto.getStakeholders()).hasSize(3);
 
         // Stakeholders and Stakeholdergroups always override the entire list
         assessmentDto.getStakeholderGroups().clear();
@@ -174,7 +174,7 @@ public class AssessmentSvcTest {
 
         AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment, "EN");
         assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
-        assertThat(assessmentDto.getStakeholders()).hasSize(3); 
+        assertThat(assessmentDto.getStakeholders()).hasSize(3);
 
         // Stakeholders and Stakeholdergroups NOT send will imply leave what is there without touching it
         assessmentDto.setStakeholderGroups(null);
@@ -225,7 +225,7 @@ public class AssessmentSvcTest {
         assertThat(assessmentUpdated.stakeholders).extracting(e -> e.stakeholderId).containsExactlyInAnyOrder(180L, 200L, 300L, 800L);
         assertThat(assessmentUpdated.stakeholdergroups).extracting(e -> e.stakeholdergroupId).containsExactlyInAnyOrder(550L, 650L, 750L);
     }
-    
+
     @Test
     @Transactional
     public void given_CreatedAssessment_When_UpdateWithStakeholdersEmpty_Then_ItDeleteAllStakeholders() {
@@ -236,7 +236,7 @@ public class AssessmentSvcTest {
 
         AssessmentDto assessmentDto = assessmentMapper.assessmentToAssessmentDto(assessment, "EN");
         assertThat(assessmentDto.getStakeholderGroups()).hasSize(2);
-        assertThat(assessmentDto.getStakeholders()).hasSize(3); 
+        assertThat(assessmentDto.getStakeholders()).hasSize(3);
 
         // Stakeholders and Stakeholdergroups sent EMPTY send will imply deleting every element in DB in stakeholders/stakeholdergroups
         assessmentDto.getStakeholderGroups().clear();
@@ -248,7 +248,7 @@ public class AssessmentSvcTest {
         assertThat(assessmentUpdated.stakeholders).hasSize(0);
         assertThat(assessmentUpdated.stakeholdergroups).hasSize(0);
     }
-    
+
     @Transactional
     private boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId)  {
         log.info("categories to check " + assessment.assessmentQuestionnaire.categories.size());
@@ -341,33 +341,33 @@ public class AssessmentSvcTest {
         Assessment assessment = createAssessment(questionnaire, 1200L);
         assessmentSvc.deleteAssessment(assessment.id);
         assertThat(Assessment.findByIdOptional(assessment.id)).isEmpty();
-    }    
-    
+    }
+
     @Test
     public void given_NotExistingAssessment_When_DeleteAssessment_should_ThrowException() {
         assertThatThrownBy(() -> assessmentSvc.deleteAssessment(8888L));
-    }    
-    
+    }
+
     @Test
     @Transactional
     public void given_AlreadyDeletedAssessment_When_DeleteAssessment_should_ThrowException() {
         Questionnaire questionnaire = createQuestionnaire();
         Assessment assessment = createAssessment(questionnaire, 897200L);
-        
+
         assertThat(Assessment.findByIdOptional(assessment.id)).isNotEmpty();
-        
+
         assessmentSvc.deleteAssessment(assessment.id);
 
         assertThat(Assessment.findByIdOptional(assessment.id)).isEmpty();
         assertThatThrownBy(() -> assessmentSvc.deleteAssessment(assessment.id));
-    } 
-    
+    }
+
     @Test
     @Transactional
     public void given_Assessment_When_DeleteAssessmentAndFails_should_ThrowException() {
         Questionnaire questionnaire = createQuestionnaire();
         Assessment assessment = createAssessment(questionnaire, 897200L);
-        
+
         assertThat(Assessment.findByIdOptional(assessment.id)).isNotEmpty();
 
         assessmentSvc.deleteAssessment(assessment.id);
@@ -665,7 +665,7 @@ public class AssessmentSvcTest {
 
     @Test
     @Transactional
-    public void given_TwoAssessments_when_RequestedIdentifiedRisksInSpanishAndNullLanguage_then_ApplicationsGroupAreTheSameAndTextsAreTranslated() {
+    public void given_TwoAssessments_when_RequestedIdentifiedRisksInCatalanAndNullLanguage_then_ApplicationsGroupAreTheSameAndTextsAreTranslated() {
         Assessment assessment1 = createAssessment(Questionnaire.findAll().firstResult(), 7766L);
 
         AssessmentQuestion question1 = getAssessmentQuestion(assessment1, 1, 1);
@@ -689,12 +689,12 @@ public class AssessmentSvcTest {
         option4.selected = true;
 
         List<RiskLineDto> riskLineDtos = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "");
-        List<RiskLineDto> riskLineDtosES = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "ES");
+        List<RiskLineDto> riskLineDtosCA = assessmentSvc.identifiedRisks(List.of(7766L, 8877L), "CA");
 
         // we have answered 6 options : 3 RED , 1 AMBER, 1 GREEN, 1 UNKNOWN
         // but only the RED answers are returned
         assertThat(riskLineDtos).hasSize(2);
-        assertThat(riskLineDtosES).hasSize(2);
+        assertThat(riskLineDtosCA).hasSize(2);
 
         assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question1.questionText) && e.getAnswer().equals(option1.option))
             .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(7766L, 8877L);
@@ -702,10 +702,10 @@ public class AssessmentSvcTest {
         assertThat(riskLineDtos.stream().filter(e -> e.getQuestion().equals(question3.questionText) && e.getAnswer().equals(option3.option))
             .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(8877L);
 
-        assertThat(riskLineDtosES.stream().filter(e -> e.getQuestion().equals("ES: " + question1.questionText) && e.getAnswer().equals("ES: " + option1.option))
+        assertThat(riskLineDtosCA.stream().filter(e -> e.getQuestion().equals("CA: " + question1.questionText) && e.getAnswer().equals("CA: " + option1.option))
             .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(7766L, 8877L);
 
-        assertThat(riskLineDtosES.stream().filter(e -> e.getQuestion().equals("ES: " + question3.questionText) && e.getAnswer().equals("ES: " + option3.option))
+        assertThat(riskLineDtosCA.stream().filter(e -> e.getQuestion().equals("CA: " + question3.questionText) && e.getAnswer().equals("CA: " + option3.option))
             .findFirst().map(e -> e.getApplications()).get()).containsExactlyInAnyOrder(8877L);
     }
 
