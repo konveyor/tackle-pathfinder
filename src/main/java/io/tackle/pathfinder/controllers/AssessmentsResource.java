@@ -41,15 +41,15 @@ public class AssessmentsResource {
   @POST
   @Produces("application/json")
   @Consumes("application/json")
-  public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data, @QueryParam("questionnaireId") Long questionnaireId) {
+  public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data) {
     AssessmentHeaderDto createAssessment;
-    
+
     if (fromAssessmentId != null) {
       createAssessment = assessmentSvc.copyAssessment(fromAssessmentId, data.getApplicationId());
     } else {
-      createAssessment = assessmentSvc.createAssessment(data.getApplicationId(), questionnaireId);
+      createAssessment = assessmentSvc.createAssessment(data.getApplicationId());
     }
-    
+
     return Response
       .status(Status.CREATED)
       .entity(createAssessment)
@@ -63,8 +63,8 @@ public class AssessmentsResource {
   public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @QueryParam("language") String language) {
     String lang = translatorSvc.getLanguage(accessToken.getRawToken(), language);
     return assessmentSvc.getAssessmentDtoByAssessmentId(assessmentId, lang);
-  }  
-  
+  }
+
   @PATCH
   @Path("{assessmentId}")
   @Produces("application/json")

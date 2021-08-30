@@ -24,7 +24,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Mapper(componentModel = "cdi")
-public abstract class AssessmentMapper extends TranslatorMapper{
+public abstract class AssessmentMapper {
+    @Inject
+    TranslatorSvc translatorSvc;
 
     public abstract AssessmentHeaderDto assessmentToAssessmentHeaderDto(Assessment assessment);
 
@@ -32,20 +34,20 @@ public abstract class AssessmentMapper extends TranslatorMapper{
     @Mapping(target = "option", expression="java(translateOption(option, option.option, language, \"option\"))")
     public abstract AssessmentQuestionOptionDto assessmentSingleOptionToAssessmentQuestionOptionDto(AssessmentSingleOption option, @Context String language);
     public abstract List<AssessmentQuestionOptionDto> assessmentSingleOptionListToassessmentQuestionOptionDtoList(List<AssessmentSingleOption> optionList, @Context String language);
-    
+
     @Mapping(target = "options", source="singleOptions")
     @Mapping(target = "question", expression="java(translateQuestion(question, question.questionText, language, \"question\"))")
     @Mapping(target = "description", expression="java(translateQuestion(question, question.description, language, \"description\"))")
     public abstract AssessmentQuestionDto assessmentQuestionToAssessmentQuestionDto(AssessmentQuestion question, @Context String language);
     public abstract List<AssessmentQuestionDto> assessmentQuestionListToassessmentQuestionDtoList(List<AssessmentQuestion> questionList, @Context String language);
-   
+
     @Mapping(target="title", expression="java(translateCategory(category, category.name, language, \"name\"))")
     public abstract AssessmentCategoryDto assessmentCategoryToAssessmentCategoryDto(AssessmentCategory category, @Context String language);
 
     public abstract List<AssessmentCategoryDto> assessmentCategoryListToAssessmentCategoryDtoList(List<AssessmentCategory> categoryList, @Context String language);
 
     @Mapping(target="title", source="name")
-    @Mapping(target = "language", expression="java(org.apache.commons.lang3.StringUtils.defaultString(language, questionnaire.languageCode))")
+    @Mapping(target = "language", expression="java(language)")
     public abstract AssessmentQuestionnaireDto assessmentQuestionnaireToAssessmentQuestionnaireDto(AssessmentQuestionnaire questionnaire, @Context String language);
 
     public List<Long> assessmentStakeholderListToLongList(List<AssessmentStakeholder> stakeholder) {
@@ -111,6 +113,13 @@ public abstract class AssessmentMapper extends TranslatorMapper{
             .flatMap(a -> SingleOption.findByIdOptional(a))
             .map(a -> translate((PanacheEntity) a, defaultText, destLanguage, field))
             .orElse(defaultText);
+    }
+
+    protected String translate(PanacheEntity dto, String defaultText, String destLanguage, String field) {
+        if (StringUtils.isBlank(destLanguage)) return defaultText;
+
+        String key = translatorSvc.getKey(dto, field);
+        return translatorSvc.translate(key, destLanguage, defaultText);
     }
 
     public AssessmentBulkDto assessmentBulkToassessmentBulkDto(AssessmentBulk bulk) {
