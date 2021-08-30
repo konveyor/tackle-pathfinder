@@ -63,7 +63,7 @@ public class AssessmentsResource {
   public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @QueryParam("language") String language) {
     String lang = translatorSvc.getLanguage(accessToken.getRawToken(), language);
     return assessmentSvc.getAssessmentDtoByAssessmentId(assessmentId, lang);
-  }
+  }  
   
   @PATCH
   @Path("{assessmentId}")
