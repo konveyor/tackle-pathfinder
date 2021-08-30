@@ -2,7 +2,6 @@ package io.tackle.pathfinder.controllers;
 
 import io.tackle.pathfinder.dto.translator.TranslateDBDto;
 import io.tackle.pathfinder.services.TranslatorSvc;
-import org.jboss.resteasy.annotations.Body;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -22,8 +21,8 @@ public class TranslatorResource {
         String key = translatorSvc.getKey(translateDBDto.getTable(), translateDBDto.getId(), translateDBDto.getField());
         translatorSvc.addOrUpdateTranslation(key, translateDBDto.getText(), translateDBDto.getLanguage());
         return Response
-            .status(Response.Status.CREATED)
-            .type(MediaType.APPLICATION_JSON)
-            .build();
+                .status(Response.Status.CREATED)
+                .type(MediaType.APPLICATION_JSON)
+                .build();
     }
 }

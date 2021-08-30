@@ -14,11 +14,11 @@ import javax.annotation.processing.Generated;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "id",
-    "table",
-    "field",
-    "text",
-    "language"
+        "id",
+        "table",
+        "field",
+        "text",
+        "language"
 })
 @Generated("jsonschema2pojo")
 @Data
