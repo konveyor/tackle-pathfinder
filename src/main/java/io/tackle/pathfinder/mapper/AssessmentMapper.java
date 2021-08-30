@@ -40,7 +40,7 @@ public abstract class AssessmentMapper {
     @Mapping(target = "description", expression="java(translateQuestion(question, question.description, language, \"description\"))")
     public abstract AssessmentQuestionDto assessmentQuestionToAssessmentQuestionDto(AssessmentQuestion question, @Context String language);
     public abstract List<AssessmentQuestionDto> assessmentQuestionListToassessmentQuestionDtoList(List<AssessmentQuestion> questionList, @Context String language);
-    
+   
     @Mapping(target="title", expression="java(translateCategory(category, category.name, language, \"name\"))")
     public abstract AssessmentCategoryDto assessmentCategoryToAssessmentCategoryDto(AssessmentCategory category, @Context String language);
 
