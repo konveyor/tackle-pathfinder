@@ -8,15 +8,13 @@ import io.tackle.pathfinder.model.bulk.AssessmentBulkApplication;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
-import io.tackle.pathfinder.services.TranslatorSvc;
-import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import javax.inject.Inject;
-import javax.transaction.*;
-import java.math.BigInteger;
+
 import javax.persistence.Tuple;
+import javax.transaction.Transactional;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Mapper(componentModel = "cdi")
-public abstract class AssessmentMapper extends TranslatorMapper{
+public abstract class AssessmentMapper extends TranslatorMapper {
 
     public abstract AssessmentHeaderDto assessmentToAssessmentHeaderDto(Assessment assessment);
 
@@ -32,13 +30,13 @@ public abstract class AssessmentMapper extends TranslatorMapper{
     @Mapping(target = "option", expression="java(translateOption(option, option.option, language, \"option\"))")
     public abstract AssessmentQuestionOptionDto assessmentSingleOptionToAssessmentQuestionOptionDto(AssessmentSingleOption option, @Context String language);
     public abstract List<AssessmentQuestionOptionDto> assessmentSingleOptionListToassessmentQuestionOptionDtoList(List<AssessmentSingleOption> optionList, @Context String language);
-    
+
     @Mapping(target = "options", source="singleOptions")
     @Mapping(target = "question", expression="java(translateQuestion(question, question.questionText, language, \"question\"))")
     @Mapping(target = "description", expression="java(translateQuestion(question, question.description, language, \"description\"))")
     public abstract AssessmentQuestionDto assessmentQuestionToAssessmentQuestionDto(AssessmentQuestion question, @Context String language);
     public abstract List<AssessmentQuestionDto> assessmentQuestionListToassessmentQuestionDtoList(List<AssessmentQuestion> questionList, @Context String language);
-   
+
     @Mapping(target="title", expression="java(translateCategory(category, category.name, language, \"name\"))")
     public abstract AssessmentCategoryDto assessmentCategoryToAssessmentCategoryDto(AssessmentCategory category, @Context String language);
 
