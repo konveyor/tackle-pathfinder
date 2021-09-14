@@ -43,7 +43,7 @@ public abstract class AssessmentMapper extends TranslatorMapper {
     public abstract List<AssessmentCategoryDto> assessmentCategoryListToAssessmentCategoryDtoList(List<AssessmentCategory> categoryList, @Context String language);
 
     @Mapping(target="title", source="name")
-    @Mapping(target = "language", expression="java(org.apache.commons.lang3.StringUtils.defaultString(language, questionnaire.languageCode))")
+    @Mapping(target = "language", expression="java(language)")
     public abstract AssessmentQuestionnaireDto assessmentQuestionnaireToAssessmentQuestionnaireDto(AssessmentQuestionnaire questionnaire, @Context String language);
 
     public List<Long> assessmentStakeholderListToLongList(List<AssessmentStakeholder> stakeholder) {
