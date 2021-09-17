@@ -41,13 +41,13 @@ public class AssessmentsResource {
   @POST
   @Produces("application/json")
   @Consumes("application/json")
-  public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data) {
+  public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data, @QueryParam("questionnaireId") Long questionnaireId) {
     AssessmentHeaderDto createAssessment;
     
     if (fromAssessmentId != null) {
       createAssessment = assessmentSvc.copyAssessment(fromAssessmentId, data.getApplicationId());
     } else {
-      createAssessment = assessmentSvc.createAssessment(data.getApplicationId());
+      createAssessment = assessmentSvc.createAssessment(data.getApplicationId(), questionnaireId);
     }
     
     return Response

@@ -544,7 +544,12 @@ public class AssessmentSvcTest {
 
     @Transactional
     public Questionnaire createQuestionnaire() {
-        Questionnaire questionnaire = Questionnaire.builder().name("Test").languageCode("EN").build();
+        return createQuestionnaire("test");
+    }
+
+    @Transactional
+    public Questionnaire createQuestionnaire(String title) {
+        Questionnaire questionnaire = Questionnaire.builder().name(title).languageCode("EN").build();
         questionnaire.persistAndFlush();
 
         questionnaire.categories = IntStream.range(1, 10).mapToObj(e -> createCategory(questionnaire, e)).collect(Collectors.toList());
@@ -559,7 +564,7 @@ public class AssessmentSvcTest {
             .order(order)
             .questionnaire(questionnaire)
             .build();
-        category.persistAndFlush();
+        category.persist();
 
         category.questions = IntStream.range(1, 20).mapToObj(e -> createQuestion(category, e))
                 .collect(Collectors.toList());
@@ -576,7 +581,7 @@ public class AssessmentSvcTest {
             .description("tooltip-" + i)
             .type(QuestionType.SINGLE)
             .build();
-        question.persistAndFlush();
+        question.persist();
 
         question.singleOptions = IntStream.range(1, new Random().nextInt(10) + 3)
                 .mapToObj(e -> createSingleOption(question, e)).collect(Collectors.toList());
@@ -592,7 +597,7 @@ public class AssessmentSvcTest {
             .question(question)
             .risk(Risk.values()[new Random().nextInt(Risk.values().length)])
             .build();
-        single.persistAndFlush();
+        single.persist();
         return single;
     }
 
@@ -735,5 +740,19 @@ public class AssessmentSvcTest {
     private AssessmentSingleOption getAssessmentOption(Assessment assessment1, Integer questionOrder , Risk risk, int catOrder) {
         return getAssessmentQuestion(assessment1, questionOrder, catOrder)
                 .singleOptions.stream().filter(e -> e.risk == risk).findFirst().get();
+    }
+
+    @Test
+    @Transactional
+    public void given_SeveralQuestionnaires_when_CreateNewAssessment_then_SuccessAndQuestionnaireSelectedOrDefault() {
+        Questionnaire questionnaire = createQuestionnaire("Second Test");
+
+        AssessmentHeaderDto assessment = assessmentSvc.createAssessment(795566L, questionnaire.id);
+        AssessmentDto assessmentDto = assessmentSvc.getAssessmentDtoByAssessmentId(assessment.getId(), "EN");
+        assertThat(assessmentDto.getQuestionnaire().getTitle()).isEqualTo("Second Test");
+
+        AssessmentHeaderDto assessment2 = assessmentSvc.createAssessment(895566L);
+        AssessmentDto assessmentDto2 = assessmentSvc.getAssessmentDtoByAssessmentId(assessment2.getId(), "EN");
+        assertThat(assessmentDto2.getQuestionnaire().getTitle()).isEqualTo("Pathfinder");
     }
 }
