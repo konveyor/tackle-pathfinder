@@ -72,7 +72,7 @@ where question.deleted is not true and
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'Question_' || question.id || '_question', '¿La aplicación tiene requerimientos legales y/o de licenciamiento?', 'ES'
+'Question_' || question.id || '_question', '¿La aplicación tiene requisitos legales y/o de licenciamiento?', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
        question.question_text='Does the application have legal and/or licensing requirements?' and
@@ -1131,7 +1131,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_42_option', 'Múltiples requerimientos legales y de licenciamiento', 'ES'
+'SingleOption_42_option', 'Múltiples requisitos legales y de licenciamiento', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
