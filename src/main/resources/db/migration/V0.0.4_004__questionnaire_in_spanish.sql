@@ -296,7 +296,7 @@ where question.deleted is not true and
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'Question_' || question.id || '_description', 'Requerimientos legales y de licenciamiento han de ser valorados para determinar su posible impacto (coste, reporte de fallos) en la plataforma de conetenedores que hospeda la aplicación. Ejemplos de requerimientos legales: clusters aislados, certificaciones, cumplimiento con el ''Payment Card Industry Data Security Standard'' o el ''Health Insurance Portability and Accountability Act''. Ejemplos de requerimientos de licenciamiento: por servidor, por CPU.', 'ES'
+'Question_' || question.id || '_description', 'Requerimientos legales y de licenciamiento han de ser valorados para determinar su posible impacto (coste, reporte de fallos) en la plataforma de contenedores que hospeda la aplicación. Ejemplos de requerimientos legales: clusters aislados, certificaciones, cumplimiento con el ''Payment Card Industry Data Security Standard'' o el ''Health Insurance Portability and Accountability Act''. Ejemplos de requerimientos de licenciamiento: por servidor, por CPU.', 'ES'
 FROM question join category c on question.category_id = c.id
 where question.deleted is not true and
        question.description='Legal and licensing requirements must be assessed to determine their possible impact (cost, fault reporting) on the container platform hosting the application. Examples of legal requirements: isolated clusters, certifications, compliance with the Payment Card Industry Data Security Standard or the Health Insurance Portability and Accountability Act. Examples of licensing requirements: per server, per CPU.' and
@@ -671,7 +671,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-       'SingleOption_6_option', 'Modo mantenimiento, sin conocimiento SME o documentación adecuada disponible', 'ES'
+       'SingleOption_6_option', 'Modo mantenimiento, sin conocimiento SME (Subject Matter Expert) o documentación adecuada disponible', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -911,7 +911,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_7_option', 'Modo mantenimiento, conocimiento SME disponible', 'ES'
+'SingleOption_7_option', 'Modo mantenimiento, conocimiento SME (Subject Matter Expert) disponible', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -921,7 +921,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_8_option', 'Activamente desarrollada, conocimiento SME disponible', 'ES'
+'SingleOption_8_option', 'Activamente desarrollada, conocimiento SME (Subject Matter Expert) disponible', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1141,7 +1141,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_43_option', 'Requerimientos de licenciamiento (ejemplos: por servidor, por CPU)', 'ES'
+'SingleOption_43_option', 'Requisitos de licenciamiento (ejemplos: por servidor, por CPU)', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1151,7 +1151,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_44_option', 'Requerimientos legales (ejemplos: aislamiento de cluster, hardware, cumplimiento PCI o HIPAA) ', 'ES'
+'SingleOption_44_option', 'Requisitos legales (ejemplos: aislamiento de cluster, hardware, cumplimiento PCI o HIPAA) ', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1201,7 +1201,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_51_option', 'Monolito flexible (ejemplos: reintentos, corta circuitos)', 'ES'
+'SingleOption_51_option', 'Monolito flexible (ejemplos: reintentos, Circuit Breaker)', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1471,7 +1471,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-'SingleOption_95_option', 'La aplicación emplea patrones flexibles de arquitectura (ejemplos: corta circuitos, mecanismos de reintento)', 'ES'
+'SingleOption_95_option', 'La aplicación emplea patrones flexibles de arquitectura (ejemplos: Circuit Breaker, mecanismos de reintento)', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -1980,7 +1980,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-       'SingleOption_179_option', 'Módulos de seguridad de hardware o dispositivos de encriptación', 'ES'
+       'SingleOption_179_option', 'Módulos de seguridad de hardware o dispositivos de cifrado', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
@@ -2170,7 +2170,7 @@ where single_option.deleted is not true
 
 INSERT INTO translated_text (id, deleted, key, text, language)
 select nextval('hibernate_sequence'), false,
-       'SingleOption_208_option', 'La contenedorización de la aplicación no se ha intentado aún', 'ES'
+       'SingleOption_208_option', 'La containerización de la aplicación no se ha intentado aún', 'ES'
 FROM single_option  join question on (question.id = single_option.question_id)
                     join category c on question.category_id = c.id
 where single_option.deleted is not true
