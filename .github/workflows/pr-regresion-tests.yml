@@ -33,11 +33,12 @@ jobs:
       - name: Build container image
         run: |
           mvn -U -B package --file tackle-pathfinder/pom.xml \
-          -Pcontainer-image -Pnative -DskipTests \
+          -Pnative -DskipTests \
           -Dquarkus.container-image.push=false \
           -Dquarkus.container-image.group=tackle \
           -Dquarkus.container-image.name=tackle-pathfinder \
           -Dquarkus.container-image.tag=current-pr \
+          -Dquarkus.container-image.build=true \
           -Dquarkus.native.container-build=true
       - name: Save container image
         run: docker save -o tackle-pathfinder.tar tackle/tackle-pathfinder:current-pr
@@ -94,8 +95,8 @@ jobs:
         run: kubectl wait deployment/keycloak --for condition=available --timeout=-1s -n tackle
       - name: Verify tackle-controls
         run: kubectl wait deployment/tackle-controls --for condition=available --timeout=-1s -n tackle
-      - name: Verify tackle-pathfinder
-        run: kubectl wait deployment/tackle-pathfinder --for condition=available --timeout=-1s -n tackle
+      - name: Verify tackle-application-inventory
+        run: kubectl wait deployment/tackle-application-inventory --for condition=available --timeout=-1s -n tackle
       - name: Verify tackle-pathfinder
         run: kubectl wait deployment/tackle-pathfinder --for condition=available --timeout=-1s -n tackle
       - name: Verify tackle-ui
