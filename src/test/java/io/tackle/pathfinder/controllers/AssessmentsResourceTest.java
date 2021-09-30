@@ -1,8 +1,10 @@
 package io.tackle.pathfinder.controllers;
 
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import io.tackle.commons.testcontainers.KeycloakTestResource;
@@ -21,15 +23,18 @@ import lombok.extern.java.Log;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.apache.commons.lang3.StringUtils;
+import org.awaitility.Awaitility;
+
 
 import javax.inject.Inject;
 import javax.transaction.*;
 
 import java.time.Duration;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -67,14 +72,14 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 	public void init() {
 		log.info("Assessments count : " + Assessment.count());
 		log.info("Questionnaire count : " + Questionnaire.count());
-		Assessment.streamAll().forEach(e -> e.delete());
+		Assessment.streamAll().forEach(PanacheEntityBase::delete);
 		log.info("After delete Assessments count : " + Assessment.count());
 		log.info("After delete Questionnaire count : " + Questionnaire.count());
 	}
 
     @Test
 	public void given_ApplicationWithAssessment_When_Get_Then_ReturnsHeaderDto() {
-		assessmentSvc.createAssessment(20L);
+		assessmentSvc.newAssessment(null, 20L);
 
 		AssessmentHeaderDto[] assessments = given()
 			.queryParam("applicationId", "20")
@@ -134,7 +139,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 	@Test
 	public void given_ApplicationWithAssessment_When_CreateAssessment_Then_Returns400() {
-		assessmentSvc.createAssessment(20L);
+		assessmentSvc.newAssessment(null, 20L);
 
 		given()
 		    .contentType(ContentType.JSON)
@@ -180,8 +185,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.when()
 				.post("/assessments")
 			.then()
-				.log().all()
-				.statusCode(201);
+				.log().all();
 			log.info("End Async 1 request Assessment : " + LocalTime.now());
 
 			return response;
@@ -200,15 +204,23 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.when()
 				.post("/assessments")
 			.then()
-				.log().all()
-				.statusCode(400);
+				.log().all();
 
 			log.info("End Async 2 request Assessment : " + LocalTime.now());
 			return response;
 		});
 
-		assertThat(future1).succeedsWithin(Duration.ofSeconds(10));
-		assertThat(future2).succeedsWithin(Duration.ofSeconds(10));
+		Awaitility.await()
+			.atMost(Duration.ofSeconds(10))
+			.untilAsserted(() -> {
+				assertThat(future1.isDone()).isTrue();
+				assertThat(future2.isDone()).isTrue();
+				assertThat((future1.get().extract().statusCode() == 201 &&
+							future2.get().extract().statusCode() == 400) ||
+						(future1.get().extract().statusCode() == 400 &&
+							future2.get().extract().statusCode() == 201)).isTrue();
+			});
+
 	}
 
 	@Test
@@ -739,6 +751,177 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 	}
 
 	@Test
+	public void given_ApplicationAssessed_When_BulkCreateListOfApplications_Then_CreationIsDoneAndResultIsListOfApplications() {
+		AssessmentBulkDto headerBulk = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(AssessmentBulkPostDto.builder()
+					.applications(List.of(ApplicationDto.builder().applicationId(999L).build(),
+							ApplicationDto.builder().applicationId(888L).build(),
+							ApplicationDto.builder().applicationId(777L).build()))
+					.build())
+		.when()
+			.post("/assessments/bulk")
+		.then()
+			.log().all()
+			.statusCode(202)
+			.extract().as(AssessmentBulkDto.class);
+
+		Awaitility.await()
+		.atMost(50, TimeUnit.SECONDS)
+		.pollInterval(Duration.ofSeconds(5))
+		.untilAsserted(() -> {
+			log.info("Calling");
+			AssessmentBulkDto bulkDtos = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+			.when()
+				.get("/assessments/bulk/" + headerBulk.getBulkId())
+			.then()
+				.log().all()
+				.statusCode(200).extract().as(AssessmentBulkDto.class);
+
+			assertThat(bulkDtos.getAssessments()).hasSize(3);
+			assertThat(bulkDtos.getAssessments()).allMatch(e -> StringUtils.isBlank(e.getError()));
+			assertThat(bulkDtos.getAssessments()).allMatch(e -> null != e.getId());
+			assertThat(bulkDtos.getCompleted()).isTrue();
+		});
+	}
+
+	@Test
+	public void given_ApplicationAssessed_When_BulkCopyListOfApplications_Then_CopyIsDoneAndResultIsListOfApplications() throws InterruptedException {
+		// Creation of the Assessment
+		AssessmentHeaderDto assessmentHeaderDto = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(new ApplicationDto(99999L))
+				.when()
+				.post("/assessments")
+				.then()
+				.statusCode(201)
+				.extract().as(AssessmentHeaderDto.class);
+
+		// Retrieval of the assessment created
+		AssessmentDto assessmentSource = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.when()
+			.get("/assessments/" + assessmentHeaderDto.getId())
+			.then()
+			.log().all()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+
+		AssessmentCategoryDto category = assessmentSource.getQuestionnaire().getCategories().get(0);
+		AssessmentQuestionDto question = category.getQuestions().get(0);
+		AssessmentQuestionOptionDto option = question.getOptions().get(0);
+
+		// Modification of 1 category comment, 1 option selected, 2 stakeholders , 2 stakeholdergroups
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.body(AssessmentDto.builder()
+				.applicationId(99999L)
+				.id(assessmentHeaderDto.getId())
+				.questionnaire(
+					AssessmentQuestionnaireDto.builder()
+						.categories(List.of(
+							AssessmentCategoryDto.builder()
+								.id(category.getId())
+								.comment("USER COMMENT 1")
+								.questions(List.of(
+									AssessmentQuestionDto.builder()
+										.id(question.getId())
+										.options(List.of(
+											AssessmentQuestionOptionDto.builder()
+												.id(option.getId())
+												.checked(true)
+												.build()
+										))
+										.build()
+								))
+								.build()))
+						.build())
+				.stakeholderGroups(List.of(1000L, 2000L))
+				.stakeholders(List.of(444L, 555L))
+				.build())
+			.when()
+			.patch("/assessments/" + assessmentHeaderDto.getId())
+			.then()
+			.log().all()
+			.statusCode(200)
+			.body("id", equalTo(assessmentHeaderDto.getId().intValue()),
+				"applicationId", equalTo(99999),
+				"status", equalTo("STARTED"));
+
+		AssessmentBulkDto headerBulk = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(AssessmentBulkPostDto.builder()
+						.fromAssessmentId(assessmentHeaderDto.getId())
+						.applications(List.of(ApplicationDto.builder().applicationId(1999L).build(),
+								ApplicationDto.builder().applicationId(1888L).build(),
+								ApplicationDto.builder().applicationId(1666L).build(),
+								ApplicationDto.builder().applicationId(1777L).build()
+								))
+						.build())
+		.when()
+			.post("/assessments/bulk")
+		.then()
+			.log().all()
+			.statusCode(202)
+			.extract().as(AssessmentBulkDto.class);
+
+		Awaitility.await()
+		.atMost(50, TimeUnit.SECONDS)
+		.untilAsserted(() -> {
+			AssessmentBulkDto bulkDto = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+			.when()
+				.get("/assessments/bulk/" + headerBulk.getBulkId())
+			.then()
+				.log().all()
+				.statusCode(200).extract().as(AssessmentBulkDto.class);
+
+			assertThat(bulkDto.getAssessments()).hasSize(4);
+			assertThat(bulkDto.getAssessments()).allMatch(e -> StringUtils.isBlank(e.getError()));
+			assertThat(bulkDto.getAssessments()).allMatch(e -> null != e.getId());
+			assertThat(bulkDto.getCompleted()).isTrue();
+		});
+
+		AssessmentHeaderDto[] assessments = given()
+			.queryParam("applicationId", "1888")
+			.when()
+			.get("/assessments")
+			.then()
+			.statusCode(200)
+			.extract().as(AssessmentHeaderDto[].class);
+
+		given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+			.when()
+			.get("/assessments/" + assessments[0].getId())
+			.then()
+			.log().all()
+			.statusCode(200)
+			.body("applicationId", is(1888))
+			.body("status", is("STARTED"))
+			.body("stakeholders.size()", is(2))
+			.body("stakeholderGroups.size()", is(2))
+			.body("questionnaire.categories.size()", is(5))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.comment", is("USER COMMENT 1"))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.title", is(category.getTitle()))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.size()", is(category.getQuestions().size()))
+
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.find{it.order==" + question.getOrder() + "}.description", is(question.getDescription()))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.find{it.order==" + question.getOrder() + "}.options.size()", is(question.getOptions().size() ))
+			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.find{it.order==" + question.getOrder() + "}.options.find{it.order==" + option.getOrder() + "}.checked", is(true));
+
+	}
+
+	@Test
 	public void given_ApplicationsAssessed_When_LandscapeRequested_Then_ExpectedJSONIsReturned() {
 		// create 2 assessments
 		// Creation of the Assessment
@@ -820,7 +1003,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.extract().as(LandscapeDto[].class);
 
 		// assert
-		assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(header1.getId(), Risk.GREEN), new LandscapeDto(header2.getId(), Risk.RED));
+		assertThat(landscape).containsExactlyInAnyOrder(new LandscapeDto(header1.getId(), Risk.GREEN, header1.getApplicationId()), new LandscapeDto(header2.getId(), Risk.RED, header2.getApplicationId()));
 	}
 
 	@Test
@@ -970,5 +1153,49 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.body("find{it.assessmentId=="+ assessmentAMBER.id + "}.confidence", is(24))
 			.body("find{it.assessmentId=="+ assessmentUNKNOWN.id + "}.confidence", is(70));
 
+	}
+
+	@Test
+	public void given_AssessmentAndTranslations_when_TranslationDeleted_then_ThatConceptHasTheNotTranslatedVallue() {
+		String KEYCLOAK_SERVER_URL = System.getProperty("quarkus.oidc.auth-server-url", "http://localhost:8180/auth");
+		String ACCESS_TOKEN_JDOE = RestAssured.given().relaxedHTTPSValidation()
+			.auth().preemptive()
+				.basic("backend-service", "secret")
+				.contentType("application/x-www-form-urlencoded")
+				.formParam("grant_type", "password")
+				.formParam("username", "jdoe")
+				.formParam("password", "jdoe")
+			.when()
+				.post(KEYCLOAK_SERVER_URL + "/protocol/openid-connect/token", new Object[0])
+			.then()
+				.extract()
+				.path("access_token", new String[0]).toString();
+
+		// Creation of the Assessment
+		AssessmentHeaderDto header = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON).auth().oauth2(ACCESS_TOKEN_JDOE)
+			.body(new ApplicationDto(35500L))
+			.when()
+			.post("/assessments")
+			.then()
+			.log().all()
+			.statusCode(201)
+			.extract().as(AssessmentHeaderDto.class);
+
+		// Retrieval of the assessment created
+		AssessmentDto assessment = given()
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON).auth().oauth2(ACCESS_TOKEN_JDOE)
+			.when()
+			.get("/assessments/" + header.getId())
+			.then()
+			.statusCode(200)
+			.extract().as(AssessmentDto.class);
+
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getTitle().startsWith("CA:"))).isTrue();
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getQuestion().startsWith("CA:")))).isTrue();
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getDescription().startsWith("CA:")))).isTrue();
+		assertThat(assessment.getQuestionnaire().getCategories().stream().allMatch(a -> a.getQuestions().stream().allMatch (b -> b.getOptions().stream().allMatch(c -> c.getOption().startsWith("CA:"))))).isTrue();
 	}
 }

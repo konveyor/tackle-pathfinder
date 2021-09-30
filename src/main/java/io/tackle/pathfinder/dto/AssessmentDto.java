@@ -5,13 +5,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import io.tackle.pathfinder.services.TranslatorSvc;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -31,21 +33,11 @@ import java.util.List;
     "questionnaire"
 })
 @Data
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @RegisterForReflection
-
-public class AssessmentDto {
-
-    /**
-     * Assessment id
-     * (Required)
-     * 
-     */
-    @JsonProperty("id")
-    @JsonPropertyDescription("Assessment id")
-    private Long id;
+public class AssessmentDto extends BasicDto {
     /**
      * Application id
      * 
@@ -66,14 +58,14 @@ public class AssessmentDto {
      */
     @JsonProperty("stakeholders")
     @JsonPropertyDescription("List of ids of stakeholders")
-    private List<Long> stakeholders ;
+    private List<Long> stakeholders; 
     /**
      * List of ids of stakeholder groups
      * 
      */
     @JsonProperty("stakeholderGroups")
     @JsonPropertyDescription("List of ids of stakeholder groups")
-    private List<Long> stakeholderGroups;
+    private List<Long> stakeholderGroups; 
     /**
      * 
      * (Required)

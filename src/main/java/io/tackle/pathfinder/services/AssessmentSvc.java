@@ -2,6 +2,12 @@ package io.tackle.pathfinder.services;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import io.tackle.pathfinder.dto.*;
+import io.quarkus.security.identity.SecurityIdentity;
+import io.quarkus.vertx.ConsumeEvent;
+import io.smallrye.common.annotation.Blocking;
+import io.tackle.pathfinder.dto.AssessmentBulkDto;
+import io.tackle.pathfinder.dto.AssessmentDto;
+import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
@@ -16,28 +22,36 @@ import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
 import lombok.Value;
+import io.tackle.pathfinder.model.bulk.AssessmentBulk;
+import io.vertx.core.eventbus.EventBus;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.apache.commons.lang3.StringUtils;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.persistence.Tuple;
 import javax.transaction.Transactional;
+import javax.transaction.UserTransaction;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.function.Function;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -45,7 +59,7 @@ import static java.util.stream.Collectors.toList;
 @Log
 public class AssessmentSvc {
     @Inject
-    AssessmentMapper mapper;
+    AssessmentMapper assessmentMapper;
 
     @Inject
     EntityManager entityManager;
@@ -73,13 +87,25 @@ public class AssessmentSvc {
     @ConfigProperty(name = "confidence.risk.UNKNOWN.adjuster")
     Double unknownAdjuster;
 
-    public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
-        List<Assessment> assessmentQuery = Assessment.list("application_id", applicationId);
-        return assessmentQuery.stream().findFirst().map(e -> mapper.assessmentToAssessmentHeaderDto(e));
-    }
+    @Inject
+    EventBus eventBus;
+
+    @Inject
+    SecurityIdentity identityContext;
+
+    @Inject
+    UserTransaction transaction;
+
+    @Inject
+    BulkCreateSvc bulkSvc;
 
     @Transactional
     public AssessmentHeaderDto createAssessment(@NotNull Long applicationId) {
+        return createAssessment(applicationId, null);
+    }
+
+    @Transactional
+    public AssessmentHeaderDto createAssessment(@NotNull Long applicationId, Long questionnaireId) {
         long count = Assessment.count("application_id", applicationId);
         log.log(Level.FINE, "Assessments for application_id [ " + applicationId + "] : " + count);
         if (count == 0) {
@@ -88,12 +114,19 @@ public class AssessmentSvc {
             assessment.status = AssessmentStatus.STARTED;
             assessment.persistAndFlush();
 
-            copyQuestionnaireIntoAssessment(assessment, defaultQuestionnaire());
+            Questionnaire questionnaire = questionnaireId != null ? Questionnaire.findById(questionnaireId) : defaultQuestionnaire();
+            copyQuestionnaireIntoAssessment(assessment,  questionnaire);
 
-            return mapper.assessmentToAssessmentHeaderDto(assessment);
+            return assessmentMapper.assessmentToAssessmentHeaderDto(assessment);
         } else {
             throw new BadRequestException();
         }
+    }
+
+    public Optional<AssessmentHeaderDto> getAssessmentHeaderDtoByApplicationId(@NotNull Long applicationId) {
+        return Assessment.find("application_id", applicationId)
+                        .firstResultOptional()
+                        .map(e -> assessmentMapper.assessmentToAssessmentHeaderDto((Assessment) e));
     }
 
     @Transactional
@@ -114,6 +147,7 @@ public class AssessmentSvc {
                 .name(category.name)
                 .order(category.order)
                 .questionnaire(assessment.assessmentQuestionnaire)
+                .questionnaire_categoryId(category.id)
                 .build();
             assessmentCategory.persist();
 
@@ -125,6 +159,7 @@ public class AssessmentSvc {
                     .questionText(question.questionText)
                     .type(question.type)
                     .description(question.description)
+                    .questionnaire_questionId(question.id)
                     .build();
 
                 assessmentQuestion.persist();
@@ -136,6 +171,7 @@ public class AssessmentSvc {
                         .question(assessmentQuestion)
                         .risk(so.risk)
                         .selected(false)
+                        .questionnaire_optionId(so.id)
                         .build();
 
                     singleOption.persist();
@@ -155,11 +191,11 @@ public class AssessmentSvc {
         return Questionnaire.<Questionnaire>streamAll().findFirst().orElseThrow(NotFoundException::new);
     }
 
-    public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId) {
-        log.log(Level.FINE, "Requesting Assessment " + assessmentId);
+    public AssessmentDto getAssessmentDtoByAssessmentId(@NotNull Long assessmentId, String language) {
+        log.log(Level.FINE, "Requesting Assessment " + assessmentId + " in language " + language);
         Assessment assessment = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
 
-        return mapper.assessmentToAssessmentDto(assessment);
+        return assessmentMapper.assessmentToAssessmentDto(assessment, StringUtils.defaultString(language));
     }
 
     @Transactional
@@ -221,6 +257,7 @@ public class AssessmentSvc {
                 AssessmentCategory category = AssessmentCategory.find("assessment_questionnaire_id=?1 and id=?2", assessment_questionnaire.id, categ.getId()).<AssessmentCategory>firstResultOptional().orElseThrow(BadRequestException::new);
                 if (categ.getComment() != null) {
                     category.comment = categ.getComment();
+                    category.updateUser = identityContext.getPrincipal().getName();
                     log.log(Level.FINE, "Setting category comment : " + category.comment);
                 }
 
@@ -233,6 +270,7 @@ public class AssessmentSvc {
                                 AssessmentSingleOption option = AssessmentSingleOption.find("assessment_question_id=?1 and id=?2", question.id, opt.getId()).<AssessmentSingleOption>firstResultOptional().orElseThrow(BadRequestException::new);
                                 if (opt.getChecked() != null) {
                                     option.selected = opt.getChecked();
+                                    option.updateUser = identityContext.getPrincipal().getName();
                                     log.log(Level.FINE, "Setting option checked : " + option.selected);
                                 }
                             });
@@ -241,7 +279,19 @@ public class AssessmentSvc {
                 }
             });
         }
-        return mapper.assessmentToAssessmentHeaderDto(assessment);
+        assessment.updateUser = identityContext.getPrincipal().getName();
+        return assessmentMapper.assessmentToAssessmentHeaderDto(assessment);
+    }
+
+    @Transactional
+    public AssessmentHeaderDto newAssessment(Long fromAssessmentId, @NotNull @Valid Long applicationId) {
+        Assessment assessment = AssessmentCreateCommand.builder()
+            .applicationId(applicationId)
+            .fromAssessmentId(fromAssessmentId)
+            .username(identityContext.getPrincipal().getName())
+        .build()
+        .execute();
+        return assessmentMapper.assessmentToAssessmentHeaderDto(assessment);
     }
 
     @Transactional
@@ -250,6 +300,29 @@ public class AssessmentSvc {
         boolean deleted = Assessment.deleteById(assessment.id);
         log.log(Level.FINE, "Deleted assessment : " + assessmentId + " = " + deleted);
         if (!deleted) throw new BadRequestException();
+    }
+
+    public AssessmentBulkDto bulkCreateAssessments(Long fromAssessmentId, @NotNull @Valid List<Long> appList) throws NotSupportedException, SystemException, SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException {
+        // We manage manually the transaction to be sure the consumer starts after this transaction has been commited
+        transaction.begin();
+        AssessmentBulk bulkNew = bulkSvc.newAssessmentBulk(fromAssessmentId, appList, identityContext.getPrincipal().getName());
+        transaction.commit();
+
+        eventBus.send("process-bulk-assessment-creation", bulkNew.id);
+
+        log.info("Finishing request");
+        return assessmentMapper.assessmentBulkToassessmentBulkDto(bulkNew);
+    }
+
+    @Transactional
+    @ConsumeEvent("process-bulk-assessment-creation")
+    @Blocking
+    public void processApplicationAssessmentCreationAsync(Long bulkId) {
+        log.log(Level.FINE, "Starting async process");
+
+        AssessmentBulk bulk = (AssessmentBulk) AssessmentBulk.findByIdOptional(bulkId).orElseThrow(NotFoundException::new);
+        log.log(Level.FINE, "Bulk : " + bulk.id);
+        bulkSvc.processBulkApplications(bulk);
     }
 
     @Transactional
@@ -282,7 +355,7 @@ public class AssessmentSvc {
                     return stakeholder;
                 }).collect(toList());
                 assessmentTarget.persist();
-                return mapper.assessmentToAssessmentHeaderDto(assessmentTarget);
+                return assessmentMapper.assessmentToAssessmentHeaderDto(assessmentTarget);
             }
         }
 
@@ -304,6 +377,7 @@ public class AssessmentSvc {
                 .name(cat.name)
                 .order(cat.order)
                 .questionnaire(questionnaire)
+                .questionnaire_categoryId(cat.questionnaire_categoryId)
                 .build();
             assessmentCategory.persist();
             assessmentCategory.questions = cat.questions.stream().map(que -> {
@@ -314,6 +388,7 @@ public class AssessmentSvc {
                     .order(que.order)
                     .questionText(que.questionText)
                     .type(que.type)
+                    .questionnaire_questionId(que.questionnaire_questionId)
                     .build();
                 assessmentQuestion.persist();
                 assessmentQuestion.singleOptions = que.singleOptions.stream().map(opt -> {
@@ -323,6 +398,7 @@ public class AssessmentSvc {
                         .question(assessmentQuestion)
                         .risk(opt.risk)
                         .selected(opt.selected)
+                        .questionnaire_optionId(opt.questionnaire_optionId)
                         .build();
                     singleOption.persist();
                     return singleOption;
@@ -334,14 +410,20 @@ public class AssessmentSvc {
 
         return questionnaire;
     }
+    public AssessmentBulkDto bulkGet(@NotNull Long bulkId) {
+        AssessmentBulk bulk = (AssessmentBulk) AssessmentBulk.findByIdOptional(bulkId).orElseThrow(NotFoundException::new);
+
+        return assessmentMapper.assessmentBulkToassessmentBulkDto(bulk);
+	}
 
     @Transactional
     public List<LandscapeDto> landscape(List<Long> applicationIds) {
-            String sql = "SELECT cast(ID as int), RISK, cast(trunc(max(PCT)) as int) AS PERCENTAGE " +
+            String sql = "SELECT ID, RISK, cast(trunc(max(PCT)) as int) AS PERCENTAGE , application_id " +
                 " FROM ( " +
                 "    SELECT assess.id, " +
                 "            so.risk, " +
-                "            trunc(((0.0 + Count(*) OVER w_risk_count) / (Count(*) OVER (PARTITION BY assess.id)) * 100)) AS pct " +
+                "            trunc(((0.0 + Count(*) OVER w_risk_count) / (Count(*) OVER (PARTITION BY assess.id)) * 100)) AS pct, " +
+                "            assess.application_id " +
                 "            FROM assessment_singleoption so " +
                 "                    join assessment_question qu on (qu.id = so.assessment_question_id and qu.deleted is not true) " +
                 "                    join assessment_category ca on (ca.id = qu.assessment_category_id and ca.deleted is not true) " +
@@ -352,39 +434,46 @@ public class AssessmentSvc {
                 "                   AND assess.status = 'COMPLETE' " +
                 "            window w_risk_count as (partition by assess.id, so.risk) " +
                 "    ) AS risks " +
-                " GROUP BY ID, risk;";
-            Query query = entityManager.createNativeQuery(sql);
+                " GROUP BY ID, risk, application_id;";
+            List<Tuple> query = entityManager.createNativeQuery(sql, Tuple.class).getResultList();
 
-            List<AssessmentRiskDto> resultMappedToAssessmentsRisk = (List<AssessmentRiskDto>) query.getResultList().stream()
+            List<AssessmentRiskDto> resultMappedToAssessmentsRisk = query.stream()
                 .map(this::sqlRowToAssessmentRisk)
                 .collect(Collectors.toList());
 
             List<LandscapeDto> collect = resultMappedToAssessmentsRisk.stream()
                 .collect(Collectors.groupingBy(e -> e.id, Collectors.mapping(Function.identity(), Collectors.maxBy(this::compareAssessmentRisk))))
                 .values().stream()
-                .map(a -> new LandscapeDto(a.get().getId().longValue(), "UNKNOWN".equalsIgnoreCase(a.get().getRisk()) ? Risk.GREEN : Risk.valueOf(a.get().getRisk())))
+                .map(a -> new LandscapeDto(a.get().getId().longValue(), "UNKNOWN".equalsIgnoreCase(a.get().getRisk()) ? Risk.GREEN : Risk.valueOf(a.get().getRisk()), a.get().applicationId.longValue()))
                 .collect(toList());
             return collect;
     }
     @Transactional
-    public List<RiskLineDto> identifiedRisks(List<Long> applicationList) {
-        String sqlString = "select cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option, cast(array_agg(a.application_id) as text) \n" +
-                "from assessment_category cat join assessment_question q on cat.id = q.assessment_category_id\n" +
-                "                             join assessment_singleoption opt on q.id = opt.assessment_question_id and opt.selected is true\n" +
-                "                             join assessment_questionnaire aq on cat.assessment_questionnaire_id = aq.id\n" +
-                "                             join assessment a on aq.assessment_id = a.id\n" +
-                "where cat.deleted is not true\n" +
+    public List<RiskLineDto> identifiedRisks(List<Long> applicationList, String language) {
+        //String sqlString = "select cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option, cast(array_agg(a.application_id) as text) \n" +
+        String sqlString = " select c.id as cid, q.id as qid, so.id as soid, " +
+                           " cat.category_order, que.question_order, opt.singleoption_order, \n" +
+                           " cast(array_agg(a.application_id) as text) as applicationIds \n" +
+                " from assessment_category cat join assessment_question que on cat.id = que.assessment_category_id \n" +
+                "                             join assessment_singleoption opt on que.id = opt.assessment_question_id and opt.selected is true \n" +
+                "                             join assessment_questionnaire aq on cat.assessment_questionnaire_id = aq.id \n" +
+                "                             join assessment a on aq.assessment_id = a.id\n " +
+                "                             join category c on (c.id = cat.questionnaire_categoryid)\n " +
+                "                             join question q on (q.id = que.questionnaire_questionid) \n " +
+                "                             join single_option so on (so.id = opt.questionnaire_optionid) \n" +
+                " where cat.deleted is not true\n" +
                 "      AND q.deleted is not true\n" +
                 "      AND opt.deleted is not true\n" +
                 "      AND aq.deleted is not true\n" +
                 "      AND a.deleted is not true\n" +
                 "      AND a.application_id in (" + StringUtils.join(applicationList, ",") + ") " +
                 "      AND opt.risk = 'RED' " +
-                "group by cat.category_order, cat.name, q.question_order, q.question_text, opt.singleoption_order, opt.option " +
-                "order by cat.category_order, q.question_order, opt.singleoption_order;";
+                " group by cid, qid, soid, cat.category_order, que.question_order, opt.singleoption_order \n" +
+                " order by cat.category_order, que.question_order, opt.singleoption_order;";
 
-        Query query = entityManager.createNativeQuery(sqlString);
-        return mapper.riskListQueryToRiskLineDtoList(query.getResultList());
+
+        List<Tuple> query = entityManager.createNativeQuery(sqlString, Tuple.class).getResultList();
+        return assessmentMapper.riskListQueryToRiskLineDtoList(query, language);
     }
     @Transactional
     public List<AdoptionCandidateDto> getAdoptionCandidate(List<Long> applicationId) {
@@ -452,8 +541,8 @@ public class AssessmentSvc {
         adjuster.set(adjuster.get() * Math.pow(adjusterBase.get(b.getKey()), b.getValue()));
     }
 
-    private AssessmentRiskDto sqlRowToAssessmentRisk(Object row) {
-        return new AssessmentRiskDto((Integer) ((Object[]) row)[0], (String) ((Object[]) row)[1], (Integer) ((Object[]) row)[2]);
+    private AssessmentRiskDto sqlRowToAssessmentRisk(Tuple row) {
+        return new AssessmentRiskDto(row.get("id", BigInteger.class).longValue(), row.get("risk", String.class), row.get("percentage", Integer.class), row.get("application_id", BigInteger.class).longValue());
     }
 
     private int compareAssessmentRisk(AssessmentRiskDto o1, AssessmentRiskDto o2) {
@@ -468,11 +557,11 @@ public class AssessmentSvc {
         else return 0; // this should not happen
     }
 
-
     @Value
     public class AssessmentRiskDto {
-        Integer id;
+        Long id;
         String risk;
         Integer percentage;
+        Long applicationId;
     }
 }
