@@ -124,20 +124,8 @@ jobs:
           echo "CYPRESS_tackleUrl=https://$external_ip" >>$GITHUB_ENV'
 
       - name: Cypress run
-        uses: cypress-io/github-action@v2
-        with:
-          working-directory: tackle-ui-tests
-          record: false
-          start: npx echo "Starting Minikube Cypress tests"
-          config: pageLoadTimeout=100000,retries=2,video=false
-          browser: chrome
-          spec: |
-            **/*.test.ts
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_user: tackle
-          CYPRESS_pass: password
-          CYPRESS_grepTags: ${{ matrix.tier }}
+        run: |
+          cd tackle-ui-tests && npx cypress run --spec **/*.test.ts --env grepTags=${{ matrix.tier }},user=tackle,pass=password,tackleUrl=${{ env.CYPRESS_tackleUrl }}
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
