@@ -43,13 +43,13 @@ public class AssessmentsResource {
   @Consumes("application/json")
   public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data, @QueryParam("questionnaireId") Long questionnaireId) {
     AssessmentHeaderDto createAssessment;
-    
+
     if (fromAssessmentId != null) {
       createAssessment = assessmentSvc.copyAssessment(fromAssessmentId, data.getApplicationId());
     } else {
       createAssessment = assessmentSvc.createAssessment(data.getApplicationId(), questionnaireId);
     }
-    
+
     return Response
       .status(Status.CREATED)
       .entity(createAssessment)
@@ -63,8 +63,8 @@ public class AssessmentsResource {
   public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @QueryParam("language") String language) {
     String lang = translatorSvc.getLanguage(accessToken.getRawToken(), language);
     return assessmentSvc.getAssessmentDtoByAssessmentId(assessmentId, lang);
-  }  
-  
+  }
+
   @PATCH
   @Path("{assessmentId}")
   @Produces("application/json")
@@ -117,9 +117,10 @@ public class AssessmentsResource {
   @Consumes("application/json")
   public Response bulkCreate(@NotNull @Valid AssessmentBulkPostDto data) throws SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException, NotSupportedException {
     List<Long> appsList = data.getApplications().stream()
-                          .map(e -> e.getApplicationId())
+                          .map(ApplicationDto::getApplicationId)
                           .collect(Collectors.toList());
-    return Response.accepted().entity(assessmentSvc.bulkCreateAssessments(data.getFromAssessmentId(), appsList)).build();
+    AssessmentBulkDto assessmentBulkDto = assessmentSvc.bulkCreateAssessments(data.getFromAssessmentId(), appsList);
+    return Response.accepted().entity(assessmentBulkDto).build();
   }
 
   @GET

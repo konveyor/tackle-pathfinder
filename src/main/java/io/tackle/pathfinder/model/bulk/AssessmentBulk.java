@@ -28,28 +28,25 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class AssessmentBulk extends PanacheEntity {
-    @CreationTimestamp
-    @Column(updatable=false)
-    public Instant createTime;
 
-    public String createUser;
+    @CreationTimestamp
+    @Column(updatable = false)
+    public Instant createTime;
 
     @UpdateTimestamp
     public Instant updateTime;
 
+    public String createUser;
     public String updateUser;
 
     @Builder.Default
     public Boolean deleted = false;
 
-    @Column(nullable=false, columnDefinition = " boolean default false" )
+    @Column(nullable = false, columnDefinition = " boolean default false")
     @Builder.Default
     public boolean completed = false;
 
     public Long fromAssessmentId;
-
-    @Column(nullable=false)
-    public String applications;
 
     @Builder.Default
     @OneToMany(mappedBy = "assessmentBulk", cascade = CascadeType.ALL)
