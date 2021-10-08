@@ -327,7 +327,7 @@ req_identified_risks=$(curl -X POST "http://$api_ip/pathfinder/assessments/risks
             -d "[{\"applicationId\":10},{\"applicationId\":325100},{\"applicationId\":329100}]" \
             -H 'Content-Type: application/json' -s)
 test "$(echo $req_identified_risks | jq 'length')" = "1"
-test "$(echo $req_identified_risks | jq '.[0].applications | length')" = "2"
+test "$(echo $req_identified_risks | jq '.[0].applications | length')" = "1"
 
 echo
 echo
