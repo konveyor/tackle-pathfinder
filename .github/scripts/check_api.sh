@@ -285,14 +285,16 @@ req_bulk_applications=$(curl -X GET "http://$api_ip/pathfinder/assessments/bulk/
             -s )
 test $(echo $req_bulk_applications | jq '.completed') = "true"
 test $(echo $req_bulk_applications | jq '.assessments | length') = 5
-test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .error ') = "null"
-test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .id ') = "null"
-test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .status ') = '"STARTED"'
-test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .id ') != "null"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 9) | .error ') = "null"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 10) | .error ') = "null"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 11) | .error ') = "null"
 test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .error ') = "null"
-test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 11) | .status ') = '"STARTED"'
-test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 10) | .status ') = '"STARTED"'
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .error ') = "null"
 test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 9) | .status ') = '"STARTED"'
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 10) | .status ') = '"STARTED"'
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 11) | .status ') = '"STARTED"'
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .status ') = '"STARTED"'
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .status ') = '"STARTED"'
 
 
 echo
