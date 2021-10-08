@@ -362,7 +362,7 @@ confidence=$(curl -X POST "http://$api_ip/pathfinder/assessments/confidence" -H 
             -H "Authorization: Bearer $access_token" \
             -d "[{\"applicationId\":100} , {\"applicationId\": $applicationSource}, {\"applicationId\": $applicationTarget}]" \
             -H 'Content-Type: application/json' )
-test "1" = "$(echo $confidence | jq 'length')"
+test "0" = "$(echo $confidence | jq 'length')"
 echo $confidence | grep "\"assessmentId\":$assessmentSourceId"
 echo $confidence | grep "\"confidence\":"
 echo $confidence | grep "\"applicationId\":$applicationSource"
