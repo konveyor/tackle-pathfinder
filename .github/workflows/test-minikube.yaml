@@ -51,7 +51,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Setup Minikube
-        uses: manusa/actions-setup-minikube@v2.3.1
+        uses: manusa/actions-setup-minikube@v2.4.2
         with:
           minikube version: v1.21.0
           kubernetes version: v1.21.0
@@ -64,6 +64,13 @@ jobs:
         run: minikube addons list -o json | jq '.registry.Status' | grep enabled
       - name: Kubectl create namespace
         run: kubectl create ns tackle
+
+      - name: Check during max 2 minutes to allow Minikube ingress to be ready
+        timeout-minutes: 2
+        run: |
+          while [[ ! "$(kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx)" =~ "successfully" ]]; do
+            sleep 15
+          done
 
       - name: Deploy Pathfinder on minikube
         run: |
