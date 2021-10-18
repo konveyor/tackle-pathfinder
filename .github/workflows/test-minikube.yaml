@@ -69,7 +69,7 @@ jobs:
         run: |
           kubectl apply -f src/test/resources/test-deployment.yaml -n tackle
           sed -e 's/imagePullPolicy: Always/imagePullPolicy: Never/g' \
-              -e 's/image: quay.io\/konveyor\/tackle-pathfinder:0.0.1-SNAPSHOT-native/image: tackle\/tackle-pathfinder\/:current-pr/g' \
+              -e 's/image: quay.io\/konveyor\/tackle-pathfinder:0.0.1-SNAPSHOT-native/image: tackle\/tackle-pathfinder:current-pr/g' \
               src/main/kubernetes/tackle-pathfinder.yaml | kubectl apply -n tackle -f -
 
       - name: Verify keycloak
