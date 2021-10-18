@@ -28,9 +28,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class AssessmentBulk extends PanacheEntity {
-
     @CreationTimestamp
-    @Column(updatable = false)
+    @Column(updatable=false)
     public Instant createTime;
 
     @UpdateTimestamp
@@ -42,7 +41,7 @@ public class AssessmentBulk extends PanacheEntity {
     @Builder.Default
     public Boolean deleted = false;
 
-    @Column(nullable = false, columnDefinition = " boolean default false")
+    @Column(nullable=false, columnDefinition = " boolean default false")
     @Builder.Default
     public boolean completed = false;
 

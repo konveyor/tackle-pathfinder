@@ -34,13 +34,14 @@ public class BulkCreateSvc {
 
                 // Copy the assessment from fromAssessmentId to applicationId
                 Assessment assessment = AssessmentCreateCommand.builder()
-                        .applicationId(app.applicationId)
-                        .fromAssessmentId(bulk.fromAssessmentId)
-                        .username(bulk.createUser)
-                        .build().execute();
+                                            .applicationId(app.applicationId)
+                                            .fromAssessmentId(bulk.fromAssessmentId)
+                                            .username(bulk.createUser)
+                                            .build().execute();
                 app.assessmentId = assessment.id;
             } catch (BadRequestException ex) {
                 error = "400";
+
             } catch (NotFoundException ex) {
                 error = "404";
             }
@@ -54,21 +55,21 @@ public class BulkCreateSvc {
     @Transactional
     public AssessmentBulk newAssessmentBulk(Long fromAssessmentId, @NotNull @Valid List<Long> appList, String username) {
         AssessmentBulk bulk = AssessmentBulk.builder()
-                .createUser(username)
-                .fromAssessmentId(fromAssessmentId)
-                .build();
+                            .createUser(username)
+                            .fromAssessmentId(fromAssessmentId)
+                            .build();
 
         appList.forEach(e -> {
             AssessmentBulkApplication bulkApplication = AssessmentBulkApplication.builder()
-                    .applicationId(e)
-                    .createUser(username)
-                    .assessmentBulk(bulk)
-                    .build();
+            .applicationId(e)
+            .createUser(username)
+            .assessmentBulk(bulk)
+            .build();
+
             bulk.bulkApplications.add(bulkApplication);
         });
         bulk.persistAndFlush();
         log.info("Number of apps within bulk: " + bulk.bulkApplications.size());
-
         return bulk;
     }
 }

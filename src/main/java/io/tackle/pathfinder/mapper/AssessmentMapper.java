@@ -25,32 +25,29 @@ public abstract class AssessmentMapper extends TranslatorMapper {
 
     public abstract AssessmentHeaderDto assessmentToAssessmentHeaderDto(Assessment assessment);
 
-    @Mapping(target = "checked", source = "selected")
-    @Mapping(target = "option", expression = "java(translateOption(option, option.option, language, \"option\"))")
+    @Mapping(target="checked", source="selected")
+    @Mapping(target = "option", expression="java(translateOption(option, option.option, language, \"option\"))")
     public abstract AssessmentQuestionOptionDto assessmentSingleOptionToAssessmentQuestionOptionDto(AssessmentSingleOption option, @Context String language);
-
     public abstract List<AssessmentQuestionOptionDto> assessmentSingleOptionListToassessmentQuestionOptionDtoList(List<AssessmentSingleOption> optionList, @Context String language);
 
-    @Mapping(target = "options", source = "singleOptions")
-    @Mapping(target = "question", expression = "java(translateQuestion(question, question.questionText, language, \"question\"))")
-    @Mapping(target = "description", expression = "java(translateQuestion(question, question.description, language, \"description\"))")
+    @Mapping(target = "options", source="singleOptions")
+    @Mapping(target = "question", expression="java(translateQuestion(question, question.questionText, language, \"question\"))")
+    @Mapping(target = "description", expression="java(translateQuestion(question, question.description, language, \"description\"))")
     public abstract AssessmentQuestionDto assessmentQuestionToAssessmentQuestionDto(AssessmentQuestion question, @Context String language);
-
     public abstract List<AssessmentQuestionDto> assessmentQuestionListToassessmentQuestionDtoList(List<AssessmentQuestion> questionList, @Context String language);
 
-    @Mapping(target = "title", expression = "java(translateCategory(category, category.name, language, \"name\"))")
+    @Mapping(target="title", expression="java(translateCategory(category, category.name, language, \"name\"))")
     public abstract AssessmentCategoryDto assessmentCategoryToAssessmentCategoryDto(AssessmentCategory category, @Context String language);
 
     public abstract List<AssessmentCategoryDto> assessmentCategoryListToAssessmentCategoryDtoList(List<AssessmentCategory> categoryList, @Context String language);
 
-    @Mapping(target = "title", source = "name")
-    @Mapping(target = "language", expression = "java(language)")
+    @Mapping(target="title", source="name")
+    @Mapping(target = "language", expression="java(language)")
     public abstract AssessmentQuestionnaireDto assessmentQuestionnaireToAssessmentQuestionnaireDto(AssessmentQuestionnaire questionnaire, @Context String language);
 
     public List<Long> assessmentStakeholderListToLongList(List<AssessmentStakeholder> stakeholder) {
         return stakeholder.stream().map(e -> e.stakeholderId).collect(Collectors.toList());
     }
-
     public List<Long> assessmentStakeholderGroupListToLongList(List<AssessmentStakeholdergroup> stakeholdergroup) {
         return stakeholdergroup.stream().map(e -> e.stakeholdergroupId).collect(Collectors.toList());
     }
@@ -78,11 +75,11 @@ public abstract class AssessmentMapper extends TranslatorMapper {
         List<Long> applications = Arrays.stream(appsList).map(Long::parseLong).collect(Collectors.toList());
 
         return RiskLineDto.builder()
-                .category(categoryText)
-                .question(questionText)
-                .answer(optionText)
-                .applications(applications)
-                .build();
+            .category(categoryText)
+            .question(questionText)
+            .answer(optionText)
+            .applications(applications)
+            .build();
     }
 
     public List<RiskLineDto> riskListQueryToRiskLineDtoList(List<Tuple> objectList, @Context String language) {
@@ -94,41 +91,41 @@ public abstract class AssessmentMapper extends TranslatorMapper {
         return Optional.ofNullable(cat.questionnaire_categoryId)
                 .flatMap(a -> Category.findByIdOptional(a))
                 .map(a -> translate((PanacheEntity) a, defaultText, destLanguage, field))
-                .orElse(defaultText);
+            .orElse(defaultText);
     }
 
     @Transactional
     protected String translateQuestion(AssessmentQuestion que, String defaultText, String destLanguage, String field) {
         return Optional.ofNullable(que.questionnaire_questionId)
-                .flatMap(a -> Question.findByIdOptional(a))
-                .map(a -> translate((PanacheEntity) a, defaultText, destLanguage, field))
-                .orElse(defaultText);
+            .flatMap(a -> Question.findByIdOptional(a))
+            .map(a -> translate((PanacheEntity) a, defaultText, destLanguage, field))
+            .orElse(defaultText);
     }
 
     @Transactional
     protected String translateOption(AssessmentSingleOption opt, String defaultText, String destLanguage, String field) {
         return Optional.ofNullable(opt.questionnaire_optionId)
-                .flatMap(a -> SingleOption.findByIdOptional(a))
-                .map(a -> translate((PanacheEntity) a, defaultText, destLanguage, field))
-                .orElse(defaultText);
+            .flatMap(a -> SingleOption.findByIdOptional(a))
+            .map(a -> translate((PanacheEntity) a, defaultText, destLanguage, field))
+            .orElse(defaultText);
     }
 
     public AssessmentBulkDto assessmentBulkToAssessmentBulkDto(AssessmentBulk bulk) {
         return AssessmentBulkDto.builder()
-                .bulkId(bulk.id)
-                .applications(bulk.bulkApplications.stream().map(f -> f.applicationId).collect(Collectors.toList()))
-                .completed(bulk.completed)
-                .fromAssessmentId(bulk.fromAssessmentId)
-                .assessments(bulk.bulkApplications.stream().map(this::assessmentBulkApplicationToAssessmentHeaderBulkDto).collect(Collectors.toList()))
-                .build();
+            .bulkId(bulk.id)
+            .applications(bulk.bulkApplications.stream().map(f -> f.applicationId).collect(Collectors.toList()))
+            .completed(bulk.completed)
+            .fromAssessmentId(bulk.fromAssessmentId)
+            .assessments(bulk.bulkApplications.stream().map(this::assessmentBulkApplicationToAssessmentHeaderBulkDto).collect(Collectors.toList()))
+            .build();
     }
 
     protected AssessmentHeaderBulkDto assessmentBulkApplicationToAssessmentHeaderBulkDto(AssessmentBulkApplication application) {
         AssessmentHeaderBulkDto dto = AssessmentHeaderBulkDto.builder()
-                .applicationId(application.applicationId)
-                .id(application.assessmentId)
-                .error(application.error)
-                .build();
+            .applicationId(application.applicationId)
+            .id(application.assessmentId)
+            .error(application.error)
+            .build();
         if (application.assessmentId != null) {
             Assessment assessment = Assessment.findById(application.assessmentId);
             dto.setStatus(assessment.status);

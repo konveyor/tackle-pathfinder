@@ -26,9 +26,8 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder
 public class AssessmentBulkApplication extends PanacheEntity {
-
     @CreationTimestamp
-    @Column(updatable = false)
+    @Column(updatable=false)
     public Instant createTime;
 
     @UpdateTimestamp
@@ -47,6 +46,6 @@ public class AssessmentBulkApplication extends PanacheEntity {
     public String error;
 
     @ManyToOne
-    @JoinColumn(name = "assessment_bulk_id", referencedColumnName = "id")
+    @JoinColumn(name="assessment_bulk_id", referencedColumnName="id")
     public AssessmentBulk assessmentBulk;
 }
