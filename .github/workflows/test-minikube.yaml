@@ -29,12 +29,12 @@ jobs:
           -Dquarkus.container-image.build=true \
           -Dquarkus.native.container-build=true
       - name: Save container image
-        run: docker save -o tackle-application-inventory.tar tackle/tackle-pathfinder:current-pr
+        run: docker save -o tackle-pathfinder.tar tackle/tackle-pathfinder:current-pr
       - name: Upload container image
         uses: actions/upload-artifact@v2
         with:
-          name: tackle-application-inventory
-          path: tackle-application-inventory.tar
+          name: tackle-pathfinder
+          path: tackle-pathfinder.tar
 
   k8s:
     runs-on: ubuntu-latest
