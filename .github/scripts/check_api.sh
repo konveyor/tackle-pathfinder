@@ -255,48 +255,6 @@ req_not_existing_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessment
             -w "%{http_code}")
 test "404" = "$req_not_existing_assessment"
 
-#echo
-#echo
-#echo "15 >>> Bulk creation of blank assessments"
-#req_bulk_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessments/bulk" -H 'Accept: application/json' \
-#            -H "Authorization: Bearer $access_token" \
-#            -H 'Content-Type: application/json' \
-#            -d '{ "applications" : [ {"applicationId":9},{"applicationId": 10},{"applicationId": 11},{"applicationId": 12},{"applicationId": 325100}]}' )
-#echo $req_bulk_assessment
-#echo $req_bulk_assessment | grep '"completed":false,"applications":\[9,10,11,12,325100\],"assessments":\[{"applicationId":9},{"applicationId":10},{"applicationId":11},{"applicationId":12},{"applicationId":325100}\]}'
-#bulkId=$(echo $req_bulk_assessment | jq '.bulkId')
-#
-#echo "15.1 Checking bulk"
-#
-#req_bulk_applications=$(curl -X GET "http://$api_ip/pathfinder/assessments/bulk/$bulkId" -H 'Accept: application/json' \
-#            -H "Authorization: Bearer $access_token" \
-#            -H 'Content-Type: application/json' \
-#            -s )
-#test $(echo $req_bulk_applications | jq '.completed') = "false"
-#test $(echo $req_bulk_applications | jq '.assessments | length') = 5
-#
-#sleep 15s
-#
-#echo "15.2 Checking bulk hoping it's complete "
-#
-#req_bulk_applications=$(curl -X GET "http://$api_ip/pathfinder/assessments/bulk/$bulkId" -H 'Accept: application/json' \
-#            -H "Authorization: Bearer $access_token" \
-#            -H 'Content-Type: application/json' \
-#            -s )
-#test $(echo $req_bulk_applications | jq '.completed') = "true"
-#test $(echo $req_bulk_applications | jq '.assessments | length') = 5
-#test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 9) | .error ') = "null"
-#test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 10) | .error ') = "null"
-#test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 11) | .error ') = "null"
-#test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .error ') = "null"
-#test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .error ') = "null"
-#test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 9) | .status ') = '"STARTED"'
-#test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 10) | .status ') = '"STARTED"'
-#test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 11) | .status ') = '"STARTED"'
-#test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .status ') = '"STARTED"'
-#test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .status ') = '"STARTED"'
-
-
 echo
 echo
 echo "15 >>> Requesting Landscape report"
@@ -366,6 +324,47 @@ test "1" = "$(echo $confidence | jq 'length')"
 echo $confidence | grep "\"assessmentId\":$assessmentSourceId"
 echo $confidence | grep "\"confidence\":"
 echo $confidence | grep "\"applicationId\":$applicationSource"
+
+echo
+echo
+echo "15 >>> Bulk creation of blank assessments"
+req_bulk_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessments/bulk" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -H 'Content-Type: application/json' \
+            -d '{ "applications" : [ {"applicationId":9},{"applicationId": 10},{"applicationId": 11},{"applicationId": 12},{"applicationId": 325100}]}' )
+echo $req_bulk_assessment
+echo $req_bulk_assessment | grep '"completed":false,"applications":\[9,10,11,12,325100\],"assessments":\[{"applicationId":9},{"applicationId":10},{"applicationId":11},{"applicationId":12},{"applicationId":325100}\]}'
+bulkId=$(echo $req_bulk_assessment | jq '.bulkId')
+
+echo "15.1 Checking bulk"
+
+req_bulk_applications=$(curl -X GET "http://$api_ip/pathfinder/assessments/bulk/$bulkId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -H 'Content-Type: application/json' \
+            -s )
+test $(echo $req_bulk_applications | jq '.completed') = "false"
+test $(echo $req_bulk_applications | jq '.assessments | length') = 5
+
+sleep 15s
+
+echo "15.2 Checking bulk hoping it's complete "
+
+req_bulk_applications=$(curl -X GET "http://$api_ip/pathfinder/assessments/bulk/$bulkId" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -H 'Content-Type: application/json' \
+            -s )
+test $(echo $req_bulk_applications | jq '.completed') = "true"
+test $(echo $req_bulk_applications | jq '.assessments | length') = 5
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 9) | .error ') = "null"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 10) | .error ') = "null"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 11) | .error ') = "null"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .error ') = "null"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .error ') = "null"
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 9) | .status ') = '"STARTED"'
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 10) | .status ') = '"STARTED"'
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 11) | .status ') = '"STARTED"'
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .status ') = '"STARTED"'
+test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .status ') = '"STARTED"'
 
 
 echo " +++++ API CHECK SUCCESSFUL ++++++"
