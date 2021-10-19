@@ -278,7 +278,7 @@ echo $landscapeJson | grep "[{\"assessmentId\":$assessmentSourceId,\"risk\":\"RE
 
 echo
 echo
-echo "16 >>> Get Identified Risks for 3 applications , only 2 existing,  and only get the answer RED"
+echo "15 >>> Get Identified Risks for 3 applications , only 2 existing,  and only get the answer RED"
 
 req_identified_risks=$(curl -X POST "http://$api_ip/pathfinder/assessments/risks" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
@@ -289,7 +289,7 @@ test "$(echo $req_identified_risks | jq '.[0].applications | length')" = "2"
 
 echo
 echo
-echo "17 >>> Get Identified Risks for 3 applications, none existing"
+echo "16 >>> Get Identified Risks for 3 applications, none existing"
 
 req_identified_risks=$(curl -X POST "http://$api_ip/pathfinder/assessments/risks" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
@@ -299,7 +299,7 @@ test "$(echo $req_identified_risks | jq 'length')" = "0"
 
 echo
 echo
-echo "18 >>> Get Identified Risks for 0 applications"
+echo "17 >>> Get Identified Risks for 0 applications"
 
 req_identified_risks=$(curl -X POST "http://$api_ip/pathfinder/assessments/risks" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
@@ -315,7 +315,7 @@ test "$(echo $req_identified_risks)" = "400"
 
 echo
 echo
-echo "19 >>> Checking the confidence of assessments"
+echo "18 >>> Checking the confidence of assessments"
 confidence=$(curl -X POST "http://$api_ip/pathfinder/assessments/confidence" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
             -d "[{\"applicationId\":100} , {\"applicationId\": $applicationSource}, {\"applicationId\": $applicationTarget}]" \
@@ -327,7 +327,7 @@ echo $confidence | grep "\"applicationId\":$applicationSource"
 
 echo
 echo
-echo "15 >>> Bulk creation of blank assessments"
+echo "19 >>> Bulk creation of blank assessments"
 req_bulk_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessments/bulk" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
             -H 'Content-Type: application/json' \
@@ -347,7 +347,7 @@ test $(echo $req_bulk_applications | jq '.assessments | length') = 5
 
 sleep 15s
 
-echo "15.2 Checking bulk hoping it's complete "
+echo "20 Checking bulk hoping it's complete "
 
 req_bulk_applications=$(curl -X GET "http://$api_ip/pathfinder/assessments/bulk/$bulkId" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
