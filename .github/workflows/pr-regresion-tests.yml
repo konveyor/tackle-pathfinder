@@ -74,7 +74,6 @@ jobs:
         with:
           repository: konveyor/tackle-ui-tests
           path: tackle-ui-tests
-          ref: dev
       - name: Setup Minikube
         uses: manusa/actions-setup-minikube@v2.3.1
         with:
@@ -124,8 +123,8 @@ jobs:
           echo "CYPRESS_tackleUrl=https://$external_ip" >>$GITHUB_ENV'
 
       - name: Cypress run
+        working-directory: tackle-ui-tests
         run: |
-          cd tackle-ui-tests
           npm install .
           npx cypress run --spec **/*.test.ts --env grepTags=${{ matrix.tier }},user=tackle,pass=password,tackleUrl=${{ env.CYPRESS_tackleUrl }}
       - uses: actions/upload-artifact@v1
