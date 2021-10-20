@@ -192,3 +192,7 @@ curl 'http://localhost:8085/pathfinder/assessments' \
   -d "{ \"applicationId\": 20 }" \
   -v -s | jq
 ```
+
+ # Internationalization
+
+ To contribute translating Tackle Pathfinder (questionnaire) into a new language please read [Internationalization](./INTERNATIONALIZATION)
