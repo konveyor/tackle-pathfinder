@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Mapper(componentModel = "cdi")
 public abstract class AssessmentMapper extends TranslatorMapper {
@@ -111,17 +110,17 @@ public abstract class AssessmentMapper extends TranslatorMapper {
             .orElse(defaultText);
     }
 
-    public AssessmentBulkDto assessmentBulkToassessmentBulkDto(AssessmentBulk bulk) {
+    public AssessmentBulkDto assessmentBulkToAssessmentBulkDto(AssessmentBulk bulk) {
         return AssessmentBulkDto.builder()
             .bulkId(bulk.id)
-            .applications(Stream.of(bulk.applications.split(",")).map(Long::parseLong).collect(Collectors.toList()))
+            .applications(bulk.bulkApplications.stream().map(f -> f.applicationId).collect(Collectors.toList()))
             .completed(bulk.completed)
             .fromAssessmentId(bulk.fromAssessmentId)
-            .assessments(bulk.bulkApplications.stream().map(e -> this.assessmentBulkApplicationToassessmentHeaderBulkDto(e)).collect(Collectors.toList()))
+            .assessments(bulk.bulkApplications.stream().map(this::assessmentBulkApplicationToAssessmentHeaderBulkDto).collect(Collectors.toList()))
             .build();
     }
 
-    protected AssessmentHeaderBulkDto assessmentBulkApplicationToassessmentHeaderBulkDto(AssessmentBulkApplication application) {
+    protected AssessmentHeaderBulkDto assessmentBulkApplicationToAssessmentHeaderBulkDto(AssessmentBulkApplication application) {
         AssessmentHeaderBulkDto dto = AssessmentHeaderBulkDto.builder()
             .applicationId(application.applicationId)
             .id(application.assessmentId)

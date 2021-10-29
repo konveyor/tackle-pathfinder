@@ -18,7 +18,7 @@ import lombok.extern.java.Log;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
-
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -112,7 +112,8 @@ public class AssessmentCreateCommand {
     private Assessment copyAssessment(@NotNull Long assessmentId, @NotNull Long targetApplicationId) {
             Assessment assessmentSource = (Assessment) Assessment.findByIdOptional(assessmentId).orElseThrow(NotFoundException::new);
             if (assessmentSource != null) {
-                if (Assessment.find("applicationId", targetApplicationId).firstResultOptional().isEmpty()) {
+                Optional<Assessment> currentAssessment = Assessment.find("applicationId", targetApplicationId).firstResultOptional();
+                if (currentAssessment.isEmpty()) {
                     Assessment assessmentTarget = Assessment.builder()
                             .applicationId(targetApplicationId)
                             .status(assessmentSource.status)
@@ -135,9 +136,12 @@ public class AssessmentCreateCommand {
 
                     assessmentTarget.persistAndFlush();
                     return assessmentTarget;
+                } else {
+                    throw new IllegalStateException("Could not copy assessment into application:" + targetApplicationId);
                 }
-            }
-            throw new BadRequestException();
+        }
+
+        throw new BadRequestException();
     }
 
     private AssessmentQuestionnaire copyQuestionnaireBetweenAssessments(Assessment sourceAssessment, Assessment targetAssessment) {

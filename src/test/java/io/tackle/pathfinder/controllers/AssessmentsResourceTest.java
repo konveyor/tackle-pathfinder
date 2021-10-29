@@ -172,8 +172,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
 			.log().all()
 			.statusCode(400);
-	}	
-	
+	}
+
 	@Test
 	public void given_SameApplication_When_SeveralCreateAssessment_Then_Returns400() throws InterruptedException {
 		CompletableFuture<ValidatableResponse> future1 = managedExecutor.supplyAsync(() -> {
@@ -190,10 +190,10 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 			return response;
 		});
-		
+
 		// To force second call starts a bit later than first one
 		Thread.sleep(500);
-		
+
 		CompletableFuture<ValidatableResponse> future2 = managedExecutor.supplyAsync(() -> {
 			log.info("Async 2 request Assessment : " + LocalTime.now());
 
@@ -343,7 +343,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.body("questionnaire.categories.find{it.id==" + category.getId() + "}.questions.find{it.id==" + question.getId() + "}.options.findAll{it.checked==true}.size()", is(1))
 			.body("questionnaire.categories.find{it.id==" + category.getId() + "}.questions.find{it.id==" + question.getId() + "}.options.size()", greaterThan(1));
 	}
-	
+
 	@Test
 	public void given_AssessmentCreated_When_UpdatingStatus_Then_StatusIsStored_And_ResponseIsOK() {
 		// Creation of the Assessment
@@ -421,8 +421,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.log().all()
 			.statusCode(200)
 			.body("status", is("STARTED"));
-	}	
-	
+	}
+
 	@Test
 	public void given_AssessmentCreated_When_UpdatingWithIncorrectIds_Then_ResponseIsBadRequest() {
 		// Creation of the Assessment
@@ -460,8 +460,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.then()
     		.log().all()
 			.statusCode(400);
-	}	
-	
+	}
+
 	@Test
 	public void given_AssessmentCreated_When_Deleting_Then_ResponseIsOKAndAssessmentIsNotReachable() {
 		// Creation of the Assessment
@@ -919,6 +919,182 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.find{it.order==" + question.getOrder() + "}.options.size()", is(question.getOptions().size() ))
 			.body("questionnaire.categories.find{it.order==" + category.getOrder() + "}.questions.find{it.order==" + question.getOrder() + "}.options.find{it.order==" + option.getOrder() + "}.checked", is(true));
 
+	}
+
+	@Test
+	public void bulkCopyShouldOverrideAssessments() throws InterruptedException {
+		// Case: create an assessment for app1 and app2, then copy assessment from app1 to app3;
+		// Finally copy (override) assessment from app2 to app3
+
+		Long application1Id = 1L;
+		Long application2Id = 2L;
+		Long application3Id = 3L;
+
+		// Assessment for app1
+		AssessmentHeaderDto assessmentApp3 = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(new ApplicationDto(application1Id))
+				.when()
+				.post("/assessments")
+				.then()
+				.statusCode(201)
+				.extract().as(AssessmentHeaderDto.class);
+
+		given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(AssessmentDto.builder()
+						.stakeholders(List.of(11L, 111L))
+						.status(AssessmentStatus.COMPLETE)
+						.build()
+				)
+				.when()
+				.patch("/assessments/" + assessmentApp3.getId())
+				.then()
+				.statusCode(200)
+				.body("id", equalTo(assessmentApp3.getId().intValue()),
+						"applicationId", equalTo(application1Id.intValue()),
+						"status", equalTo(AssessmentStatus.COMPLETE.toString())
+				);
+
+		// Assessment for app2
+		AssessmentHeaderDto assessmentApp2 = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(new ApplicationDto(application2Id))
+				.when()
+				.post("/assessments")
+				.then()
+				.statusCode(201)
+				.extract().as(AssessmentHeaderDto.class);
+
+		given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(AssessmentDto.builder()
+						.stakeholders(List.of(22L, 222L))
+						.status(AssessmentStatus.STARTED)
+						.build()
+				)
+				.when()
+				.patch("/assessments/" + assessmentApp2.getId())
+				.then()
+				.statusCode(200)
+				.body("id", equalTo(assessmentApp2.getId().intValue()),
+						"applicationId", equalTo(application2Id.intValue()),
+						"status", equalTo(AssessmentStatus.STARTED.toString())
+				);
+
+		// Create bulk copy: source=app1, target=app3
+		AssessmentBulkDto headerBulk1 = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(AssessmentBulkPostDto.builder()
+						.fromAssessmentId(assessmentApp3.getId())
+						.applications(List.of(
+								ApplicationDto.builder()
+										.applicationId(application3Id)
+										.build()
+						))
+						.build()
+				)
+				.when()
+				.post("/assessments/bulk")
+				.then()
+				.statusCode(202)
+				.extract().as(AssessmentBulkDto.class);
+
+		Awaitility.await()
+				.atMost(50, TimeUnit.SECONDS)
+				.untilAsserted(() -> {
+					AssessmentBulkDto bulkDto = given()
+							.contentType(ContentType.JSON)
+							.accept(ContentType.JSON)
+							.when()
+							.get("/assessments/bulk/" + headerBulk1.getBulkId())
+							.then()
+							.statusCode(200).extract().as(AssessmentBulkDto.class);
+
+					assertThat(bulkDto.getCompleted()).isTrue();
+				});
+
+		assessmentApp3 = given()
+				.queryParam("applicationId", application3Id)
+				.when()
+				.get("/assessments")
+				.then()
+				.statusCode(200)
+				.extract().as(AssessmentHeaderDto[].class)[0];
+
+		given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.when()
+				.get("/assessments/" + assessmentApp3.getId())
+				.then()
+				.statusCode(200)
+				.body("applicationId", is(application3Id.intValue()),
+						"status", is(AssessmentStatus.COMPLETE.toString()),
+						"stakeholders.size()", is(2),
+						"stakeholders[0]", is(11),
+						"stakeholders[1]", is(111)
+				);
+
+		// Create bulk copy: source=app2, target=app3
+		AssessmentBulkDto headerBulk2 = given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.body(AssessmentBulkPostDto.builder()
+						.fromAssessmentId(assessmentApp2.getId())
+						.applications(List.of(
+								ApplicationDto.builder()
+										.applicationId(application3Id)
+										.build()
+						))
+						.build()
+				)
+				.when()
+				.post("/assessments/bulk")
+				.then()
+				.statusCode(202)
+				.extract().as(AssessmentBulkDto.class);
+
+		Awaitility.await()
+				.atMost(50, TimeUnit.SECONDS)
+				.untilAsserted(() -> {
+					AssessmentBulkDto bulkDto = given()
+							.contentType(ContentType.JSON)
+							.accept(ContentType.JSON)
+							.when()
+							.get("/assessments/bulk/" + headerBulk2.getBulkId())
+							.then()
+							.statusCode(200).extract().as(AssessmentBulkDto.class);
+
+					assertThat(bulkDto.getCompleted()).isTrue();
+				});
+
+		assessmentApp3 = given()
+				.queryParam("applicationId", application3Id)
+				.when()
+				.get("/assessments")
+				.then()
+				.statusCode(200)
+				.extract().as(AssessmentHeaderDto[].class)[0];
+
+		given()
+				.contentType(ContentType.JSON)
+				.accept(ContentType.JSON)
+				.when()
+				.get("/assessments/" + assessmentApp3.getId())
+				.then()
+				.statusCode(200)
+				.body("applicationId", is(application3Id.intValue()),
+						"status", is(AssessmentStatus.STARTED.toString()),
+						"stakeholders.size()", is(2),
+						"stakeholders[0]", is(22),
+						"stakeholders[1]", is(222)
+				);
 	}
 
 	@Test
