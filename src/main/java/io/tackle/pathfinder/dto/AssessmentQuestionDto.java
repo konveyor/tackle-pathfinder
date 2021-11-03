@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,20 +31,11 @@ import java.util.List;
     "description"
 })
 @Data
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @RegisterForReflection
-public class AssessmentQuestionDto {
-
-    /**
-     * DB id
-     * (Required)
-     * 
-     */
-    @JsonProperty("id")
-    @JsonPropertyDescription("DB id")
-    private Long id;
+public class AssessmentQuestionDto extends BasicDto {
     /**
      * Used for sorting multiple questions
      * (Required)

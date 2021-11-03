@@ -1,46 +1,53 @@
 package io.tackle.pathfinder.controllers;
 
-import io.tackle.pathfinder.dto.AdoptionCandidateDto;
-import io.tackle.pathfinder.dto.ApplicationDto;
-import io.tackle.pathfinder.dto.AssessmentDto;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
-import io.tackle.pathfinder.dto.LandscapeDto;
-import io.tackle.pathfinder.dto.RiskLineDto;
+import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.services.AssessmentSvc;
-
+import lombok.extern.java.Log;
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
+import org.eclipse.microprofile.jwt.JsonWebToken;
+import io.tackle.pathfinder.services.TranslatorSvc;
 
 @Path("/assessments")
+@Log
 public class AssessmentsResource {
   @Inject
-  AssessmentSvc service;
+  AssessmentSvc assessmentSvc;
+
+  @Inject
+  TranslatorSvc translatorSvc;
+
+  @Inject
+  JsonWebToken accessToken;
 
   @GET
   @Produces("application/json")
   public List<AssessmentHeaderDto> getApplicationAssessments(@NotNull @QueryParam("applicationId") Long applicationId) {
-    return service.getAssessmentHeaderDtoByApplicationId(applicationId).stream().collect(Collectors.toList());
+    return assessmentSvc.getAssessmentHeaderDtoByApplicationId(applicationId).stream().collect(Collectors.toList());
   }
 
   @POST
   @Produces("application/json")
   @Consumes("application/json")
-  public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data) {
+  public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data, @QueryParam("questionnaireId") Long questionnaireId) {
     AssessmentHeaderDto createAssessment;
     
     if (fromAssessmentId != null) {
-      createAssessment = service.copyAssessment(fromAssessmentId, data.getApplicationId());
+      createAssessment = assessmentSvc.copyAssessment(fromAssessmentId, data.getApplicationId());
     } else {
-      createAssessment = service.createAssessment(data.getApplicationId());
+      createAssessment = assessmentSvc.createAssessment(data.getApplicationId(), questionnaireId);
     }
     
     return Response
@@ -53,8 +60,9 @@ public class AssessmentsResource {
   @GET
   @Path("{assessmentId}")
   @Produces("application/json")
-  public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId) {
-    return service.getAssessmentDtoByAssessmentId(assessmentId);
+  public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @QueryParam("language") String language) {
+    String lang = translatorSvc.getLanguage(accessToken.getRawToken(), language);
+    return assessmentSvc.getAssessmentDtoByAssessmentId(assessmentId, lang);
   }  
   
   @PATCH
@@ -62,14 +70,14 @@ public class AssessmentsResource {
   @Produces("application/json")
   @Consumes("application/json")
   public AssessmentHeaderDto updateAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @NotNull @Valid AssessmentDto assessment) {
-    return service.updateAssessment(assessmentId, assessment);
+    return assessmentSvc.updateAssessment(assessmentId, assessment);
   }
 
   @DELETE
   @Path("{assessmentId}")
   @Produces("application/json")
   public Response deleteAssessment(@NotNull @PathParam("assessmentId") Long assessmentId) {
-    service.deleteAssessment(assessmentId);
+    assessmentSvc.deleteAssessment(assessmentId);
     return Response.ok().status(Response.Status.NO_CONTENT).build();
   }
 
@@ -77,9 +85,10 @@ public class AssessmentsResource {
   @Path("risks")
   @Produces("application/json")
   @Consumes("application/json")
-  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<ApplicationDto> applicationList) {
+  public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<ApplicationDto> applicationList, @QueryParam("language") String language) {
     if (!applicationList.isEmpty()) {
-      return service.identifiedRisks(applicationList.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
+      String lang = translatorSvc.getLanguage(accessToken.getRawToken(), language);
+      return assessmentSvc.identifiedRisks(applicationList.stream().map(ApplicationDto::getApplicationId).collect(Collectors.toList()), lang);
     } else {
       throw new BadRequestException();
     }
@@ -91,7 +100,7 @@ public class AssessmentsResource {
   @Consumes("application/json")
   public List<LandscapeDto> getLandscape(@NotNull @Valid List<ApplicationDto> applicationIds) {
     if (applicationIds.isEmpty()) throw new BadRequestException();
-    return service.landscape(applicationIds.stream().map(e -> e.getApplicationId()).collect(Collectors.toList()));
+    return assessmentSvc.landscape(applicationIds.stream().map(ApplicationDto::getApplicationId).collect(Collectors.toList()));
   }
 
   @POST
@@ -99,7 +108,25 @@ public class AssessmentsResource {
   @Produces("application/json")
   @Consumes("application/json")
   public List<AdoptionCandidateDto> adoptionCandidate(@NotNull @Valid List<ApplicationDto> applicationId) {
-    return service.getAdoptionCandidate(applicationId.stream().map(a -> a.getApplicationId()).collect(Collectors.toList()));
+    return assessmentSvc.getAdoptionCandidate(applicationId.stream().map(ApplicationDto::getApplicationId).collect(Collectors.toList()));
   }
 
+  @POST
+  @Path("bulk")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public Response bulkCreate(@NotNull @Valid AssessmentBulkPostDto data) throws SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException, NotSupportedException {
+    List<Long> appsList = data.getApplications().stream()
+                          .map(e -> e.getApplicationId())
+                          .collect(Collectors.toList());
+    return Response.accepted().entity(assessmentSvc.bulkCreateAssessments(data.getFromAssessmentId(), appsList)).build();
+  }
+
+  @GET
+  @Path("bulk/{bulkId}")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public AssessmentBulkDto bulkGet(@NotNull @PathParam("bulkId") Long bulkId) {
+    return assessmentSvc.bulkGet(bulkId);
+  }
 }

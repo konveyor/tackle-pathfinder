@@ -3,7 +3,7 @@
     "info": {
         "title": "tackle-pathfinder",
         "version": "0.0.4",
-        "description": "Tackle PathFinder 0.0.4\n\nChanges : \n* added delete assessment function\n* added create assessment copying responses from another assessment\n* added bulk creation/copy of assessments\n* added identified risks function\n* added assessment confidence function"
+        "description": "Tackle PathFinder 0.0.4\n\nChanges : \n* added delete assessment function\n* added create assessment copying responses from another assessment\n* added bulk creation/copy of assessments\n* added identified risks function\n* added assessment confidence function\n* added multilanguage optional param for GetAssessment\n* added get questionnaire header list\n"
     },
     "paths": {
         "/assessments": {
@@ -143,6 +143,16 @@
         },
         "/assessments/{assessmentId}": {
             "get": {
+                "parameters": [
+                    {
+                        "name": "language",
+                        "description": "ISO language code for the response\nIf not specified the language used will be the original language of the questionnaire",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "content": {
@@ -745,6 +755,51 @@
                             }
                         },
                         "description": "Success response"
+                    }
+                }
+            }
+        },
+        "/questionnaires": {
+            "get": {
+                "parameters": [
+                    {
+                        "name": "language",
+                        "description": "",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/QuestionnaireHeader"
+                                    }
+                                },
+                                "examples": {
+                                    "success_questionnaireheader": {
+                                        "value": [
+                                            {
+                                                "id": 9,
+                                                "name": "some text",
+                                                "language": "some text"
+                                            },
+                                            {
+                                                "id": 84,
+                                                "name": "some text",
+                                                "language": "some text"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        "description": "Success"
                     }
                 }
             }
@@ -1544,6 +1599,29 @@
                     "risk": {
                         "$ref": "#/components/schemas/Risk",
                         "description": ""
+                    }
+                }
+            },
+            "QuestionnaireHeader": {
+                "description": "",
+                "required": [
+                    "id",
+                    "name",
+                    "language"
+                ],
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "language": {
+                        "description": "",
+                        "type": "string"
                     }
                 }
             }
