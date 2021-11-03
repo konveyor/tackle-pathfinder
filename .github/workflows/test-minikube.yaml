@@ -5,73 +5,97 @@ on:
     branches: [ main ]
 
 jobs:
-  minikube-api-validation:
+  container-image:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.0.0
+        uses: actions/checkout@v2.3.5
+        with:
+          path: tackle-pathfinder
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: "11"
+          distribution: "adopt"
+          java-package: jdk
+      - name: Build container image
+        run: |
+          mvn -U -B package --file tackle-pathfinder/pom.xml \
+          -Pnative -DskipTests \
+          -Dquarkus.container-image.push=false \
+          -Dquarkus.container-image.group=tackle \
+          -Dquarkus.container-image.name=tackle-pathfinder \
+          -Dquarkus.container-image.tag=current-pr \
+          -Dquarkus.container-image.build=true \
+          -Dquarkus.native.container-build=true
+      - name: Save container image
+        run: docker save -o tackle-pathfinder.tar tackle/tackle-pathfinder:current-pr
+      - name: Upload container image
+        uses: actions/upload-artifact@v2
+        with:
+          name: tackle-pathfinder
+          path: tackle-pathfinder.tar
+
+  k8s:
+    runs-on: ubuntu-latest
+    needs: [ container-image ]
+    steps:
+      - name: Download container image
+        uses: actions/download-artifact@v2
+        with:
+          name: tackle-pathfinder
+          path: .
+      - name: Load container image
+        run: docker load -i tackle-pathfinder.tar
+
+      - name: Checkout
+        uses: actions/checkout@v2.3.5
       - name: Setup Minikube
         uses: manusa/actions-setup-minikube@v2.4.2
         with:
           minikube version: v1.21.0
-          kubernetes version: 'v1.21.0'
-          github token: ${{ secrets.GITHUB_TOKEN }}
-          driver: docker
-          start args: ' --addons=ingress --cpus 2 --memory 6000'
-      - name: Get minikube IP
-        id: getMinikubeIp
-        run: echo "::set-output name=value::$(minikube ip)"
-        shell: bash
-#      - name: Pulling image for test
-#        run: |
-#          docker pull quay.io/jonathanvila/tackle-pathfinder:0.0.1-SNAPSHOT-native
-#          docker tag quay.io/jonathanvila/tackle-pathfinder:0.0.1-SNAPSHOT-native quay.io/konveyor/tackle-pathfinder:0.0.1-SNAPSHOT-native
-#          minikube cache add quay.io/${{ github.repository_owner }}/tackle-pathfinder:0.0.1-SNAPSHOT-native
-#          minikube cache list
-      - name: Build Pathfinder image and push it to the minikube docker host
-        run: |
-          set -x
-          cd ${{github.workspace}}
-          ./mvnw -U -B package -DskipTests -Pnative \
-            -Dquarkus.container-image.push=false \
-            -Dquarkus.container-image.build=true \
-            -Dquarkus.container-image.group=${{ github.repository_owner }} \
-            -Dquarkus.container-image.additional-tags=latest-jar \
-            -Dquarkus.container-image.tag=gh-test \
-            -Dquarkus.container-image.registry=quay.io \
-            -Dquarkus.native.container-build=true
-          minikube image load quay.io/${{ github.repository_owner }}/tackle-pathfinder:gh-test
+          kubernetes version: v1.21.0
+          start args: "--addons=registry --addons=ingress"
+      - name: Validate Minikube
+        run: minikube status | grep Running
+      - name: Validate Cluster
+        run: kubectl get nodes
+      - name: Validate enabled addon in arg
+        run: minikube addons list -o json | jq '.registry.Status' | grep enabled
+      - name: Kubectl create namespace
+        run: kubectl create ns tackle
+
       - name: Check during max 2 minutes to allow Minikube ingress to be ready
         timeout-minutes: 2
         run: |
           while [[ ! "$(kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx)" =~ "successfully" ]]; do
             sleep 15
           done
+
       - name: Deploy Pathfinder on minikube
         run: |
-          kubectl create namespace tackle
           kubectl apply -f src/test/resources/test-deployment.yaml -n tackle
           sed -e 's/imagePullPolicy: Always/imagePullPolicy: Never/g' \
-              -e 's/image: quay.io\/konveyor\/tackle-pathfinder:0.0.1-SNAPSHOT-native/image: quay.io\/${{ github.repository_owner }}\/tackle-pathfinder:gh-test/g' \
+              -e 's/image: quay.io\/konveyor\/tackle-pathfinder:0.0.1-SNAPSHOT-native/image: tackle\/tackle-pathfinder:current-pr/g' \
               src/main/kubernetes/tackle-pathfinder.yaml | kubectl apply -n tackle -f -
-      - name: Print status on Minikube
-        run : |
-          set -x
-          kubectl get pods -n tackle
-          kubectl describe deployment tackle-pathfinder -n tackle
-      - name: Check during max 10 minutes to allow objects to be created and ready
-        timeout-minutes: 10
+
+      - name: Verify keycloak
+        run: kubectl wait deployment/keycloak --for condition=available --timeout=-1s -n tackle
+      - name: Verify tackle-pathfinder
+        run: kubectl wait deployment/tackle-pathfinder --for condition=available --timeout=-1s -n tackle
+
+      - name: Wait for Ingress
         run: |
-          while [[ ! "$(kubectl rollout status deployment tackle-pathfinder -n tackle)" =~ "successfully" ]]; do
-            sleep 15
-          done
-      - name: Print status on Minikube
-        run : |
-          set -x
-          kubectl get pods -n tackle
-          kubectl describe deployment tackle-pathfinder -n tackle
+          bash -c 'external_ip="";
+          while [ -z $external_ip ];
+            do echo "Waiting for end point...";
+            external_ip=$(kubectl get ingress tackle --template="{{range .status.loadBalancer.ingress}}{{.ip}}{{end}}" -n tackle);[ -z "$external_ip" ] &&
+            sleep 10;
+          done;
+          echo "End point ready:" &&
+          echo $external_ip;'
+
       - name: API simple tests
         run: .github/scripts/check_api.sh
         timeout-minutes: 5
-        
+

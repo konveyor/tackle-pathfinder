@@ -251,6 +251,7 @@
       <properties>
         <quarkus.package.type>native</quarkus.package.type>
         <quarkus.container-image.tag>${quarkus.application.version:latest}-native</quarkus.container-image.tag>
+        <quarkus.jib.base-native-image>registry.access.redhat.com/ubi8-minimal@sha256:4d6547bbb7c5fe0f0d37b491c0c1975ff96bf4cf1c26dd665e3a5d70918b5564</quarkus.jib.base-native-image>
       </properties>
     </profile>
     <profile>

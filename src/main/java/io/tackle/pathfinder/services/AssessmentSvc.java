@@ -30,7 +30,6 @@ import org.apache.commons.lang3.StringUtils;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
 
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -303,25 +302,25 @@ public class AssessmentSvc {
     }
 
     public AssessmentBulkDto bulkCreateAssessments(Long fromAssessmentId, @NotNull @Valid List<Long> appList) throws NotSupportedException, SystemException, SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException {
-        // We manage manually the transaction to be sure the consumer starts after this transaction has been commited
+        // We manage manually the transaction to be sure the consumer starts after this transaction has been committed
         transaction.begin();
         AssessmentBulk bulkNew = bulkSvc.newAssessmentBulk(fromAssessmentId, appList, identityContext.getPrincipal().getName());
         transaction.commit();
 
         eventBus.send("process-bulk-assessment-creation", bulkNew.id);
+        log.info("Bulk scheduled");
 
-        log.info("Finishing request");
-        return assessmentMapper.assessmentBulkToassessmentBulkDto(bulkNew);
+        return assessmentMapper.assessmentBulkToAssessmentBulkDto(bulkNew);
     }
 
     @Transactional
     @ConsumeEvent("process-bulk-assessment-creation")
     @Blocking
     public void processApplicationAssessmentCreationAsync(Long bulkId) {
-        log.log(Level.FINE, "Starting async process");
+        log.log(Level.FINE, "Starting bulk copy async process");
 
         AssessmentBulk bulk = (AssessmentBulk) AssessmentBulk.findByIdOptional(bulkId).orElseThrow(NotFoundException::new);
-        log.log(Level.FINE, "Bulk : " + bulk.id);
+        log.log(Level.FINE, "Bulk: " + bulk.id);
         bulkSvc.processBulkApplications(bulk);
     }
 
@@ -413,8 +412,8 @@ public class AssessmentSvc {
     public AssessmentBulkDto bulkGet(@NotNull Long bulkId) {
         AssessmentBulk bulk = (AssessmentBulk) AssessmentBulk.findByIdOptional(bulkId).orElseThrow(NotFoundException::new);
 
-        return assessmentMapper.assessmentBulkToassessmentBulkDto(bulk);
-	}
+        return assessmentMapper.assessmentBulkToAssessmentBulkDto(bulk);
+    }
 
     @Transactional
     public List<LandscapeDto> landscape(List<Long> applicationIds) {

@@ -30,11 +30,10 @@ public class AssessmentBulkApplication extends PanacheEntity {
     @Column(updatable=false)
     public Instant createTime;
 
-    public String createUser;
-
     @UpdateTimestamp
     public Instant updateTime;
 
+    public String createUser;
     public String updateUser;
 
     public Boolean deleted = false;
