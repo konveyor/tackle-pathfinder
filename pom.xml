@@ -15,7 +15,7 @@
     <quarkus-plugin.version>1.12.2.Final</quarkus-plugin.version>
     <quarkus.platform.artifact-id>quarkus-universe-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
-    <quarkus.platform.version>1.12.2.Final</quarkus.platform.version>
+    <quarkus.platform.version>2.5.0.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
     <mapstruct.version>1.4.2.Final</mapstruct.version>
     <lombok.version>1.18.20</lombok.version>
@@ -284,6 +284,58 @@
                         <outputDirectory>${project.reporting.outputDirectory}/jacoco-reports</outputDirectory>
                     </configuration>
                 </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>podman</id>
+      <activation>
+        <property>
+          <name>!env.DOCKER_HOST</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>${surefire-plugin.version}</version>
+            <configuration>
+              <systemPropertyVariables>
+                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                <maven.home>${maven.home}</maven.home>
+              </systemPropertyVariables>
+              <environmentVariables>
+                <DOCKER_HOST>unix:///run/user/1000/podman/podman.sock</DOCKER_HOST>
+                <TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED>true</TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED>
+                <TESTCONTAINERS_CHECKS_DISABLE>true</TESTCONTAINERS_CHECKS_DISABLE>
+              </environmentVariables>
+              <trimStackTrace>false</trimStackTrace>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.0.0</version>
+            <executions>
+              <execution>
+                <id>start-async-podman-service</id>
+                <phase>generate-test-resources</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>podman</executable>
+                  <arguments>
+                    <argument>system</argument>
+                    <argument>service</argument>
+                    <argument>-t</argument>
+                    <argument>0</argument>
+                  </arguments>
+                  <async>true</async>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
         </plugins>
