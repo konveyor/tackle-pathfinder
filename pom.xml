@@ -289,5 +289,57 @@
         </plugins>
       </build>
     </profile>
+    <profile>
+      <id>podman</id>
+      <activation>
+        <property>
+          <name>!env.DOCKER_HOST</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>${surefire-plugin.version}</version>
+            <configuration>
+              <systemPropertyVariables>
+                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                <maven.home>${maven.home}</maven.home>
+              </systemPropertyVariables>
+              <environmentVariables>
+                <DOCKER_HOST>unix:///run/user/1000/podman/podman.sock</DOCKER_HOST>
+                <TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED>true</TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED>
+                <TESTCONTAINERS_CHECKS_DISABLE>true</TESTCONTAINERS_CHECKS_DISABLE>
+              </environmentVariables>
+              <trimStackTrace>false</trimStackTrace>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.0.0</version>
+            <executions>
+              <execution>
+                <id>start-async-podman-service</id>
+                <phase>generate-test-resources</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>podman</executable>
+                  <arguments>
+                    <argument>system</argument>
+                    <argument>service</argument>
+                    <argument>-t</argument>
+                    <argument>0</argument>
+                  </arguments>
+                  <async>true</async>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 </project>
