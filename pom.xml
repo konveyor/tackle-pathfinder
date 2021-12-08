@@ -12,16 +12,18 @@
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus-plugin.version>1.13.7.Final</quarkus-plugin.version>
+    <quarkus-plugin.version>1.12.2.Final</quarkus-plugin.version>
     <quarkus.platform.artifact-id>quarkus-universe-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
-    <quarkus.platform.version>1.13.7.Final</quarkus.platform.version>
+    <quarkus.platform.version>1.12.2.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
     <mapstruct.version>1.4.2.Final</mapstruct.version>
     <lombok.version>1.18.20</lombok.version>
     <testcontainers.version>1.16.0</testcontainers.version>
     <keycloak.version>12.0.3</keycloak.version>
     <jacoco.version>0.8.7</jacoco.version>
+
+    <agroal.version>1.11</agroal.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -43,6 +45,40 @@
   </repositories>
 
   <dependencies>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-agroal</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>io.agroal</groupId>
+          <artifactId>agroal-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.agroal</groupId>
+          <artifactId>agroal-narayana</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.agroal</groupId>
+          <artifactId>agroal-pool</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.agroal</groupId>
+      <artifactId>agroal-api</artifactId>
+      <version>${agroal.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.agroal</groupId>
+      <artifactId>agroal-narayana</artifactId>
+      <version>${agroal.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.agroal</groupId>
+      <artifactId>agroal-pool</artifactId>
+      <version>${agroal.version}</version>
+    </dependency>
+
     <!-- Hibernate ORM specific dependencies -->
     <dependency>
       <groupId>io.quarkus</groupId>
