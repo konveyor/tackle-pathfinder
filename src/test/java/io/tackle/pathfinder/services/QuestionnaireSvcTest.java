@@ -4,6 +4,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.tackle.pathfinder.dto.questionnaire.QuestionnaireHeaderDto;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import org.assertj.core.groups.Tuple;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled
 @QuarkusTest
 class QuestionnaireSvcTest {
     @Inject

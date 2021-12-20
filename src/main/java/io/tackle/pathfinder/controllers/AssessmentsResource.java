@@ -41,7 +41,7 @@ public class AssessmentsResource {
   @POST
   @Produces("application/json")
   @Consumes("application/json")
-  public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data, @QueryParam("questionnaireId") Long questionnaireId) {
+  public Response createAssessment(@QueryParam("fromAssessmentId") Long fromAssessmentId, @NotNull @Valid ApplicationDto data, @QueryParam("questionnaireId") Long questionnaireId) throws BadRequestException {
     AssessmentHeaderDto createAssessment;
     
     if (fromAssessmentId != null) {

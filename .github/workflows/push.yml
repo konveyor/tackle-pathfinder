@@ -103,13 +103,16 @@ jobs:
       uses: rlespinasse/github-slug-action@v3.x
     - name: Build Image for main branch with Maven
       run: |
-        ./mvnw -U -B package -Pnative -DskipTests \
-          -Dquarkus.container-image.push=true \
-          -Dquarkus.container-image.group=${{ github.repository_owner }} \
-          -Dquarkus.container-image.additional-tags=latest-native \
-          -Dquarkus.container-image.registry=${{ secrets.QUAYIO_REPO }} \
-          -Dquarkus.container-image.username=${{ secrets.QUAYIO_USERNAME }} \
-          -Dquarkus.container-image.password=${{ secrets.QUAYIO_PASSWORD }}
+
+
+  mvn -U -B package --file pom.xml \
+  -Pcontainer-image -Pnative -DskipTests \
+  -Dquarkus.container-image.push=true \
+  -Dquarkus.container-image.group=carlosthe19916 \
+  -Dquarkus.container-image.additional-tags=memory \
+  -Dquarkus.container-image.registry=quay.io \
+  -Dquarkus.container-image.username=carlosthe19916+controls_ui \
+  -Dquarkus.container-image.password=A14HU7UXKS824HTFT0ULUVY0LX0BQ4AT6257RU6UUPIBEDQ2OEBJHOCH8JOWLTV6
 
   code-coverage:
     runs-on: ubuntu-latest

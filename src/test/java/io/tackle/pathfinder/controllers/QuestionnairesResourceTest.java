@@ -8,6 +8,7 @@ import io.tackle.pathfinder.dto.questionnaire.QuestionnaireHeaderDto;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.services.QuestionnaireSvc;
 import io.tackle.pathfinder.services.TranslatorSvc;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
@@ -17,6 +18,7 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled
 @QuarkusTest
 public class QuestionnairesResourceTest extends SecuredResourceTest {
     @Inject
