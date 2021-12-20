@@ -104,12 +104,10 @@ public class AssessmentSvc {
     }
 
     @Transactional
-    public AssessmentHeaderDto createAssessment(@NotNull Long applicationId, Long questionnaireId) throws BadRequestException {
+    public AssessmentHeaderDto createAssessment(@NotNull Long applicationId, Long questionnaireId) {
         long count = Assessment.count("application_id", applicationId);
         log.log(Level.FINE, "Assessments for application_id [ " + applicationId + "] : " + count);
-        System.out.println("countttt " + count);
         if (count == 0) {
-            System.out.println("vilaaaaaa");
             Assessment assessment = new Assessment();
             assessment.applicationId = applicationId;
             assessment.status = AssessmentStatus.STARTED;
@@ -120,7 +118,6 @@ public class AssessmentSvc {
 
             return assessmentMapper.assessmentToAssessmentHeaderDto(assessment);
         } else {
-            System.out.println("carlos esteban feria vila");
             throw new BadRequestException();
         }
     }
@@ -365,7 +362,7 @@ public class AssessmentSvc {
     }
 
     @Transactional
-    public AssessmentQuestionnaire copyQuestionnaireBetweenAssessments(Assessment sourceAssessment, Assessment targetAssessment) {
+    protected AssessmentQuestionnaire copyQuestionnaireBetweenAssessments(Assessment sourceAssessment, Assessment targetAssessment) {
         AssessmentQuestionnaire questionnaire = AssessmentQuestionnaire.builder()
             .assessment(targetAssessment)
             .questionnaire(sourceAssessment.assessmentQuestionnaire.questionnaire)
