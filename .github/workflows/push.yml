@@ -103,6 +103,14 @@ jobs:
       uses: rlespinasse/github-slug-action@v3.x
     - name: Build Image for main branch with Maven
       run: |
+        ./mvnw -U -B package -Pnative -DskipTests \
+          -Dquarkus.container-image.push=true \
+          -Dquarkus.container-image.group=${{ github.repository_owner }} \
+          -Dquarkus.container-image.additional-tags=latest-native \
+          -Dquarkus.container-image.registry=${{ secrets.QUAYIO_REPO }} \
+          -Dquarkus.container-image.username=${{ secrets.QUAYIO_USERNAME }} \
+          -Dquarkus.container-image.password=${{ secrets.QUAYIO_PASSWORD }}
+
   code-coverage:
     runs-on: ubuntu-latest
 

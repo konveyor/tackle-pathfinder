@@ -119,7 +119,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments")
 		.then()
-//			//.log().all()
+			.log().all()
 			.statusCode(201)
 			.body("id", greaterThan(0),
 			      "applicationId", equalTo(20),
@@ -171,7 +171,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(400);
 	}
 
@@ -185,8 +185,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 				.body(new ApplicationDto(330L))
 			.when()
 				.post("/assessments")
-			.then();
-				//.log().all();
+			.then()
+				.log().all();
 			log.info("End Async 1 request Assessment : " + LocalTime.now());
 
 			return response;
@@ -204,8 +204,8 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 				.body(new ApplicationDto(330L))
 			.when()
 				.post("/assessments")
-			.then();
-				//.log().all();
+			.then()
+				.log().all();
 
 			log.info("End Async 2 request Assessment : " + LocalTime.now());
 			return response;
@@ -233,7 +233,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(201)
 			.extract().as(AssessmentHeaderDto.class);
 
@@ -245,7 +245,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.get("/assessments/" + header.getId())
 		.then()
-    		//.log().all()
+    		.log().all()
 			.statusCode(200)
 			.body("applicationId", is(400))
 			.body("status", is("STARTED"))
@@ -273,7 +273,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(201)
 			.extract().as(AssessmentHeaderDto.class);
 
@@ -284,7 +284,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.get("/assessments/" + header.getId())
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(200)
 			.extract().as(AssessmentDto.class);
 
@@ -324,7 +324,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.patch("/assessments/" + header.getId())
 		.then()
-    		//.log().all()
+    		.log().all()
 			.statusCode(200)
 			.body("id", equalTo(header.getId().intValue()),
 				  "applicationId", equalTo(500),
@@ -337,7 +337,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.get("/assessments/" + header.getId())
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(200)
 			.body("questionnaire.categories.find{it.id==" + category.getId() + "}.comment", is("USER COMMENT 1"))
 			.body("questionnaire.categories.find{it.id==" + category.getId() + "}.questions.find{it.id==" + question.getId() + "}.options.find{it.id==" + option.getId() + "}.checked", is(true))
@@ -355,7 +355,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(201)
 			.extract().as(AssessmentHeaderDto.class);
 
@@ -369,7 +369,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.patch("/assessments/" + header.getId())
 		.then()
-    		//.log().all()
+    		.log().all()
 			.statusCode(200)
 			.body("id", equalTo(header.getId().intValue()),
 				  "applicationId", equalTo(5500),
@@ -382,7 +382,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.get("/assessments/" + header.getId())
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(200)
 			.body("status", is("COMPLETE"));
 	}
@@ -397,7 +397,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(201)
 			.extract().as(AssessmentHeaderDto.class);
 
@@ -409,7 +409,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.patch("/assessments/" + header.getId())
 		.then()
-    		//.log().all()
+    		.log().all()
 			.statusCode(400);
 
 		// Retrieval of the assessment again to check updated values
@@ -419,7 +419,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.get("/assessments/" + header.getId())
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(200)
 			.body("status", is("STARTED"));
 	}
@@ -434,7 +434,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(201)
 			.extract().as(AssessmentHeaderDto.class);
 
@@ -445,7 +445,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.get("/assessments/" + header.getId())
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(200)
 			.extract().as(AssessmentDto.class);
 
@@ -459,7 +459,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.patch("/assessments/" + header.getId())
 		.then()
-    		//.log().all()
+    		.log().all()
 			.statusCode(400);
 	}
 
@@ -473,7 +473,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(201)
 			.extract().as(AssessmentHeaderDto.class);
 
@@ -484,7 +484,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.get("/assessments/" + header.getId())
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(200);
 
 		// Deleting the assessment
@@ -494,7 +494,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.delete("/assessments/" + header.getId())
 		.then()
-    		//.log().all()
+    		.log().all()
 			.statusCode(204);
 
 		// Checking again the get
@@ -504,7 +504,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.get("/assessments/" + header.getId())
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(404);
 	}
 
@@ -518,7 +518,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(201)
 			.extract().as(AssessmentHeaderDto.class);
 
@@ -529,7 +529,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.get("/assessments/" + header.getId())
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(200);
 
 		// Deleting the assessment
@@ -539,7 +539,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.delete("/assessments/" + header.getId())
 		.then()
-    		//.log().all()
+    		.log().all()
 			.statusCode(204);
 
 		// Checking again the get
@@ -549,7 +549,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.get("/assessments/" + header.getId())
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(404);
 
 		// Deleting the assessment again
@@ -559,7 +559,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.delete("/assessments/" + header.getId())
 		.then()
-    		//.log().all()
+    		.log().all()
 			.statusCode(404);
 	}
 
@@ -612,7 +612,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(201).extract().as(AssessmentHeaderDto.class);
 
 		// Get the contents of the assessment
@@ -642,7 +642,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments?fromAssessmentId=" + assessmentSourceHeader.getId())
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(201)
 			.body("status", is("STARTED"),
 			      "applicationId", is(89500))
@@ -675,7 +675,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(201)
 			.extract().as(AssessmentHeaderDto.class);
 
@@ -697,7 +697,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments?fromAssessmentId=" + assessmentHeader.getId())
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(400);
 	}
 
@@ -711,7 +711,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(201)
 			.extract().as(AssessmentHeaderDto.class);
 
@@ -722,7 +722,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.delete("/assessments/" + header.getId())
 		.then()
-    		//.log().all()
+    		.log().all()
 			.statusCode(204);
 
 		// Copy of the Assessment, and expect to fail
@@ -733,7 +733,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments?fromAssessmentId=" + header.getId())
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(404);
 	}
 
@@ -747,7 +747,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments?fromAssessmentId=5556")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(404);
 	}
 
@@ -764,7 +764,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments/bulk")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(202)
 			.extract().as(AssessmentBulkDto.class);
 
@@ -779,7 +779,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.when()
 				.get("/assessments/bulk/" + headerBulk.getBulkId())
 			.then()
-				//.log().all()
+				.log().all()
 				.statusCode(200).extract().as(AssessmentBulkDto.class);
 
 			assertThat(bulkDtos.getAssessments()).hasSize(3);
@@ -809,7 +809,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.when()
 			.get("/assessments/" + assessmentHeaderDto.getId())
 			.then()
-			//.log().all()
+			.log().all()
 			.statusCode(200)
 			.extract().as(AssessmentDto.class);
 
@@ -849,7 +849,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.when()
 			.patch("/assessments/" + assessmentHeaderDto.getId())
 			.then()
-			//.log().all()
+			.log().all()
 			.statusCode(200)
 			.body("id", equalTo(assessmentHeaderDto.getId().intValue()),
 				"applicationId", equalTo(99999),
@@ -869,7 +869,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments/bulk")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(202)
 			.extract().as(AssessmentBulkDto.class);
 
@@ -882,7 +882,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.when()
 				.get("/assessments/bulk/" + headerBulk.getBulkId())
 			.then()
-				//.log().all()
+				.log().all()
 				.statusCode(200).extract().as(AssessmentBulkDto.class);
 
 			assertThat(bulkDto.getAssessments()).hasSize(4);
@@ -905,7 +905,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.when()
 			.get("/assessments/" + assessments[0].getId())
 			.then()
-			//.log().all()
+			.log().all()
 			.statusCode(200)
 			.body("applicationId", is(1888))
 			.body("status", is("STARTED"))
@@ -1193,7 +1193,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 				.when()
 				.post("/assessments")
 				.then()
-				//.log().all()
+				.log().all()
 				.statusCode(201)
 				.extract().as(AssessmentHeaderDto.class);
 
@@ -1258,7 +1258,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments/risks")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(200)
 		.extract().as(RiskLineDto[].class);
 
@@ -1274,7 +1274,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments/risks")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(400);
 	}
 
@@ -1323,7 +1323,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 		.when()
 			.post("/assessments/confidence")
 		.then()
-			//.log().all()
+			.log().all()
 			.statusCode(200)
 			.body("find{it.assessmentId=="+ assessmentRED.id + "}.confidence", is(0))
 			.body("find{it.assessmentId=="+ assessmentGREEN.id + "}.confidence", is(100))
@@ -1356,7 +1356,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 			.when()
 			.post("/assessments")
 			.then()
-			//.log().all()
+			.log().all()
 			.statusCode(201)
 			.extract().as(AssessmentHeaderDto.class);
 
