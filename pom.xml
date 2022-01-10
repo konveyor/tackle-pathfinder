@@ -12,10 +12,10 @@
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus-plugin.version>1.12.2.Final</quarkus-plugin.version>
+    <quarkus-plugin.version>2.5.4.Final</quarkus-plugin.version>
     <quarkus.platform.artifact-id>quarkus-universe-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
-    <quarkus.platform.version>1.12.2.Final</quarkus.platform.version>
+    <quarkus.platform.version>2.5.4.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
     <mapstruct.version>1.4.2.Final</mapstruct.version>
     <lombok.version>1.18.20</lombok.version>
@@ -105,12 +105,12 @@
     <dependency>
       <groupId>com.github.konveyor.tackle-commons-rest</groupId>
       <artifactId>commons-rest</artifactId>
-      <version>0.0.1</version>
+      <version>0.0.2</version>
     </dependency>
     <dependency>
       <groupId>com.github.konveyor.tackle-commons-rest</groupId>
       <artifactId>commons-rest-test</artifactId>
-      <version>0.0.1</version>
+      <version>0.0.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -251,7 +251,7 @@
       <properties>
         <quarkus.package.type>native</quarkus.package.type>
         <quarkus.container-image.tag>${quarkus.application.version:latest}-native</quarkus.container-image.tag>
-        <quarkus.jib.base-native-image>registry.access.redhat.com/ubi8-minimal@sha256:4d6547bbb7c5fe0f0d37b491c0c1975ff96bf4cf1c26dd665e3a5d70918b5564</quarkus.jib.base-native-image>
+        <quarkus.native.builder-image>quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11</quarkus.native.builder-image>
       </properties>
     </profile>
     <profile>
@@ -288,6 +288,13 @@
           </plugin>
         </plugins>
       </build>
+    </profile>
+    <profile>
+      <id>container-image</id>
+      <properties>
+        <quarkus.container-image.build>true</quarkus.container-image.build>
+        <quarkus.jib.base-native-image>registry.access.redhat.com/ubi8-minimal@sha256:4d6547bbb7c5fe0f0d37b491c0c1975ff96bf4cf1c26dd665e3a5d70918b5564</quarkus.jib.base-native-image>
+      </properties>
     </profile>
     <profile>
       <id>podman</id>

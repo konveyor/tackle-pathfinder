@@ -20,6 +20,7 @@ import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.services.AssessmentSvc;
 import lombok.extern.java.Log;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1333,7 +1334,7 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 	@Test
 	public void given_AssessmentAndTranslations_when_TranslationDeleted_then_ThatConceptHasTheNotTranslatedVallue() {
-		String KEYCLOAK_SERVER_URL = System.getProperty("quarkus.oidc.auth-server-url", "http://localhost:8180/auth");
+		String KEYCLOAK_SERVER_URL = ConfigProvider.getConfig().getOptionalValue("quarkus.oidc.auth-server-url", String.class).orElse("http://localhost:8180/auth");
 		String ACCESS_TOKEN_JDOE = RestAssured.given().relaxedHTTPSValidation()
 			.auth().preemptive()
 				.basic("backend-service", "secret")

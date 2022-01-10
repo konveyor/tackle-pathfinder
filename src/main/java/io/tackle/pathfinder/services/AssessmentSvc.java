@@ -362,7 +362,7 @@ public class AssessmentSvc {
     }
 
     @Transactional
-    private AssessmentQuestionnaire copyQuestionnaireBetweenAssessments(Assessment sourceAssessment, Assessment targetAssessment) {
+    protected AssessmentQuestionnaire copyQuestionnaireBetweenAssessments(Assessment sourceAssessment, Assessment targetAssessment) {
         AssessmentQuestionnaire questionnaire = AssessmentQuestionnaire.builder()
             .assessment(targetAssessment)
             .questionnaire(sourceAssessment.assessmentQuestionnaire.questionnaire)

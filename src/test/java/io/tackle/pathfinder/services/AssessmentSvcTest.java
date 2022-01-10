@@ -250,7 +250,7 @@ public class AssessmentSvcTest {
     }
 
     @Transactional
-    private boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId)  {
+    public boolean getCheckedForOption(Assessment assessment, Long categoryId, Long questionId, Long optionId)  {
         log.info("categories to check " + assessment.assessmentQuestionnaire.categories.size());
         log.info("categories to check " + assessment.assessmentQuestionnaire.categories.stream().map(e -> e.id.toString()).collect(Collectors.joining(" ## ")));
 
@@ -266,7 +266,7 @@ public class AssessmentSvcTest {
     }
 
     @Transactional
-    private void addStakeholdersToAssessment(Assessment assessment) {
+    public void addStakeholdersToAssessment(Assessment assessment) {
         AssessmentStakeholder stakeholder = AssessmentStakeholder.builder().assessment(assessment).stakeholderId(100L).build();
         stakeholder.persist();
         assessment.stakeholders.add(stakeholder);
@@ -300,8 +300,13 @@ public class AssessmentSvcTest {
                 Assessment assessment = createAssessment(questionnaire, 57L);
                 transaction.commit();
                 return assessment;
-            } catch (Exception exc) {
-                return null;
+            } catch (Throwable exc) {
+                try {
+                    transaction.rollback();
+                } catch (SystemException e) {
+                    e.printStackTrace();
+                }
+                throw new CompletionException(exc);
             }
         });
         Thread.sleep(500);
@@ -311,7 +316,12 @@ public class AssessmentSvcTest {
                 Assessment assessment = createAssessment(questionnaire, 57L);
                 transaction.commit();
                 return assessment;
-            } catch (Exception exc) {
+            } catch (Throwable exc) {
+                try {
+                    transaction.rollback();
+                } catch (SystemException e) {
+                    e.printStackTrace();
+                }
                 throw new CompletionException(exc);
             }
         });
@@ -558,7 +568,7 @@ public class AssessmentSvcTest {
     }
 
     @Transactional
-    private Category createCategory(Questionnaire questionnaire, int order) {
+    public Category createCategory(Questionnaire questionnaire, int order) {
         Category category = Category.builder()
             .name("category-" + order)
             .order(order)
@@ -572,7 +582,7 @@ public class AssessmentSvcTest {
     }
 
     @Transactional
-    private Question createQuestion(Category category, int i) {
+    public Question createQuestion(Category category, int i) {
         Question question = Question.builder()
             .name("question-" + i)
             .order(i)
@@ -590,7 +600,7 @@ public class AssessmentSvcTest {
     }
 
     @Transactional
-    private SingleOption createSingleOption(Question question, int i) {
+    public SingleOption createSingleOption(Question question, int i) {
         SingleOption single = SingleOption.builder()
             .option("option-" + i)
             .order(i)
