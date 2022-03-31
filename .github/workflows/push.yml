@@ -18,7 +18,7 @@ jobs:
         distribution: 'adopt'
         java-package: jdk
     - name: Cache Maven packages
-      uses: actions/cache@v2.1.6
+      uses: actions/cache@v3.0.1
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -39,7 +39,7 @@ jobs:
         distribution: 'adopt'
         java-package: jdk
     - name: Cache Maven packages
-      uses: actions/cache@v2.1.6
+      uses: actions/cache@v3.0.1
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -62,7 +62,7 @@ jobs:
         distribution: 'adopt'
         java-package: jdk
     - name: Cache Maven packages
-      uses: actions/cache@v2.1.6
+      uses: actions/cache@v3.0.1
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -94,7 +94,7 @@ jobs:
         distribution: 'adopt'
         java-package: jdk
     - name: Cache Maven packages
-      uses: actions/cache@v2.1.6
+      uses: actions/cache@v3.0.1
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -123,7 +123,7 @@ jobs:
           distribution: 'adopt'
           java-package: jdk
       - name: Cache Maven packages
-        uses: actions/cache@v2.1.6
+        uses: actions/cache@v3.0.1
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
