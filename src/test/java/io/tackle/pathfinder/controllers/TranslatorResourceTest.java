@@ -6,7 +6,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import io.tackle.commons.testcontainers.KeycloakTestResource;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
-import io.tackle.commons.tests.SecuredResourceTest;
+import io.tackle.pathfinder.AbstractResourceTest;
 import io.tackle.pathfinder.dto.AssessmentCategoryDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         }
 )
 @Log
-class TranslatorResourceTest extends SecuredResourceTest {
+class TranslatorResourceTest extends AbstractResourceTest {
 
     @Inject
     AssessmentSvc assessmentSvc;

@@ -1,6 +1,7 @@
 package io.tackle.pathfinder.model.assessment;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.tackle.pathfinder.model.Constants;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -49,7 +50,7 @@ public class AssessmentQuestionnaire extends PanacheEntity {
     
     @Column(name="language_code", nullable = false)
     @Builder.Default
-    public String languageCode = "EN";
+    public String languageCode = Constants.defaultLanguage;
 
     @Basic(optional = false)
     public String name;

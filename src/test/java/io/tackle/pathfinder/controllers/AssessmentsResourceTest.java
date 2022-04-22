@@ -10,6 +10,7 @@ import io.restassured.response.ValidatableResponse;
 import io.tackle.commons.testcontainers.KeycloakTestResource;
 import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.commons.tests.SecuredResourceTest;
+import io.tackle.pathfinder.AbstractResourceTest;
 import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
@@ -20,6 +21,7 @@ import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.services.AssessmentSvc;
 import lombok.extern.java.Log;
+import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,7 +60,7 @@ import static org.hamcrest.Matchers.is;
         }
 )
 @Log
-public class AssessmentsResourceTest extends SecuredResourceTest {
+public class AssessmentsResourceTest extends AbstractResourceTest {
 	@Inject
 	AssessmentSvc assessmentSvc;
 
@@ -1334,6 +1336,12 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 	@Test
 	public void given_AssessmentAndTranslations_when_TranslationDeleted_then_ThatConceptHasTheNotTranslatedVallue() {
+		Config config = ConfigProvider.getConfig();
+		Boolean authorizationDisabled = config.getValue("pathfinder.disable.authorization", Boolean.class);
+		if (authorizationDisabled) {
+			return;
+		}
+
 		String KEYCLOAK_SERVER_URL = ConfigProvider.getConfig().getOptionalValue("quarkus.oidc.auth-server-url", String.class).orElse("http://localhost:8180/auth");
 		String ACCESS_TOKEN_JDOE = RestAssured.given().relaxedHTTPSValidation()
 			.auth().preemptive()

@@ -1,6 +1,7 @@
  package io.tackle.pathfinder.model.questionnaire;
 
 import io.tackle.commons.entities.AbstractEntity;
+import io.tackle.pathfinder.model.Constants;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -26,7 +27,7 @@ import java.util.List;
 public class Questionnaire extends AbstractEntity {
     @Column(name="language_code", nullable = false)
     @Builder.Default
-    public String languageCode = "EN";
+    public String languageCode = Constants.defaultLanguage;
 
     @Basic(optional = false)
     public String name;
