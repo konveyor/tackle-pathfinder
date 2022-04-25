@@ -1,12 +1,10 @@
 package io.tackle.pathfinder.controllers;
 
-import io.quarkus.test.common.QuarkusTestResource;
-import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import io.restassured.http.ContentType;
-import io.tackle.commons.testcontainers.KeycloakTestResource;
-import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
 import io.tackle.pathfinder.AbstractResourceTest;
+import io.tackle.pathfinder.DefaultTestProfile;
 import io.tackle.pathfinder.dto.AssessmentCategoryDto;
 import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
@@ -24,19 +22,7 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
-@QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
-        initArgs = {
-                @ResourceArg(name = PostgreSQLDatabaseTestResource.DB_NAME, value = "pathfinder_db"),
-                @ResourceArg(name = PostgreSQLDatabaseTestResource.USER, value = "pathfinder"),
-                @ResourceArg(name = PostgreSQLDatabaseTestResource.PASSWORD, value = "pathfinder")
-        }
-)
-@QuarkusTestResource(value = KeycloakTestResource.class,
-        initArgs = {
-                @ResourceArg(name = KeycloakTestResource.IMPORT_REALM_JSON_PATH, value = "keycloak/quarkus-realm.json"),
-                @ResourceArg(name = KeycloakTestResource.REALM_NAME, value = "quarkus")
-        }
-)
+@TestProfile(DefaultTestProfile.class)
 @Log
 class TranslatorResourceTest extends AbstractResourceTest {
 

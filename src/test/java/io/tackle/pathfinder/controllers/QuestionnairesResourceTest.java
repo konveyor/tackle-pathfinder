@@ -1,7 +1,9 @@
 package io.tackle.pathfinder.controllers;
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import io.tackle.pathfinder.AbstractResourceTest;
+import io.tackle.pathfinder.DefaultTestProfile;
 import io.tackle.pathfinder.dto.questionnaire.QuestionnaireHeaderDto;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.services.TranslatorSvc;
@@ -19,6 +21,7 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
+@TestProfile(DefaultTestProfile.class)
 public class QuestionnairesResourceTest extends AbstractResourceTest {
     @Inject
     TranslatorSvc translatorSvc;

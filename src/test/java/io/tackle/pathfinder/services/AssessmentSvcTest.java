@@ -1,14 +1,20 @@
 package io.tackle.pathfinder.services;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.security.identity.SecurityIdentity;
-import io.quarkus.test.common.QuarkusTestResource;
-import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.junit.mockito.InjectMock;
-import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
-import io.tackle.pathfinder.dto.*;
+import io.tackle.pathfinder.DefaultTestProfile;
+import io.tackle.pathfinder.dto.AdoptionCandidateDto;
+import io.tackle.pathfinder.dto.AssessmentCategoryDto;
+import io.tackle.pathfinder.dto.AssessmentDto;
+import io.tackle.pathfinder.dto.AssessmentHeaderDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
+import io.tackle.pathfinder.dto.AssessmentStatus;
+import io.tackle.pathfinder.dto.LandscapeDto;
+import io.tackle.pathfinder.dto.RiskLineDto;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.QuestionType;
 import io.tackle.pathfinder.model.Risk;
@@ -30,11 +36,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import javax.inject.Inject;
-import javax.transaction.*;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.Transactional;
+import javax.transaction.UserTransaction;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.SecurityContext;
-
-import java.security.Principal;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
@@ -44,16 +53,11 @@ import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
-        initArgs = {
-                @ResourceArg(name = PostgreSQLDatabaseTestResource.DB_NAME, value = "pathfinder_db"),
-                @ResourceArg(name = PostgreSQLDatabaseTestResource.USER, value = "pathfinder"),
-                @ResourceArg(name = PostgreSQLDatabaseTestResource.PASSWORD, value = "pathfinder")
-        }
-)
 @QuarkusTest
+@TestProfile(DefaultTestProfile.class)
 @Log
 public class AssessmentSvcTest {
     @Inject
