@@ -11,6 +11,12 @@ keycloak_ip=${2:-$api_ip}
 
 echo "Using API IP: $api_ip   &   Keycloak IP: $keycloak_ip"
 echo
+echo '0 >>> Obtaining the keycloack token for the operations'
+curl -v -X POST "http://$keycloak_ip/auth/realms/quarkus/protocol/openid-connect/token" \
+            --user backend-service:secret \
+            -H 'content-type: application/x-www-form-urlencoded' \
+            -d 'username=alice&password=alice&grant_type=password'
+echo
 echo '1 >>> Obtaining the keycloack token for the operations'
 access_token=$(curl -X POST "http://$keycloak_ip/auth/realms/quarkus/protocol/openid-connect/token" \
             --user backend-service:secret \
