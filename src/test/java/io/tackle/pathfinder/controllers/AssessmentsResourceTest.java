@@ -1,16 +1,25 @@
 package io.tackle.pathfinder.controllers;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.test.common.QuarkusTestResource;
-import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
-import io.tackle.commons.testcontainers.KeycloakTestResource;
-import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
-import io.tackle.commons.tests.SecuredResourceTest;
-import io.tackle.pathfinder.dto.*;
+import io.tackle.pathfinder.AbstractResourceTest;
+import io.tackle.pathfinder.DefaultTestProfile;
+import io.tackle.pathfinder.dto.ApplicationDto;
+import io.tackle.pathfinder.dto.AssessmentBulkDto;
+import io.tackle.pathfinder.dto.AssessmentBulkPostDto;
+import io.tackle.pathfinder.dto.AssessmentCategoryDto;
+import io.tackle.pathfinder.dto.AssessmentDto;
+import io.tackle.pathfinder.dto.AssessmentHeaderDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionOptionDto;
+import io.tackle.pathfinder.dto.AssessmentQuestionnaireDto;
+import io.tackle.pathfinder.dto.AssessmentStatus;
+import io.tackle.pathfinder.dto.LandscapeDto;
+import io.tackle.pathfinder.dto.RiskLineDto;
 import io.tackle.pathfinder.model.Risk;
 import io.tackle.pathfinder.model.assessment.Assessment;
 import io.tackle.pathfinder.model.assessment.AssessmentCategory;
@@ -20,17 +29,22 @@ import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.services.AssessmentSvc;
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.StringUtils;
+import org.awaitility.Awaitility;
+import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.apache.commons.lang3.StringUtils;
-import org.awaitility.Awaitility;
-
 
 import javax.inject.Inject;
-import javax.transaction.*;
-
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.Transactional;
+import javax.transaction.UserTransaction;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.List;
@@ -44,21 +58,9 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 
 @QuarkusTest
-@QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
-        initArgs = {
-                @ResourceArg(name = PostgreSQLDatabaseTestResource.DB_NAME, value = "pathfinder_db"),
-                @ResourceArg(name = PostgreSQLDatabaseTestResource.USER, value = "pathfinder"),
-                @ResourceArg(name = PostgreSQLDatabaseTestResource.PASSWORD, value = "pathfinder")
-        }
-)
-@QuarkusTestResource(value = KeycloakTestResource.class,
-        initArgs = {
-                @ResourceArg(name = KeycloakTestResource.IMPORT_REALM_JSON_PATH, value = "keycloak/quarkus-realm.json"),
-                @ResourceArg(name = KeycloakTestResource.REALM_NAME, value = "quarkus")
-        }
-)
+@TestProfile(DefaultTestProfile.class)
 @Log
-public class AssessmentsResourceTest extends SecuredResourceTest {
+public class AssessmentsResourceTest extends AbstractResourceTest {
 	@Inject
 	AssessmentSvc assessmentSvc;
 
@@ -1334,6 +1336,12 @@ public class AssessmentsResourceTest extends SecuredResourceTest {
 
 	@Test
 	public void given_AssessmentAndTranslations_when_TranslationDeleted_then_ThatConceptHasTheNotTranslatedVallue() {
+		Config config = ConfigProvider.getConfig();
+		Boolean authorizationDisabled = config.getValue("pathfinder.disable.authorization", Boolean.class);
+		if (authorizationDisabled) {
+			return;
+		}
+
 		String KEYCLOAK_SERVER_URL = ConfigProvider.getConfig().getOptionalValue("quarkus.oidc.auth-server-url", String.class).orElse("http://localhost:8180/auth");
 		String ACCESS_TOKEN_JDOE = RestAssured.given().relaxedHTTPSValidation()
 			.auth().preemptive()

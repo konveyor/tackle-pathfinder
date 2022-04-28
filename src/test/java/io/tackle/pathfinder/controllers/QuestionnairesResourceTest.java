@@ -1,24 +1,28 @@
 package io.tackle.pathfinder.controllers;
 
 import io.quarkus.test.junit.QuarkusTest;
-import io.tackle.commons.tests.SecuredResourceTest;
-import io.tackle.pathfinder.dto.AssessmentHeaderDto;
-import io.tackle.pathfinder.dto.AssessmentStatus;
+import io.quarkus.test.junit.TestProfile;
+import io.tackle.pathfinder.AbstractResourceTest;
+import io.tackle.pathfinder.DefaultTestProfile;
 import io.tackle.pathfinder.dto.questionnaire.QuestionnaireHeaderDto;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
-import io.tackle.pathfinder.services.QuestionnaireSvc;
 import io.tackle.pathfinder.services.TranslatorSvc;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
-import javax.transaction.*;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-public class QuestionnairesResourceTest extends SecuredResourceTest {
+@TestProfile(DefaultTestProfile.class)
+public class QuestionnairesResourceTest extends AbstractResourceTest {
     @Inject
     TranslatorSvc translatorSvc;
 
