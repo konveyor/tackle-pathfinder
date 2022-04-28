@@ -16,10 +16,9 @@
 package io.tackle.pathfinder.services;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.test.common.QuarkusTestResource;
-import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
-import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
+import io.quarkus.test.junit.TestProfile;
+import io.tackle.pathfinder.DefaultTestProfile;
 import io.tackle.pathfinder.dto.AssessmentDto;
 import io.tackle.pathfinder.dto.AssessmentHeaderDto;
 import io.tackle.pathfinder.dto.AssessmentQuestionDto;
@@ -34,16 +33,10 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
-    initArgs = {
-        @ResourceArg(name = PostgreSQLDatabaseTestResource.DB_NAME, value = "pathfinder_db"),
-        @ResourceArg(name = PostgreSQLDatabaseTestResource.USER, value = "pathfinder"),
-        @ResourceArg(name = PostgreSQLDatabaseTestResource.PASSWORD, value = "pathfinder")
-    }
-)
 @QuarkusTest
+@TestProfile(DefaultTestProfile.class)
 public class TranslatorSvcTest {
     @Inject
     TranslatorSvc translatorSvc;

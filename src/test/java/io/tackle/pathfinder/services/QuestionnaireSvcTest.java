@@ -16,19 +16,20 @@
 package io.tackle.pathfinder.services;
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
+import io.tackle.pathfinder.DefaultTestProfile;
 import io.tackle.pathfinder.dto.questionnaire.QuestionnaireHeaderDto;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
-
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
+@TestProfile(DefaultTestProfile.class)
 class QuestionnaireSvcTest {
     @Inject
     QuestionnaireSvc questionnaireSvc;

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.tackle.pathfinder.model.Constants;
 import io.tackle.pathfinder.model.i18n.TranslatedText;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
@@ -72,6 +73,7 @@ public class TranslatorSvc {
 
     public String getLanguage(String token, String queryLanguage) {
         if (StringUtils.isNotBlank(queryLanguage)) return queryLanguage;
+        if (token == null || token.isEmpty()) return Constants.defaultLanguage;
 
         String tokenBodyJson = new String(Base64.getDecoder().decode(token.split("\\.")[1]));
         return getLocaleFromTokenBody(tokenBodyJson);
