@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
 
-    Copyright © 2021 Konveyor (https://konveyor.io/)
+    Copyright © 2021 the Konveyor Contributors (https://konveyor.io/)
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -253,7 +253,7 @@
             <plantuml>APOSTROPHE_STYLE</plantuml>
           </mapping>
           <properties>
-            <owner>Konveyor</owner>
+            <owner>the Konveyor Contributors</owner>
             <email>https://konveyor.io/</email>
           </properties>
           <licenseSets>

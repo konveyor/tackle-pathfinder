@@ -1,5 +1,5 @@
 --
--- Copyright © 2021 Konveyor (https://konveyor.io/)
+-- Copyright © 2021 the Konveyor Contributors (https://konveyor.io/)
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
