@@ -16,6 +16,7 @@
 package io.tackle.pathfinder.services;
 
 import com.google.common.util.concurrent.AtomicDouble;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.tackle.pathfinder.dto.*;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.vertx.ConsumeEvent;
@@ -314,6 +315,20 @@ public class AssessmentSvc {
         boolean deleted = Assessment.deleteById(assessment.id);
         log.log(Level.FINE, "Deleted assessment : " + assessmentId + " = " + deleted);
         if (!deleted) throw new BadRequestException();
+    }
+
+    @Transactional
+    public void bulkDeleteAssessments(@NotNull List <Long> applicationIds) {
+        applicationIds.forEach(applicationId -> {
+            PanacheQuery<Assessment> query = Assessment.find("application_id", applicationId);
+            List<Assessment> assessments = query.stream().collect(Collectors.toList());
+            assessments.forEach(assessment -> {
+                deleteAssessment(assessment.id);
+            });
+
+        });
+        //Assessment.delete("application_id in ?1",applicationIds);
+        //log.log(Level.FINE, "Deleted assessments for applicationIds : " + applicationIds.stream().map(x->String.valueOf(x)).collect(Collectors.joining(", ")));
     }
 
     public AssessmentBulkDto bulkCreateAssessments(Long fromAssessmentId, @NotNull @Valid List<Long> appList) throws NotSupportedException, SystemException, SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException {
