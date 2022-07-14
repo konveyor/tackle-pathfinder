@@ -366,5 +366,26 @@ test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId 
 test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 12) | .status ') = '"STARTED"'
 test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId == 325100) | .status ') = '"STARTED"'
 
+echo
+echo
+echo '21 >>> Bulk delete assessments passing in a list of applicationIds and receive 204 as return code'
+req_get_delete_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessments/bulkDelete" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -d "[{\"applicationId\": $applicationSource}, {\"applicationId\": $applicationTarget}]" \
+             -w "%{http_code}")
+test "$req_get_delete_assessment" = "204"
+
+echo
+echo
+echo '22 >>> Given a deleted assessment, request assessments by application id and receive empty list'
+req_find_delete_assessment=$(curl -X GET "http://$api_ip/pathfinder/assessments?applicationId=$applicationSource" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}")
+test "$req_find_delete_assessment" = "[]200"
+
+
+req_find_delete_assessment=$(curl -X GET "http://$api_ip/pathfinder/assessments?applicationId=$applicationTarget" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -w "%{http_code}")
+test "$req_find_delete_assessment" = "[]200"
+
 
 echo " +++++ API CHECK SUCCESSFUL ++++++"
