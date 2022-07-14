@@ -370,6 +370,7 @@ echo
 echo
 echo '21 >>> Bulk delete assessments passing in a list of applicationIds and receive 204 as return code'
 req_get_delete_assessment=$(curl -X POST "http://$api_ip/pathfinder/assessments/bulkDelete" -H 'Accept: application/json' \
+            -H 'Content-Type: application/json' \
             -H "Authorization: Bearer $access_token" \
             -d "[{\"applicationId\": $applicationSource}, {\"applicationId\": $applicationTarget}]" \
              -w "%{http_code}")
