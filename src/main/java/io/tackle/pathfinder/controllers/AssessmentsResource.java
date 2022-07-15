@@ -145,7 +145,7 @@ public class AssessmentsResource {
     return assessmentSvc.bulkGet(bulkId);
   }
 
-  @POST
+  @DELETE
   @Path("/bulkDelete")
   @Produces("application/json")
   @Consumes("application/json")
