@@ -327,6 +327,12 @@ public class AssessmentSvc {
             });
 
         });
+
+        /*
+            This approach (calling a delete method passing in a custom query)
+            was tried but it didn't work as cascade delete instructions on such methods are ignored by Panache.
+            See: https://github.com/quarkusio/quarkus/issues/13941#issuecomment-757500370
+        */
         //Assessment.delete("application_id in ?1",applicationIds);
         //log.log(Level.FINE, "Deleted assessments for applicationIds : " + applicationIds.stream().map(x->String.valueOf(x)).collect(Collectors.joining(", ")));
     }

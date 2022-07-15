@@ -368,7 +368,29 @@ test $(echo $req_bulk_applications | jq '.assessments[] | select(.applicationId 
 
 echo
 echo
-echo '21 >>> Bulk delete assessments passing in a list of applicationIds and receive 204 as return code'
+echo '21 >>> Bulk delete assessments passing in a list of applicationIds, one of which doesnt exist and receive 204 as return code'
+req_get_delete_assessment=$(curl -X DELETE "http://$api_ip/pathfinder/assessments/bulkDelete" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" \
+            -H 'Content-Type: application/json' \
+            -d "[{\"applicationId\": 111111111}, {\"applicationId\": $applicationSource}, {\"applicationId\": $applicationTarget}]" \
+             -w "%{http_code}")
+test "$req_get_delete_assessment" = "204"
+
+echo
+echo
+echo '22 >>> Given rolled back deletion of assessments, request assessments by application id and make sure they are still there'
+req_find_delete_assessment=$(curl -X GET "http://$api_ip/pathfinder/assessments?applicationId=$applicationSource" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -s)
+test $(echo $req_find_delete_assessment | jq '.assessments | length') = 1
+
+
+req_find_delete_assessment=$(curl -X GET "http://$api_ip/pathfinder/assessments?applicationId=$applicationTarget" -H 'Accept: application/json' \
+            -H "Authorization: Bearer $access_token" -s)
+test $(echo $req_find_delete_assessment | jq '.assessments | length') = 1
+
+echo
+echo
+echo '23 >>> Bulk delete assessments passing in a list of applicationIds with assessments and receive 204 as return code'
 req_get_delete_assessment=$(curl -X DELETE "http://$api_ip/pathfinder/assessments/bulkDelete" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
             -H 'Content-Type: application/json' \
@@ -378,7 +400,7 @@ test "$req_get_delete_assessment" = "204"
 
 echo
 echo
-echo '22 >>> Given a deleted assessment, request assessments by application id and receive empty list'
+echo '24 >>> Given a deleted assessment, request assessments by application id and receive empty list'
 req_find_delete_assessment=$(curl -X GET "http://$api_ip/pathfinder/assessments?applicationId=$applicationSource" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -w "%{http_code}")
 test "$req_find_delete_assessment" = "[]200"
