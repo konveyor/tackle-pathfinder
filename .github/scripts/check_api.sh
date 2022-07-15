@@ -381,12 +381,12 @@ echo
 echo '22 >>> Given rolled back deletion of assessments, request assessments by application id and make sure they are still there'
 req_find_delete_assessment=$(curl -X GET "http://$api_ip/pathfinder/assessments?applicationId=$applicationSource" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s)
-test $(echo $req_find_delete_assessment | jq '.assessments | length') = 1
+test "1" = "$(echo $req_find_delete_assessment | jq 'length')"
 
 
 req_find_delete_assessment=$(curl -X GET "http://$api_ip/pathfinder/assessments?applicationId=$applicationTarget" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" -s)
-test $(echo $req_find_delete_assessment | jq '.assessments | length') = 1
+test "1" = "$(echo $req_find_delete_assessment | jq 'length')"
 
 echo
 echo
