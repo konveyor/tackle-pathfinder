@@ -30,6 +30,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -149,8 +151,8 @@ public class AssessmentsResource {
   @Path("/bulkDelete")
   @Produces("application/json")
   @Consumes("application/json")
-  public Response bulkDelete(@NotNull @Valid List<ApplicationDto> applicationId) {
-    assessmentSvc.bulkDeleteAssessments(applicationId.stream().map(ApplicationDto::getApplicationId).collect(Collectors.toList()));
+  public Response bulkDelete(@NotNull @Valid LinkedHashMap<String, List<Long>> applicationIds) {
+    assessmentSvc.bulkDeleteAssessments(applicationIds.get("applicationIds"));
     return Response.ok().status(Response.Status.NO_CONTENT).build();
   }
 }
