@@ -372,7 +372,7 @@ echo '21 >>> Bulk delete assessments passing in a list of applicationIds, one of
 req_get_delete_assessment=$(curl -X DELETE "http://$api_ip/pathfinder/assessments/bulkDelete" -H 'Accept: application/json' \
             -H "Authorization: Bearer $access_token" \
             -H 'Content-Type: application/json' \
-            -d "{\"applicationIds\": [111111111,$applicationSource},$applicationTarget]}" \
+            -d "{\"applicationIds\": [111111111,$applicationSource,$applicationTarget]}" \
              -w "%{http_code}")
 test "$req_get_delete_assessment" = "204"
 
