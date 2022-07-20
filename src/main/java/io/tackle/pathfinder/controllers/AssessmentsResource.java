@@ -144,4 +144,13 @@ public class AssessmentsResource {
   public AssessmentBulkDto bulkGet(@NotNull @PathParam("bulkId") Long bulkId) {
     return assessmentSvc.bulkGet(bulkId);
   }
+
+  @DELETE
+  @Path("/bulkDelete")
+  @Produces("application/json")
+  @Consumes("application/json")
+  public Response bulkDelete(@NotNull @Valid ApplicationBulkDto applicationBulkDto) {
+    assessmentSvc.bulkDeleteAssessments(applicationBulkDto.getApplicationIds());
+    return Response.ok().status(Response.Status.NO_CONTENT).build();
+  }
 }
