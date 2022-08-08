@@ -192,6 +192,84 @@ curl 'http://localhost:8085/pathfinder/assessments' \
   -d "{ \"applicationId\": 20 }" \
   -v -s | jq
 ```
+##Alter Default Questionnaire workaround
+>:rotating_light: Instructions for this workaround are provided for development purposes and NOT for production usage :rotating_light:
+
+**This description is meant to support developers and contributors developing tackle-pathfinder.**
+
+If questions need to be added to the default questionnaire it can be achieved through running sql commands against the database.
+
+In the Openshift admin console go to the database pod, whose name begins with `pathfinder-postgres`, and go to the `Terminal` tab.
+Login using 'psql -U $POSTGRES_USER -d &POSTGRES_DB' then find the id of the category you wish to add questions to using `select * from category;` (ref. *screenshot-0*)
+
+![screenshot-0](doc/screenshots/pathfinder_psql_login.png)
+*screenshot-0: login to the pathfinder db pod and find available categories*
+
+For this example we'll add a question to category `Application Observability` with `id = 124`. Select the existing questions for this category using `select * from question where category_id=124;` (ref. *screenshot-1*)
+
+![screenshot-1](doc/screenshots/pathfinder_select_questions.png)
+*screenshot-1: find existing questions for the selected category*
+
+To place a question at the end of the list for this category we must give it `category_id=124` and `question_order=6`
+We run a sql command like this to do so:
+```Shell
+insert into question (
+        id,
+        question_order,
+        type,
+        name,
+        question_text,
+        description,
+        category_id
+    )
+values (
+        nextval('hibernate_sequence'),
+        6,
+        'SINGLE',
+        'STRING',
+        'How long is a piece of string?',
+        'String length is important',
+        124
+    );
+```
+To complete the question addition, we must add a number of single_option answers to the question for the user of the questionnaire to choose from, like so:
+
+```Shell
+insert into single_option (
+        id,
+        singleoption_order,
+        option,
+        risk,
+        question_id
+    )
+values (
+        nextval('hibernate_sequence'),
+        0,
+        'Unknown',
+        'UNKNOWN',
+        (
+            select max(id)
+            from question
+        )
+    );
+insert into single_option (
+        id,
+        singleoption_order,
+        option,
+        risk,
+        question_id
+    )
+values (
+        nextval('hibernate_sequence'),
+        1,
+        'Short ',
+        'RED',
+        (
+            select max(id)
+            from question
+        )
+    );
+```
 
  # Internationalization
 
