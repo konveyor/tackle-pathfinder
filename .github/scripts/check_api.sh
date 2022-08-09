@@ -17,6 +17,7 @@ access_token=$(curl --http1.0 -X POST "http://$keycloak_ip/auth/realms/quarkus/p
             -H 'content-type: application/x-www-form-urlencoded' \
             -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token')
 echo
+echo "access_token =" $access_token
 echo
 echo '2 >>> Given a NOT assessed app When Get Assessments ThenResult Empty body with 200 http code'
 req_not_existing_app=$(curl -X GET "http://$api_ip/pathfinder/assessments?applicationId=100" -H 'Accept: application/json' \
