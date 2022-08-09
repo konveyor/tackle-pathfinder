@@ -15,7 +15,6 @@ echo '1 >>> Obtaining the keycloak token for the operations'
 access_token=$(curl -v --http1.0 -X POST "http://$keycloak_ip/auth/realms/quarkus/protocol/openid-connect/token" \
             --user backend-service:secret \
             -H 'content-type: application/x-www-form-urlencoded' \
-            -H 'Accept: application/json' \
             -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token')
 echo
 echo
