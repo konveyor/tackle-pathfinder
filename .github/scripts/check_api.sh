@@ -16,6 +16,7 @@ access_token=$(curl --http1.0 -X POST "http://$keycloak_ip/auth/realms/quarkus/p
             --user backend-service:secret \
             -H 'content-type: application/x-www-form-urlencoded' \
             -H 'Accept: application/json' \
+            --write-out \
             -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token')
 echo
 echo
