@@ -80,9 +80,9 @@ jobs:
               src/main/kubernetes/tackle-pathfinder.yaml | kubectl apply -n tackle -f -
 
       - name: Verify keycloak
-        run: kubectl wait deployment/keycloak --for condition=available --timeout=-1s -n tackle
+        run: kubectl wait deployment/keycloak --for=condition=available --timeout=-1s -n tackle
       - name: Verify tackle-pathfinder
-        run: kubectl wait deployment/tackle-pathfinder --for condition=available --timeout=-1s -n tackle
+        run: kubectl wait deployment/tackle-pathfinder --for=condition=available --timeout=-1s -n tackle
 
       - name: Wait for Ingress
         run: |
