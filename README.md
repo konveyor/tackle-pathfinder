@@ -196,3 +196,7 @@ curl 'http://localhost:8085/pathfinder/assessments' \
  # Internationalization
 
  To contribute translating Tackle Pathfinder (questionnaire) into a new language please read [Internationalization](./INTERNATIONALIZATION)
+ 
+ 
+## Code of Conduct
+Refer to Konveyor's Code of Conduct [here](https://github.com/konveyor/community/blob/main/CODE_OF_CONDUCT.md).
