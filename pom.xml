@@ -43,7 +43,7 @@
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
     <mapstruct.version>1.4.2.Final</mapstruct.version>
     <lombok.version>1.18.20</lombok.version>
-    <testcontainers.version>1.16.0</testcontainers.version>
+    <testcontainers.version>1.17.4</testcontainers.version>
     <keycloak.version>12.0.3</keycloak.version>
     <jacoco.version>0.8.7</jacoco.version>
   </properties>
