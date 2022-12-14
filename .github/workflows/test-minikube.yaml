@@ -31,7 +31,7 @@ jobs:
       - name: Save container image
         run: docker save -o tackle-pathfinder.tar tackle/tackle-pathfinder:current-pr
       - name: Upload container image
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: tackle-pathfinder
           path: tackle-pathfinder.tar
