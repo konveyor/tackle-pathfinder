@@ -1,0 +1,23 @@
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest as builder
+COPY . /tackle-pathfinder
+RUN microdnf -y install freetype-devel gcc glibc-devel libstdc++-static tar wget which zlib-devel
+WORKDIR /opt
+RUN wget https://github.com/graalvm/mandrel/releases/download/mandrel-21.3.5.1-Final/mandrel-java11-linux-$(if [ $(uname -m) == "x86_64" ]; then echo amd64; elif [ $(uname -m) == "amd64" ]; then echo amd64; else echo aarch64; fi)-21.3.5.1-Final.tar.gz
+RUN tar -xf mandrel-java11-linux-$(if [ $(uname -m) == "x86_64" ]; then echo amd64; elif [ $(uname -m) == "amd64" ]; then echo amd64; else echo aarch64; fi)-21.3.5.1-Final.tar.gz
+ENV JAVA_HOME="/opt/mandrel-java11-21.3.5.1-Final"
+ENV GRAALVM_HOME="/opt/mandrel-java11-21.3.5.1-Final"
+ENV PATH=/opt/mandrel-java11-21.3.5.1-Final/bin:/root/.local/bin:/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+WORKDIR /tackle-pathfinder
+RUN ./mvnw package -Dquarkus.native.container-build=false -Dquarkus.native.container-runtime= -Dmaven.test.skip=true -DskipTests -Pnative
+
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
+WORKDIR /work/
+RUN chown 1001 /work \
+    && chmod "g+rwX" /work \
+    && chown 1001:root /work
+COPY --chown=1001:root --from=builder /tackle-pathfinder/target/*-runner /work/application
+
+EXPOSE 8080
+USER 1001
+
+CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]
