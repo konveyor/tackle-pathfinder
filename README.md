@@ -65,7 +65,7 @@ podman run -p 9080:8080 apicurio/apicurito-ui
 1. in your cluster install microcks & apicurio operators
 1. go to secrets , my-microcksinstall-keycloak-admin, copy username and password
 1. go to keycloak route login using those credentials
-1. got to view all suers and set the password for admin
+1. got to view all users and set the password for admin
 1. go to microcks route and log with those credentials
 
 ---
