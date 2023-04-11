@@ -80,9 +80,9 @@ jobs:
               src/main/kubernetes/tackle-pathfinder.yaml | kubectl apply -n tackle -f -
 
       - name: Verify keycloak
-        run: kubectl wait deployment/keycloak --for condition=available --timeout=-1s -n tackle
+        run: kubectl wait deployment/keycloak --for=condition=available --timeout=-1s -n tackle
       - name: Verify tackle-pathfinder
-        run: kubectl wait deployment/tackle-pathfinder --for condition=available --timeout=-1s -n tackle
+        run: kubectl wait deployment/tackle-pathfinder --for=condition=available --timeout=-1s -n tackle
 
       - name: Wait for Ingress
         run: |
@@ -92,6 +92,7 @@ jobs:
             external_ip=$(kubectl get ingress tackle --template="{{range .status.loadBalancer.ingress}}{{.ip}}{{end}}" -n tackle);[ -z "$external_ip" ] &&
             sleep 10;
           done;
+          sleep 30 &&
           echo "End point ready:" &&
           echo $external_ip;'
 
