@@ -55,17 +55,58 @@
     }, {
       "id" : "8c1abe12-62fe-4a06-ae0d-f5fb67dddbb0",
       "name" : "admin",
-      "composite" : false,
+      "composite" : true,
       "clientRole" : false,
       "containerId" : "11d78bf6-6d10-4484-baba-a1388379d68b",
-      "attributes" : { }
+      "attributes" : { },
+      "composites": {
+        "client": {
+          "backend-service": [
+            "controls:write",
+            "inventory:application:write",
+            "inventory:application-import:write",
+            "inventory:application-dependency:write",
+            "inventory:application-review:write",
+            "pathfinder:assessment:write"
+          ]
+        }
+      }
     }, {
+      "id": "f777a295-e6bc-45d5-8d84-e476a9021242",
+      "name": "architect",
+      "composite": true,
+      "clientRole" : false,
+      "containerId": "11d78bf6-6d10-4484-baba-a1388379d68b",
+      "attributes" : { },
+      "composites": {
+        "client": {
+          "backend-service": [
+            "controls:write",
+            "inventory:application:write",
+            "inventory:application-import:write",
+            "inventory:application-dependency:write",
+            "inventory:application-review:write",
+            "pathfinder:assessment:write"
+          ]
+        }
+      }
+    },{
       "id" : "5afce544-6a3c-495f-b805-fd737cf5081e",
-      "name" : "user",
-      "composite" : false,
+      "name" : "migrator",
+      "composite" : true,
       "clientRole" : false,
       "containerId" : "11d78bf6-6d10-4484-baba-a1388379d68b",
-      "attributes" : { }
+      "attributes" : { },
+      "composites": {
+        "client": {
+          "backend-service": [
+            "controls:read",
+            "inventory:application:read",
+            "inventory:application-import:read",
+            "pathfinder:assessment:write"
+          ]
+        }
+      }
     }, {
       "id" : "bc431d62-a80a-425b-961a-0fb3fc59006d",
       "name" : "offline_access",
@@ -253,6 +294,135 @@
         "clientRole" : true,
         "containerId" : "0ac5df91-e044-4051-bd03-106a3a5fb9cc",
         "attributes" : { }
+      }, {
+        "id": "691daa33-980e-419a-a63f-c86d07a03dae",
+        "name": "controls:read",
+        "composite": false,
+        "clientRole": true,
+        "containerId": "0ac5df91-e044-4051-bd03-106a3a5fb9cc",
+        "attributes": {}
+      }, {
+        "id": "574e82d1-9fc3-4166-bccd-f227afe02982",
+        "name": "controls:write",
+        "composite": true,
+        "composites": {
+          "client": {
+            "backend-service": [
+              "controls:read"
+            ]
+          }
+        },
+        "clientRole": true,
+        "containerId": "0ac5df91-e044-4051-bd03-106a3a5fb9cc",
+        "attributes": {}
+      }, {
+        "id": "5cf0b4ca-7e26-4f86-a3d3-6dab69243d33",
+        "name": "inventory:application:read",
+        "composite": true,
+        "composites": {
+          "client": {
+            "backend-service": [
+              "controls:read",
+              "pathfinder:assessment:read"
+            ]
+          }
+        },
+        "clientRole": true,
+        "containerId": "0ac5df91-e044-4051-bd03-106a3a5fb9cc",
+        "attributes": {}
+      }, {
+        "id": "f89d033f-1d90-4061-bfff-bf380aaa844a",
+        "name": "inventory:application:write",
+        "composite": true,
+        "composites": {
+          "client": {
+            "backend-service": [
+              "inventory:application:read"
+            ]
+          }
+        },
+        "clientRole": true,
+        "containerId": "0ac5df91-e044-4051-bd03-106a3a5fb9cc",
+        "attributes": {}
+      }, {
+        "id": "f0eb63c2-033f-447a-85bd-55c83f1e3619",
+        "name": "inventory:application-import:read",
+        "composite": true,
+        "composites": {
+          "client": {
+            "backend-service": [
+              "inventory:application:read"
+            ]
+          }
+        },
+        "clientRole": true,
+        "containerId": "0ac5df91-e044-4051-bd03-106a3a5fb9cc",
+        "attributes": {}
+      }, {
+        "id": "67082935-a948-4395-a0c8-a851773ca1ba",
+        "name": "inventory:application-import:write",
+        "composite": true,
+        "composites": {
+          "client": {
+            "backend-service": [
+              "inventory:application-import:read"
+            ]
+          }
+        },
+        "clientRole": true,
+        "containerId": "0ac5df91-e044-4051-bd03-106a3a5fb9cc",
+        "attributes": {}
+      }, {
+        "id": "d8a18018-8ce5-497f-b7e3-de7b1112ac39",
+        "name": "inventory:application-dependency:write",
+        "composite": true,
+        "composites": {
+          "client": {
+            "backend-service": [
+              "inventory:application:read"
+            ]
+          }
+        },
+        "clientRole": true,
+        "containerId": "0ac5df91-e044-4051-bd03-106a3a5fb9cc",
+        "attributes": {}
+      }, {
+        "id": "3ed86dfd-d354-4d70-9467-a0b8270bb37c",
+        "name": "inventory:application-review:write",
+        "composite": true,
+        "composites": {
+          "client": {
+            "backend-service": [
+              "inventory:application:read",
+              "pathfinder:assessment:write"
+            ]
+          }
+        },
+        "clientRole": true,
+        "containerId": "0ac5df91-e044-4051-bd03-106a3a5fb9cc",
+        "attributes": {}
+      }, {
+        "id": "caf1d234-b5e4-4cbe-8915-24a9a7cc7ab1",
+        "name": "pathfinder:assessment:read",
+        "composite": false,
+        "clientRole": true,
+        "containerId": "0ac5df91-e044-4051-bd03-106a3a5fb9cc",
+        "attributes": {}
+      }, {
+        "id": "03f48fd4-de69-4baa-8177-cdab92d76209",
+        "name": "pathfinder:assessment:write",
+        "composite": true,
+        "composites": {
+          "client": {
+            "backend-service": [
+              "inventory:application:read",
+              "pathfinder:assessment:read"
+            ]
+          }
+        },
+        "clientRole": true,
+        "containerId": "0ac5df91-e044-4051-bd03-106a3a5fb9cc",
+        "attributes": {}
       } ],
       "broker" : [ {
         "id" : "d36865b0-7ade-4bcd-a7dc-1dacbd80f169",
@@ -296,7 +466,7 @@
     }
   },
   "groups" : [ ],
-  "defaultRoles" : [ "uma_authorization", "offline_access" ],
+  "defaultRoles" : [ "uma_authorization", "offline_access", "migrator" ],
   "requiredCredentials" : [ "password" ],
   "otpPolicyType" : "totp",
   "otpPolicyAlgorithm" : "HmacSHA1",
@@ -458,72 +628,8 @@
     "authorizationSettings" : {
       "allowRemoteResourceManagement": true,
       "policyEnforcementMode": "ENFORCING",
-      "resources": [
-        {
-          "name": "User Resource",
-          "ownerManagedAccess": false,
-          "attributes": {},
-          "_id": "df1b74a9-3f10-499d-a581-368de48e512b",
-          "uris": [
-            "/api/users/*"
-          ]
-        },
-        {
-          "name": "Administration Resource",
-          "ownerManagedAccess": false,
-          "attributes": {},
-          "_id": "7124e2f1-e6dc-44b4-87ab-24b010090b97",
-          "uris": [
-            "/api/admin/*"
-          ]
-        }
-      ],
-      "policies": [
-        {
-          "id": "b8710fa6-160e-4de0-adf3-398c7007a0af",
-          "name": "Any User Policy",
-          "description": "Any user granted with the user role can access something",
-          "type": "role",
-          "logic": "POSITIVE",
-          "decisionStrategy": "UNANIMOUS",
-          "config": {
-            "roles": "[{\"id\":\"user\",\"required\":false}]"
-          }
-        },
-        {
-          "id": "fcef30b2-68b2-4b78-9f3d-9162c6cdf5cb",
-          "name": "Only Administrators",
-          "description": "Only administrators can access",
-          "type": "role",
-          "logic": "POSITIVE",
-          "decisionStrategy": "UNANIMOUS",
-          "config": {
-            "roles": "[{\"id\":\"admin\",\"required\":false}]"
-          }
-        },
-        {
-          "id": "3479dd56-02e9-4222-94fe-6a13cd065195",
-          "name": "User Resource Permission",
-          "type": "resource",
-          "logic": "POSITIVE",
-          "decisionStrategy": "UNANIMOUS",
-          "config": {
-            "resources": "[\"User Resource\"]",
-            "applyPolicies": "[\"Any User Policy\"]"
-          }
-        },
-        {
-          "id": "60188298-d55b-4066-b231-6a7c56ff7cc5",
-          "name": "Administration Resource Permission",
-          "type": "resource",
-          "logic": "POSITIVE",
-          "decisionStrategy": "UNANIMOUS",
-          "config": {
-            "resources": "[\"Administration Resource\"]",
-            "applyPolicies": "[\"Only Administrators\"]"
-          }
-        }
-      ],
+      "resources": [],
+      "policies": [],
       "scopes": [],
       "decisionStrategy": "UNANIMOUS"
     }
@@ -1585,7 +1691,7 @@
     } ],
     "disableableCredentialTypes" : [ "password" ],
     "requiredActions" : [ ],
-    "realmRoles" : [ "admin", "user" ],
+    "realmRoles" : [ "admin" ],
     "notBefore" : 0,
     "groups" : [ ]
   }, {
@@ -1611,7 +1717,7 @@
     } ],
     "disableableCredentialTypes" : [ "password" ],
     "requiredActions" : [ ],
-    "realmRoles" : [ "user" ],
+    "realmRoles" : [ "admin" ],
     "notBefore" : 0,
     "groups" : [ ]
   }, {
@@ -1637,7 +1743,7 @@
     } ],
     "disableableCredentialTypes" : [ "password" ],
     "requiredActions" : [ ],
-    "realmRoles" : [ "confidential", "user" ],
+    "realmRoles" : [ "confidential", "migrator" ],
     "notBefore" : 0,
     "groups" : [ ]
   }, {
@@ -1650,7 +1756,7 @@
       "type" : "password",
       "value" : "pedro"
     } ],
-    "realmRoles" : ["user"]
+    "realmRoles" : ["architect"]
   }, {
     "id" : "948c59ec-46ed-4d99-aa43-02900029b930",
     "createdTimestamp" : 1554245880023,
