@@ -1,0 +1,31 @@
+name: PR build container images
+
+on: [push]
+
+jobs:
+  container-images:
+    if: ${{ github.event_name != 'pull_request' && github.repository_owner != 'konveyor' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: "11"
+          distribution: "adopt"
+          java-package: jdk
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+      - name: Build and Push to GitHub Packages
+        run: |
+          mvn -U -B package --file pom.xml \
+          -Pnative -Dquarkus.container-image.build=true -DskipTests \
+          -Dquarkus.container-image.push=true \
+          -Dquarkus.container-image.group=${{ github.repository_owner }} \
+          -Dquarkus.container-image.name=${{ github.event.repository.name }}/tackle-pathfinder \
+          -Dquarkus.container-image.tag=${{ steps.extract_branch.outputs.branch }} \
+          -Dquarkus.container-image.registry=ghcr.io \
+          -Dquarkus.container-image.username=${{ github.actor }} \
+          -Dquarkus.container-image.password=${{ secrets.GITHUB_TOKEN }}
