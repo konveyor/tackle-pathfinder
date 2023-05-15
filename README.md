@@ -195,7 +195,7 @@ curl 'http://localhost:8085/pathfinder/assessments' \
 
  # Internationalization
 
- To contribute translating Tackle Pathfinder (questionnaire) into a new language please read [Internationalization](./INTERNATIONALIZATION)
+ To contribute translating Tackle Pathfinder (questionnaire) into a new language please read [Internationalization](./INTERNATIONALIZATION.md)
  
  
 ## Code of Conduct
