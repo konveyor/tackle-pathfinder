@@ -101,6 +101,7 @@ podman run -p 9080:8080 apicurio/apicurito-ui
 ### Assessment
 
 ![Assess Diagram](doc/diagrams/out/Use%20Cases.png)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkonveyor%2Ftackle-pathfinder.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkonveyor%2Ftackle-pathfinder?ref=badge_shield)
 
 ### Questionaire Design
 
@@ -200,3 +201,7 @@ curl 'http://localhost:8085/pathfinder/assessments' \
  
 ## Code of Conduct
 Refer to Konveyor's Code of Conduct [here](https://github.com/konveyor/community/blob/main/CODE_OF_CONDUCT.md).
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkonveyor%2Ftackle-pathfinder.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkonveyor%2Ftackle-pathfinder?ref=badge_large)
